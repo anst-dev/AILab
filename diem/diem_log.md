@@ -10,7 +10,10 @@ Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 | E3 | Waveform đè slide footage (y=1520) | 90 | ✗ discard | 90 |
 | E3b | Waveform vào dải mờ giữa (y=986) | 91 | ✔ | 91 |
 | E4 | Nền đặc #0d1117 dải giữa — hết chữ nhòe | 92 | ✔ | 92 |
-| E5 | CTA MarginV 185 — hết đè chrome video | **93** | ✔ best | **93** |
+| E5 | CTA MarginV 185 — hết đè chrome video | 93 | ✔ | 93 |
+| E6 | Auto-sync v1: mọi dòng dồn t0=0.5 (khối gộp lớn) | 93 | ✗ discard | 93 |
+| E6b | Cửa sổ trượt: 5 dòng key dồn cùng 11.2 | 93 | ✗ discard | 93 |
+| E6c | Auto-sync + stagger 2.5s tự dàn trải | **95** | ✔ best | **95** |
 
 ## E0 — Baseline: 86 điểm (tag v0)
 
@@ -56,11 +59,22 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
   → luật: vòng bị cancel phải xóa output trước khi render lại cùng tên.
 - Bảng điểm chi tiết hiện: 1:10 2:10 3:7 4:10 5:9 6:10 7:10 8:10 9:8 10:8.
 
+## E6c — Auto-sync + stagger: 95 điểm (tag v6)
+
+- Mục 3: 7 → 9 (t0 từ lời nói thực, cửa sổ trượt cặp cue + stagger 2.5s).
+- Mục 10: 8 → 9 (gen_timing.py tái sử dụng mọi clip sau — khỏi hand-tune).
+- 2 vòng fail trước đó là bài học: khối utterance gộp lớn làm keyword match sai;
+  cửa sổ trượt + stagger mới đúng.
+- Timeline tự sinh: 0.5 / 11.2 / 13.7 / 16.2 / 18.7 / 21.2 / 27.4.
+
 ## Backlog vòng kế (1 vòng = 1 cải tiến)
 
 - E1: badge "AN" tròn bên trái pill + nền pill đặc hơn (so mẫu fb2) — mục 2
 - E3: [ĐANG LÀM] waveform audio thật (showwaves) trước CTA — mục 8
-- E6: [ĐANG LÀM] gen_timing.py — auto-sync t0 code_lines từ VTT — mục 3, 10
+- E7: intro hook 1.2s fade-in chữ to — mục 8
+- E8: verify audio mean_volume + chỉnh loudnorm — mục 9
+- E9: subs auto-sinh từ VTT + chỉ duyệt tay — mục 10
+- E10: final render winner preset faster — mục 7
 - E5: CTA nhấp nháy nhẹ \f + viền pill tương phản — mục 5, 8
 - E6: tint viền phân tách 3 tầng, xử dải blur bẩn — mục 7
 - E7: auto-sync code_lines từ cue VTT — mục 3, 10
