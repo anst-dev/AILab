@@ -8,7 +8,8 @@ Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 | E1 | Badge "AN" tròn viền lime mép trái pill | 87 | ✔ | 87 |
 | E2 | Ghost lines + highlight dòng đang gõ | 90 | ✔ | 90 |
 | E3 | Waveform đè slide footage (y=1520) | 90 | ✗ discard | 90 |
-| E3b | Waveform vào dải mờ giữa (y=986) | **91** | ✔ best | **91** |
+| E3b | Waveform vào dải mờ giữa (y=986) | 91 | ✔ | 91 |
+| E4 | Nền đặc #0d1117 dải giữa — hết chữ nhòe | **92** | ✔ best | **92** |
 
 ## E0 — Baseline: 86 điểm (tag v0)
 
@@ -47,11 +48,18 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 - E3b: dời y=986 vào dải mờ — mục 8: 9 → 10 (4 lớp nhịp: typing+highlight+ghost+waveform).
 - **Cải tiến đặc biệt đầu tiên → output/best.mp4** (Telegram chưa cấu hình).
 
+## E4 — Mid clean: 92 điểm (tag v4, decode kiểm tra sạch)
+
+- Mục 7: 9 → 10 (drawbox @0.82 phủ blur bg; chữ nhòe chỉ còn vệt cực mờ).
+- Ghi chú vận hành: file E4 hỏng NAL khi lần render trước bị cancel giữa chừng
+  → luật: vòng bị cancel phải xóa output trước khi render lại cùng tên.
+- Bảng điểm chi tiết hiện: 1:10 2:10 3:7 4:10 5:9 6:10 7:10 8:10 9:8 10:8.
+
 ## Backlog vòng kế (1 vòng = 1 cải tiến)
 
 - E1: badge "AN" tròn bên trái pill + nền pill đặc hơn (so mẫu fb2) — mục 2
 - E3: [ĐANG LÀM] waveform audio thật (showwaves) trước CTA — mục 8
-- E4: [ĐANG LÀM] nền đặc vùng mờ giữa, xử chữ nhòe — mục 7
+- E5: [ĐANG LÀM] nhấc CTA lên khỏi chrome video (MarginV 150→185) — mục 5
 - E5: CTA nhấp nháy nhẹ \f + viền pill tương phản — mục 5, 8
 - E6: tint viền phân tách 3 tầng, xử dải blur bẩn — mục 7
 - E7: auto-sync code_lines từ cue VTT — mục 3, 10

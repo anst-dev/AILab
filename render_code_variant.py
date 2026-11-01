@@ -230,6 +230,11 @@ def main() -> int:
         chain += f"[{last}][3:v]overlay=170:832[c4];"
         last = "c4"
     audio_tail = "[0:a]loudnorm=I=-16:TP=-1.5:LRA=11[aout]"
+    mid_clean = bool(v.get("mid_clean"))
+    if mid_clean:
+        # phủ nền tối phẳng dải giữa (800-1080): hết chữ nhòe từ blur bg
+        chain += f"[{last}]drawbox=x=0:y=800:w=1080:h=280:color=0x0D1117@0.82:t=fill[mc];"
+        last = "mc"
     if show_wave:
         # waveform trắng theo nhịp giọng nói — trong dải mờ giữa code và footage
         wave_y = int(v.get("waveform_y", 986))
