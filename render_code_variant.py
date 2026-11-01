@@ -204,6 +204,7 @@ def main() -> int:
     ass_path.write_text(build_ass(v, dur), encoding="utf-8")
 
     badge = make_badge(v, work)
+    show_wave = bool(v.get("waveform"))
 
     # 3) ghép
     cmd = [
@@ -228,9 +229,20 @@ def main() -> int:
     if badge:
         chain += f"[{last}][3:v]overlay=170:832[c4];"
         last = "c4"
-    chain += f"[{last}]ass={ass_path.relative_to(out_buoi).as_posix()}[vout];[0:a]loudnorm=I=-16:TP=-1.5:LRA=11[aout]"
-    cmd += ["-filter_complex", chain,
-        "-map", "[vout]", "-map", "[aout]",
+    audio_tail = "[0:a]loudnorm=I=-16:TP=-1.5:LRA=11[aout]"
+    if show_wave:
+        # waveform trắng theo nhịp giọng nói — trong dải mờ giữa code và footage
+        wave_y = int(v.get("waveform_y", 986))
+        chain += (
+            f"[{last}]drawbox=x=90:y={wave_y - 6}:w=900:h=56:color=0x0D1117@0.45:t=fill[wbg];"
+            "[0:a]asplit=2[aw][al];"
+            "[aw]showwaves=s=900x44:mode=cline:colors=0xFFFFFF:rate=25[wave];"
+            f"[wbg][wave]overlay=x=(W-w)/2:y={wave_y}:shortest=1[wv];"
+        )
+        last = "wv"
+        audio_tail = "[al]loudnorm=I=-16:TP=-1.5:LRA=11[aout]"
+    chain += f"[{last}]ass={ass_path.relative_to(out_buoi).as_posix()}[vout];{audio_tail}"
+    cmd += ["-filter_complex", chain, "-map", "[vout]", "-map", "[aout]",
         "-t", f"{dur:.3f}",
         "-c:v", "libx264", "-preset", a.preset, "-crf", "20",
         "-r", "25", "-pix_fmt", "yuv420p",
