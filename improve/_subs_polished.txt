@@ -1,0 +1,15 @@
+[2.3-7.2] Bây giờ anh sẽ giới thiệu cho em | cái khung để mình làm prompt
+[7.6-10.1] làm prompt lúc đầu ấy
+[11.6-14.8] Một cái khung. Đầu tiên là mình | làm việc với AI
+[14.8-18.2] qua lời nhắc, đúng không? | Gọi là prompt
+[18.3-22.7] thì prompt, nói gì là ra một | lời nhắc đấy thế thôi
+[22.7-27.1] Còn cụ thể ở đây là nó sẽ chia | lời nhắc mình thành 5 thành phần
+[27.8-29.8] để giúp mình làm việc với AI
+[30.7-32.3] Bây giờ em thử đọc qua nhé
+[32.5-35.1] Phần đó thì anh nói nhiều rồi, | giờ đến lượt em
+[35.1-37.6] Thứ nhất, em đọc qua một lượt | cho anh
+[38.4-40.4] Em sẽ giải thích cho anh
+[40.9-42.7] từng phần nó có chức năng gì
+[43.0-44.7] Sau đây anh sẽ giải thích lại
+[46.2-47.9] Em cứ đọc đi. Chào em, | anh cần khoảng mười phút nha
+[47.9-50.0] 5 phút trò chuyện, | suy nghĩ nhé

@@ -14,7 +14,10 @@ Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 | E6 | Auto-sync v1: mọi dòng dồn t0=0.5 (khối gộp lớn) | 93 | ✗ discard | 93 |
 | E6b | Cửa sổ trượt: 5 dòng key dồn cùng 11.2 | 93 | ✗ discard | 93 |
 | E6c | Auto-sync + stagger 2.5s tự dàn trải | 95 | ✔ | 95 |
-| E8 | Verify audio ebur128: I=-15.9 LUFS, LRA 5.6 | **97** | ✔ best | **97** |
+| E8 | Verify audio ebur128: I=-15.9 LUFS, LRA 5.6 | 97 | ✔ | 97 |
+| E9 | Auto-subs v1: từ méo + dòng tràn | 94 | ✗ discard | 97 |
+| E10 | gen_subs tách câu + 4 term mới | 95 | ✗ discard | 97 |
+| E11 | LLM polish subs (claude haiku, giữ timing) | **98** | ✔ best | **98** |
 
 ## E0 — Baseline: 86 điểm (tag v0)
 
@@ -72,6 +75,13 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 
 - ebur128 đo trên E6c: I = -15.9 LUFS (mục tiêu -16, lệch 0.1 LU), LRA 5.6.
 - Mục 9: 8 → 10. Best vẫn clip E6c (output/best.mp4).
+
+## E9-E11 — Auto-subs pipeline hoàn chỉnh (tag v9)
+
+- E9 94 discard: verbatim ASR méo + tràn dòng. E10 95 discard: sửa gen_subs + term vẫn thua văn phong tay.
+- E11 98 keep: gen_subs → claude haiku polish (GIỮ nguyên timing gốc) → ghép json.
+  Pipeline giờ: gen_timing.py (timing) + gen_subs.py (nháp) + 1 lệnh claude -p (polish) — hết viết tay.
+- Trần thực tế 98: mục 3 (sync) dừng 9 vì mentor S06 không đọc tên từng phần.
 
 ## PHIÊN 1 ĐÓNG TẠI ĐÂY (quota zai ~42%)
 

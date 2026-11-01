@@ -1,0 +1,15 @@
+[2.3-7.2] Bây giờ anh sẽ giới thiệu cho em | cái khung cái khung để mình à
+[7.6-10.1] làm prompt lúc đầu ấy
+[11.6-14.8] Một cái khung để mình đầu tiên là | mình làm việc với
+[14.8-18.2] ai mình lại việc qua lựa nhắc đúng | không gọi là prompt
+[18.3-22.7] thì phờ lom nói gì là ra một lời | nhắc Thế thôi. Giảm Thế thôi. Còn cụ
+[22.7-27.1] thể ở đây là cái này nó sẽ chia | cái lời nhắc Minh thành năm thành phần
+[27.8-29.8] để giúp mình làm việc với ai
+[30.7-32.3] Bây giờ em thử đọc qua đi
+[32.5-35.1] về riêng em thì anh nói nhiều rồi. | Giờ em nói
+[35.1-37.6] này thứ nhất là em đọc qua một | lượt cho anh
+[38.4-40.4] Em sẽ giải thích cho anh
+[40.9-42.7] từng phần nó có chức năng gì
+[43.0-44.7] sau đây anh sẽ giải thích lại
+[46.2-47.9] em cứ mấy phút chào em khoảng mười
+[47.9-50.0] phút nha năm phút trò chuyện suy | nghĩ nhở?
