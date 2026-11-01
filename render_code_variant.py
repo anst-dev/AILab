@@ -81,23 +81,29 @@ def render_code_frames(v: dict, out_dir: Path, dur: float, reuse: bool = True):
         d.text((150, TAB_H // 2), v.get("tab", "session"), font=tab_f, fill=TXT)
         d.line([0, TAB_H, W, TAB_H], fill=(48, 54, 61))
 
-        # các dòng code typing (tăng dần theo t0)
+        # các dòng code typing (tăng dần theo t0); dòng chưa tới giờ hiện ghost mờ
         cursor_pos = None
+        typing_y = None
         y = BODY_Y0
         for ln in lines:
             if t < ln["t0"]:
-                break  # dòng chưa tới giờ — bỏ qua phần còn lại
+                d.text((BODY_X, y), ln["full"], font=f, fill=(61, 68, 77))  # ghost
+                y += LINE_H
+                continue
             chars = int((t - ln["t0"]) * TYPE_SPEED)
             shown = ln["full"][:chars]
-            if ln["kind"] == "comment":
-                d.text((BODY_X, y), shown, font=f, fill=GREEN)
-            else:
-                d.text((BODY_X, y), shown, font=f, fill=TXT)
             x_end = BODY_X + d.textlength(shown, font=f)
             if chars < len(ln["full"]):
+                # highlight nền dòng đang gõ
+                d.rounded_rectangle([BODY_X - 16, y - 9, BODY_X + 900, y + 50], 10, fill=(26, 33, 41))
+                typing_y = y
+                color = GREEN if ln["kind"] == "comment" else TXT
+                d.text((BODY_X, y), shown, font=f, fill=color)
                 cursor_pos = (x_end + 4, y)
-                break  # đang gõ dòng này
-            cursor_pos = (x_end + 6, y)  # dòng xong — cursor chờ cuối dòng
+            else:
+                color = GREEN if ln["kind"] == "comment" else TXT
+                d.text((BODY_X, y), shown, font=f, fill=color)
+                cursor_pos = (x_end + 6, y)
             y += LINE_H
 
         # con trỏ nhấp nháy (mặc định tại chỗ sẽ gõ tiếp)

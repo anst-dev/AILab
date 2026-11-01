@@ -5,7 +5,8 @@ Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 | Vòng | Cải tiến | Điểm | Keep? | Best |
 |---|---|---|---|---|
 | E0 | Baseline (video S06 đã duyệt 01/11) | 86 | ✔ | 86 |
-| E1 | Badge "AN" tròn viền lime mép trái pill | **87** | ✔ best | **87** |
+| E1 | Badge "AN" tròn viền lime mép trái pill | 87 | ✔ | 87 |
+| E2 | Ghost lines + highlight dòng đang gõ | **90** | ✔ best | **90** |
 
 ## E0 — Baseline: 86 điểm (tag v0)
 
@@ -31,11 +32,17 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 - Còn lại giữ nguyên E0. Bằng chứng: diem/E1/CODES06_{d,g,c}.png.
 - Best → `output/best.mp4`.
 
+## E2 — Ghost lines + highlight: 90 điểm (tag v2, ffprobe 50.00s)
+
+- Mục 1 layout: 9 → 10 (ghost lấp vùng code trống, khuôn 8 dòng đầy).
+- Mục 8 giữ chân: 7 → 9 (ghost + highlight + typing 3 lớp nhịp).
+- Lỗi nhỏ ghi nhận: highlight rỗng 0.3s đầu mỗi dòng (chars=0) — chấp nhận.
+- Best → output/best.mp4.
+
 ## Backlog vòng kế (1 vòng = 1 cải tiến)
 
 - E1: badge "AN" tròn bên trái pill + nền pill đặc hơn (so mẫu fb2) — mục 2
-- E2: ghost lines (dòng mờ trước khi gõ) + highlight dòng đang gõ — mục 1, 8
-- E3: waveform audio thật (showwaves) trước CTA — mục 8 (như fb2)
+- E3: [ĐANG LÀM] waveform audio thật (showwaves) trước CTA — mục 8
 - E4: intro hook 1.2s đầu: chữ to fade-in — mục 8
 - E5: CTA nhấp nháy nhẹ \f + viền pill tương phản — mục 5, 8
 - E6: tint viền phân tách 3 tầng, xử dải blur bẩn — mục 7
