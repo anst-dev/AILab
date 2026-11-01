@@ -4,7 +4,8 @@ Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 
 | Vòng | Cải tiến | Điểm | Keep? | Best |
 |---|---|---|---|---|
-| E0 | Baseline (video S06 đã duyệt 01/11) | **86** | ✔ best | 86 |
+| E0 | Baseline (video S06 đã duyệt 01/11) | 86 | ✔ | 86 |
+| E1 | Badge "AN" tròn viền lime mép trái pill | **87** | ✔ best | **87** |
 
 ## E0 — Baseline: 86 điểm (tag v0)
 
@@ -23,6 +24,12 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 | 9 | Audio loudnorm | 8 | loudnorm có trong filter; chưa nghe trực tiếp (unverified) |
 | 10 | Đóng gói | 8 | json điều khiển; subs vẫn phải viết tay từng vòng |
 | | **Tổng** | **86** | |
+
+## E1 — Badge "AN": 87 điểm (tag v1, ffprobe 50.00s)
+
+- Mục 2 sub pill: 9 → 10 (badge tròn viền lime đúng mẫu fb2, không che chữ).
+- Còn lại giữ nguyên E0. Bằng chứng: diem/E1/CODES06_{d,g,c}.png.
+- Best → `output/best.mp4`.
 
 ## Backlog vòng kế (1 vòng = 1 cải tiến)
 

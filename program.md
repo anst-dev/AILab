@@ -26,6 +26,12 @@
 python /d/KENH_AI/_hermes-notes/products/ai-cli-quota/scripts/quota.py
 ```
 
+## Kênh nhận kết quả "cải tiến đặc biệt"
+
+Chưa cấu hình Telegram. Vòng thắng mới → render `-preset faster` + copy sang
+`output/best.mp4` (luôn giữ bản best mới nhất để người dùng mở xem trực tiếp).
+Khi user cung cấp bot token + chat_id sau này → thêm gửi `sendVideo` Telegram.
+
 ## Tiếp nối phiên sau
 
 Đọc `diem/diem_log.md` (best hiện tại + tag), đọc `backlog.md`, làm tiếp từ vòng kế.

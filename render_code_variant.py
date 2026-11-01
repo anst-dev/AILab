@@ -135,6 +135,23 @@ def fmt_ass(sec: float) -> str:
     return f"{h}:{m:02d}:{s:05.2f}"
 
 
+def make_badge(v: dict, work: Path) -> Path | None:
+    """Badge tròn bên trái pill (vd chữ 'AN') — trả về PNG hoặc None."""
+    b = v.get("badge")
+    if not b:
+        return None
+    img = Image.new("RGBA", (96, 96), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    d.ellipse([0, 0, 95, 95], fill=(31, 31, 31, 216), outline=(163, 230, 53, 255), width=3)
+    fnt = ImageFont.truetype("C:/Windows/Fonts/segoeuib.ttf", 34)
+    txt = b.get("text", "AN")
+    tw = d.textlength(txt, font=fnt)
+    d.text(((96 - tw) / 2, 27), txt, font=fnt, fill=(255, 255, 255, 255))
+    p = work / "badge.png"
+    img.save(p)
+    return p
+
+
 def build_ass(v: dict, dur: float) -> str:
     ev = []
     for s in v["subs"]:
@@ -164,11 +181,12 @@ def main() -> int:
     start, end = float(src["start"]), float(src["end"])
     dur = end - start
 
-    out_buoi = Path(a.variant).parent                       # thư mục buổi D:/KENH_AI/shorts/<MON>/<BUOI>
+    out_buoi = Path(a.variant).resolve().parent             # tuyệt đối — tránh double-relative khi cwd đổi
     work = out_buoi / "_work" / f"variant_{src['segment_id']}"
     title_ascii = "".join(c for c in (src.get("title") or "clip").lower() if not 0x80 <= ord(c) <= 0xFFFF or c.isascii())
     slug = re.sub(r"[^a-z0-9]+", "-", title_ascii).strip("-")[:30] or "clip"
     clip_path = out_buoi / "clips" / (a.out or f"CODE{src['segment_id']}_{slug}.mp4")
+    clip_path.parent.mkdir(parents=True, exist_ok=True)
 
     # 1) frames code
     code_dir = work / "code"
@@ -179,13 +197,18 @@ def main() -> int:
     ass_path = work / "overlay.ass"
     ass_path.write_text(build_ass(v, dur), encoding="utf-8")
 
+    badge = make_badge(v, work)
+
     # 3) ghép
     cmd = [
         "ffmpeg", "-y", "-loglevel", "error",
         "-ss", f"{start:.3f}", "-t", f"{dur:.3f}", "-i", str(mp4),
         "-framerate", str(FPS), "-i", str(code_dir / "%05d.png"),
         "-f", "lavfi", "-i", "color=c=0x0D1117:s=1080x1920:r=25",
-        "-filter_complex",
+    ]
+    if badge:
+        cmd += ["-i", str(badge)]
+    chain = (
         "[0:v]split=2[bgsrc][fgsrc];"
         "[bgsrc]scale=1080:1920:force_original_aspect_ratio=increase,"
         "crop=1080:1920,boxblur=30:2,eq=brightness=-0.28:saturation=0.65,"
@@ -194,8 +217,13 @@ def main() -> int:
         "[2:v][1:v]overlay=0:0[c1];"
         "[c1][bg]overlay=0:800[c2];"
         "[c2][fg]overlay=(W-w)/2:1080[c3];"
-        f"[c3]ass={ass_path.relative_to(out_buoi).as_posix()}[vout];"
-        "[0:a]loudnorm=I=-16:TP=-1.5:LRA=11[aout]",
+    )
+    last = "c3"
+    if badge:
+        chain += f"[{last}][3:v]overlay=170:832[c4];"
+        last = "c4"
+    chain += f"[{last}]ass={ass_path.relative_to(out_buoi).as_posix()}[vout];[0:a]loudnorm=I=-16:TP=-1.5:LRA=11[aout]"
+    cmd += ["-filter_complex", chain,
         "-map", "[vout]", "-map", "[aout]",
         "-t", f"{dur:.3f}",
         "-c:v", "libx264", "-preset", a.preset, "-crf", "20",
@@ -211,6 +239,7 @@ def main() -> int:
 
     # 4) frame duyệt
     frames_dir = out_buoi / "frames"
+    frames_dir.mkdir(parents=True, exist_ok=True)
     for tag, tt in (("d", 2.0), ("g", dur / 2), ("c", dur - 2)):
         subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{tt:.2f}", "-i", str(clip_path),
                         "-frames:v", "1", str(frames_dir / f"CODE{src['segment_id']}_{tag}.png")],
