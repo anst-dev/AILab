@@ -23,7 +23,8 @@ Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 | E13 | Nhạc nền synth C3-G3-E4 + sidechain duck (I=-16.0 LUFS) | 120 | ✔ | 120 |
 | E14b | Hook intro lime 1.8s đầu fade-in nêu lợi ích | 127 | ✔ | 127 |
 | E15 | Ken burns zoom footage 1.0→1.07 (M13) | 133 | ✔ | 133 |
-| E16 | Outro 3s + fade giọng (M14) — đè pill cuối | **139** | ✔ best | **139** |
+| E16 | Outro 3s + fade giọng (M14) — đè pill cuối | 139 | ✔ | 139 |
+| E17 | Subs tự cắt trước outro — không chồng lấp | **140/140** | ✔ best | **140** |
 
 ## E0 — Baseline: 86 điểm (tag v0)
 
@@ -115,6 +116,8 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 ## E16 — Outro: 139/140 (tag v14)
 
 - M14: 3 → 10 (outro riêng + fade giọng 2.5s). M2 bị trừ 1: outro đè dòng 2 pill cuối.
+
+## E17 — Không chồng lấp: 140/140 (tag v15). Chuẩn M2 nâng: từ khóa phải màu lime.
 
 ## PHIÊN 1 ĐÓNG TẠI ĐÂY (quota zai ~42%)
 

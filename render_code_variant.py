@@ -162,9 +162,13 @@ def make_badge(v: dict, work: Path) -> Path | None:
 
 def build_ass(v: dict, dur: float) -> str:
     ev = []
+    outro_t0 = dur - float(v.get("outro", {}).get("secs", 3)) if v.get("outro") else dur
     for s in v["subs"]:
+        t1 = min(s["t1"], outro_t0 - 0.2)          # subs không lấn vào outro
+        if t1 - s["t0"] < 0.4:
+            continue
         txt = s["text"].replace("\n", "\\N")
-        ev.append(f"Dialogue: 0,{fmt_ass(s['t0'])},{fmt_ass(s['t1'])},Pill,,0,0,0,,{txt}")
+        ev.append(f"Dialogue: 0,{fmt_ass(s['t0'])},{fmt_ass(t1)},Pill,,0,0,0,,{txt}")
     cta = v["cta"]
     ev.append(
         f"Dialogue: 1,{fmt_ass(cta['t0'])},{fmt_ass(dur)},CTA,,0,0,0,,"
