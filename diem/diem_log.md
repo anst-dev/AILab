@@ -9,7 +9,8 @@ Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 | E2 | Ghost lines + highlight dòng đang gõ | 90 | ✔ | 90 |
 | E3 | Waveform đè slide footage (y=1520) | 90 | ✗ discard | 90 |
 | E3b | Waveform vào dải mờ giữa (y=986) | 91 | ✔ | 91 |
-| E4 | Nền đặc #0d1117 dải giữa — hết chữ nhòe | **92** | ✔ best | **92** |
+| E4 | Nền đặc #0d1117 dải giữa — hết chữ nhòe | 92 | ✔ | 92 |
+| E5 | CTA MarginV 185 — hết đè chrome video | **93** | ✔ best | **93** |
 
 ## E0 — Baseline: 86 điểm (tag v0)
 
@@ -59,7 +60,7 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 
 - E1: badge "AN" tròn bên trái pill + nền pill đặc hơn (so mẫu fb2) — mục 2
 - E3: [ĐANG LÀM] waveform audio thật (showwaves) trước CTA — mục 8
-- E5: [ĐANG LÀM] nhấc CTA lên khỏi chrome video (MarginV 150→185) — mục 5
+- E6: [ĐANG LÀM] gen_timing.py — auto-sync t0 code_lines từ VTT — mục 3, 10
 - E5: CTA nhấp nháy nhẹ \f + viền pill tương phản — mục 5, 8
 - E6: tint viền phân tách 3 tầng, xử dải blur bẩn — mục 7
 - E7: auto-sync code_lines từ cue VTT — mục 3, 10
