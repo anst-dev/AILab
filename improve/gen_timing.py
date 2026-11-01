@@ -28,6 +28,7 @@ def main() -> int:
     p.add_argument("variant")
     p.add_argument("-o", "--out", required=True)
     p.add_argument("--mentor", default="Tuan Anh")
+    p.add_argument("--window", help="ép nhóm dòng cùng cửa sổ vào [start:end] giây, stagger đều — vd 18.9:25.0")
     a = p.parse_args()
 
     v = json.loads(Path(a.variant).read_text(encoding="utf-8"))
@@ -49,6 +50,10 @@ def main() -> int:
 
     hits = 0
     STAGGER = 2.5  # giây giữa các dòng cùng khớp một cửa sổ
+    win_span = None
+    if a.window:
+        ws, we = (float(x) for x in a.window.split(":"))
+        win_span = (ws, we)
     used_windows: dict[float, int] = {}
     for ln in v.get("code_lines", []):
         kws = ln.get("sync")
@@ -60,7 +65,11 @@ def main() -> int:
                 k = used_windows.get(base, 0)
                 used_windows[base] = k + 1
                 old = ln["t"]
-                ln["t"] = round(base + k * STAGGER, 1)
+                if win_span and k > 0:
+                    # nhóm cùng cửa sổ: dàn đều trong khoảng người dùng chỉ định
+                    ln["t"] = round(win_span[0] + (k - 1) * (win_span[1] - win_span[0]) / 5.0, 1)
+                else:
+                    ln["t"] = round(base + k * STAGGER, 1)
                 ln["_sync_hit"] = f"{old} -> {ln['t']} (win {base}#{k + 1})"
                 hits += 1
                 break

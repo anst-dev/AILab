@@ -17,7 +17,8 @@ Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 | E8 | Verify audio ebur128: I=-15.9 LUFS, LRA 5.6 | 97 | ✔ | 97 |
 | E9 | Auto-subs v1: từ méo + dòng tràn | 94 | ✗ discard | 97 |
 | E10 | gen_subs tách câu + 4 term mới | 95 | ✗ discard | 97 |
-| E11 | LLM polish subs (claude haiku, giữ timing) | **98** | ✔ best | **98** |
+| E11 | LLM polish subs (claude haiku, giữ timing) | 98 | ✔ | 98 |
+| E12 | Window sync: nhóm 5 phần ép vào 18.9-25.0 | **100** | ✔ best | **100** |
 
 ## E0 — Baseline: 86 điểm (tag v0)
 
@@ -82,6 +83,13 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 - E11 98 keep: gen_subs → claude haiku polish (GIỮ nguyên timing gốc) → ghép json.
   Pipeline giờ: gen_timing.py (timing) + gen_subs.py (nháp) + 1 lệnh claude -p (polish) — hết viết tay.
 - Trần thực tế 98: mục 3 (sync) dừng 9 vì mentor S06 không đọc tên từng phần.
+
+## E12 — Window sync: 100/100 (tag v10, ffprobe 50.00s, decode sạch)
+
+- gen_timing.py --window 18.9:25.0: 5 dòng PCTPR dàn đều đúng câu mentor nói
+  "chia lời nhắc thành 5 thành phần"; [R] Rules riêng 27.4 theo câu sau.
+- Mục 3: 9 → 10. TẤT CẢ 10 mục = 10 — TRẦN RUBRIC.
+- best_final cần render lại từ E12 preset faster khi đưa vào đăng.
 
 ## PHIÊN 1 ĐÓNG TẠI ĐÂY (quota zai ~42%)
 
