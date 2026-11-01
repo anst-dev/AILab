@@ -205,6 +205,7 @@ def main() -> int:
 
     badge = make_badge(v, work)
     show_wave = bool(v.get("waveform"))
+    show_music = bool(v.get("music"))
 
     # 3) ghép
     cmd = [
@@ -215,6 +216,17 @@ def main() -> int:
     ]
     if badge:
         cmd += ["-i", str(badge)]
+    if show_music:
+        # pad ambient tự synth (hợp âm C3-G3-E4, LFO sóng) — không bản quyền, duck theo giọng
+        pad = (
+            "aevalsrc="
+            "0.07*sin(2*PI*130.81*t)*(0.6+0.4*sin(2*PI*0.11*t))"
+            "+0.05*sin(2*PI*196.00*t)*(0.6+0.4*sin(2*PI*0.07*t+1.5))"
+            "+0.04*sin(2*PI*329.63*t)*(0.6+0.4*sin(2*PI*0.05*t+3))"
+            f":s=48000:d={dur:.2f}"
+        )
+        cmd += ["-f", "lavfi", "-i", pad]
+
     chain = (
         "[0:v]split=2[bgsrc][fgsrc];"
         "[bgsrc]scale=1080:1920:force_original_aspect_ratio=increase,"
@@ -229,21 +241,35 @@ def main() -> int:
     if badge:
         chain += f"[{last}][3:v]overlay=170:832[c4];"
         last = "c4"
-    audio_tail = "[0:a]loudnorm=I=-16:TP=-1.5:LRA=11[aout]"
     mid_clean = bool(v.get("mid_clean"))
     if mid_clean:
-        # phủ nền tối phẳng dải giữa (800-1080): hết chữ nhòe từ blur bg
         chain += f"[{last}]drawbox=x=0:y=800:w=1080:h=280:color=0x0D1117@0.82:t=fill[mc];"
         last = "mc"
     if show_wave:
-        # waveform trắng theo nhịp giọng nói — trong dải mờ giữa code và footage
         wave_y = int(v.get("waveform_y", 986))
+        chain += f"[{last}]drawbox=x=90:y={wave_y - 6}:w=900:h=56:color=0x0D1117@0.45:t=fill[wbg];"
+        last = "wbg"
+
+    # audio: asplit MỘT lần, các nhánh dùng [aw] (waveform), [ak] (duck key), [al] (giọng)
+    n_split = 1 + (1 if show_wave else 0) + (1 if show_music else 0)
+    audio_tail = "[0:a]loudnorm=I=-16:TP=-1.5:LRA=11[aout]"
+    if n_split == 3:
+        idx_music = 3 + (1 if badge else 0)   # pad luôn là input sau canvas + (badge)
+        chain += "[0:a]asplit=3[aw][al][ak];"
+        chain += "[aw]showwaves=s=900x44:mode=cline:colors=0xFFFFFF:rate=25[wave];"
+        chain += f"[{last}][wave]overlay=x=(W-w)/2:y={int(v.get('waveform_y', 986))}:shortest=1[wv];"
+        last = "wv"
         chain += (
-            f"[{last}]drawbox=x=90:y={wave_y - 6}:w=900:h=56:color=0x0D1117@0.45:t=fill[wbg];"
-            "[0:a]asplit=2[aw][al];"
-            "[aw]showwaves=s=900x44:mode=cline:colors=0xFFFFFF:rate=25[wave];"
-            f"[wbg][wave]overlay=x=(W-w)/2:y={wave_y}:shortest=1[wv];"
+            f"[{idx_music}:a]volume=0.45,afade=t=in:d=2,afade=t=out:st={dur - 3:.2f}:d=3[mus];"
+            f"[mus][ak]sidechaincompress=threshold=0.035:ratio=8:attack=80:release=600[md];"
+            "[md]lowpass=f=1200,aresample=48000,aformat=channel_layouts=stereo[mdf];"
+            "[mdf][al]amix=inputs=2:duration=first:normalize=0[amx];"
         )
+        audio_tail = "[amx]loudnorm=I=-16:TP=-1.5:LRA=11[aout]"
+    elif show_wave:
+        chain += "[0:a]asplit=2[aw][al];"
+        chain += "[aw]showwaves=s=900x44:mode=cline:colors=0xFFFFFF:rate=25[wave];"
+        chain += f"[{last}][wave]overlay=x=(W-w)/2:y={int(v.get('waveform_y', 986))}:shortest=1[wv];"
         last = "wv"
         audio_tail = "[al]loudnorm=I=-16:TP=-1.5:LRA=11[aout]"
     chain += f"[{last}]ass={ass_path.relative_to(out_buoi).as_posix()}[vout];{audio_tail}"

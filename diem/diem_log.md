@@ -1,4 +1,4 @@
-# DIEM LOG — loop cải tiến video
+# DIEM LOG — loop cải tiến video (thang mở rộng 140 từ E13)
 
 Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 
@@ -18,7 +18,9 @@ Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 | E9 | Auto-subs v1: từ méo + dòng tràn | 94 | ✗ discard | 97 |
 | E10 | gen_subs tách câu + 4 term mới | 95 | ✗ discard | 97 |
 | E11 | LLM polish subs (claude haiku, giữ timing) | 98 | ✔ | 98 |
-| E12 | Window sync: nhóm 5 phần ép vào 18.9-25.0 | **100** | ✔ best | **100** |
+| E12 | Window sync: nhóm 5 phần ép vào 18.9-25.0 | 100/100 | ✔ | 100 |
+| — | THANG MỞ RỘNG 140 (M11-M14) — v10 chấm lại: M11:2 M12:3 M13:4 M14:3 => 112/140 | 112 | ✔ | 112 |
+| E13 | Nhạc nền synth C3-G3-E4 + sidechain duck (I=-16.0 LUFS) | **120** | ✔ best | **120** |
 
 ## E0 — Baseline: 86 điểm (tag v0)
 
@@ -91,6 +93,13 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 - Mục 3: 9 → 10. TẤT CẢ 10 mục = 10 — TRẦN RUBRIC.
 - best_final cần render lại từ E12 preset faster khi đưa vào đăng.
 
+## E13 — Nhạc nền + duck: 120/140 (tag v11, integrity + ebur128 verified)
+
+- M11: 2 → 10 (pad aevalsrc tự synth — không bản quyền; sidechain threshold 0.035;
+  lowpass 1200; amix normalize=0; loudnorm ra I=-16.0 chính xác).
+- Pitfall mới: idx input nhạc phải = 3 + (1 nếu badge) — đếm nhầm là bind error.
+- Best → output/best.mp4.
+
 ## PHIÊN 1 ĐÓNG TẠI ĐÂY (quota zai ~42%)
 
 Best: 97/100 (v8). Tiến trình: 86 → 87 → 90 → (91 fail 90) → 91 → 92 → 93 → 95 → 97.
@@ -110,3 +119,10 @@ Best: 97/100 (v8). Tiến trình: 86 → 87 → 90 → (91 fail 90) → 91 → 9
 - E8: nhạc nền duck giọng (sidechain) — mục 9
 - E9: typing theo cụm từ (word-by-word) — mục 8
 - E10: render final winner preset faster — mục 7
+
+---
+## CHẤM LẠI best v10 theo thang 140 (điểm khởi đầu E13)
+
+M1-M10 = 100 (giữ nguyên). M11 nhạc nền: 2 (chưa có). M12 hook intro: 3 (không có).
+M13 chuyển động: 4 (chỉ typing + waveform, footage tĩnh). M14 kết clip: 3 (đứt đột ngột).
+=> **Khởi đầu: 112/140** (tag v10).

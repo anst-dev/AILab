@@ -22,3 +22,14 @@ Chấm bằng 3 frame (đầu/giữa/cuối) + ffprobe + review diff. Mỗi mụ
 - 3 frame đọc trực tiếp (d/g/c) — không chấm mù.
 - `ffprobe` width/height/duration ghi vào log.
 - Mục trừ phải viết lý do 1 câu trong `diem_log.md`.
+
+## MỞ RỘNG v2 (02/11 — user ủy quyền "làm tới khi limit"): 4 tiêu chí mới
+
+| # | Tiêu chí | 10 điểm khi | Trừ khi |
+|---|---|---|---|
+| 11 | Nhạc nền + duck giọng | pad/nhạc volume thấp, tự nhỏ khi mentor nói (sidechain), không đè lời | đè lời, tắt hẳn, lặp nhàm |
+| 12 | Hook intro 3s đầu | chữ to fade-in nêu lợi ích, khán giả hiểu xem để làm gì trong 3s | không có, che nội dung |
+| 13 | Chuyển động khung hình | zoom/pan nhẹ (ken burns) trên footage hoặc code, không tĩnh hoàn toàn | rung, zoom quá mức |
+| 14 | Kết clip có chủ đích | outro riêng (fade + lời hẹn/CTA nhắc lại), không đứt đột ngột | cắt đen sỗ sàng |
+
+**Trần mới: 140 điểm.** Best v10 chấm lại theo thang mới làm điểm khởi đầu.
