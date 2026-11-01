@@ -13,7 +13,8 @@ Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 | E5 | CTA MarginV 185 — hết đè chrome video | 93 | ✔ | 93 |
 | E6 | Auto-sync v1: mọi dòng dồn t0=0.5 (khối gộp lớn) | 93 | ✗ discard | 93 |
 | E6b | Cửa sổ trượt: 5 dòng key dồn cùng 11.2 | 93 | ✗ discard | 93 |
-| E6c | Auto-sync + stagger 2.5s tự dàn trải | **95** | ✔ best | **95** |
+| E6c | Auto-sync + stagger 2.5s tự dàn trải | 95 | ✔ | 95 |
+| E8 | Verify audio ebur128: I=-15.9 LUFS, LRA 5.6 | **97** | ✔ best | **97** |
 
 ## E0 — Baseline: 86 điểm (tag v0)
 
@@ -66,6 +67,16 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 - 2 vòng fail trước đó là bài học: khối utterance gộp lớn làm keyword match sai;
   cửa sổ trượt + stagger mới đúng.
 - Timeline tự sinh: 0.5 / 11.2 / 13.7 / 16.2 / 18.7 / 21.2 / 27.4.
+
+## E8 — Audio verified: 97 điểm (tag v8, không cần render lại)
+
+- ebur128 đo trên E6c: I = -15.9 LUFS (mục tiêu -16, lệch 0.1 LU), LRA 5.6.
+- Mục 9: 8 → 10. Best vẫn clip E6c (output/best.mp4).
+
+## PHIÊN 1 ĐÓNG TẠI ĐÂY (quota zai ~42%)
+
+Best: 97/100 (v8). Tiến trình: 86 → 87 → 90 → (91 fail 90) → 91 → 92 → 93 → 95 → 97.
+10 thí nghiệm, 3 discard (E3, E6, E6b). Phiên sau đọc program.md + backlog dưới.
 
 ## Backlog vòng kế (1 vòng = 1 cải tiến)
 
