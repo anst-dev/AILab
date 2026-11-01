@@ -128,6 +128,8 @@ ScaledBorderAndShadow: yes
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 Style: Pill,Segoe UI,62,&H00FFFFFF,&H00FFFFFF,&H501C1C1C,&H00000000,-1,0,0,0,100,100,0,0,3,14,0,2,70,70,970,1
 Style: CTA,Segoe UI,54,&H00111111,&H00111111,&H0035E6A3,&H00000000,-1,0,0,0,100,100,0,0,3,16,0,2,60,60,185,1
+Style: Hook,Segoe UI,74,&H0035E6A3,&H00FFFFFF,&H00101010,&H00000000,-1,0,0,0,100,100,0,0,3,6,2,8,60,60,760,1
+Style: Outro,Segoe UI,58,&H00FFFFFF,&H00FFFFFF,&H50141414,&H00000000,-1,0,0,0,100,100,0,0,3,12,0,5,60,60,560,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -168,6 +170,14 @@ def build_ass(v: dict, dur: float) -> str:
         f"Dialogue: 1,{fmt_ass(cta['t0'])},{fmt_ass(dur)},CTA,,0,0,0,,"
         f"{cta['line1']}\\N{{\\fs44}}{cta['line2']}"
     )
+    if v.get("hook_intro"):
+        ev.insert(0, f"Dialogue: 2,0:00:00.00,{fmt_ass(min(1.8, dur / 4))},Hook,,0,0,0,,"
+                     f"{{\\fad(160,220)}}{v['hook_intro']}")
+    if v.get("outro"):
+        o = v["outro"]
+        t0 = dur - float(o.get("secs", 3))
+        ev.append(f"Dialogue: 3,{fmt_ass(t0)},{fmt_ass(dur)},Outro,,0,0,0,,"
+                  f"{{\\fad(240,0)}}{o['text']}")
     return ASS_HEAD + "\n".join(ev) + "\n"
 
 

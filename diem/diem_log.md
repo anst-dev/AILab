@@ -20,7 +20,8 @@ Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 | E11 | LLM polish subs (claude haiku, giữ timing) | 98 | ✔ | 98 |
 | E12 | Window sync: nhóm 5 phần ép vào 18.9-25.0 | 100/100 | ✔ | 100 |
 | — | THANG MỞ RỘNG 140 (M11-M14) — v10 chấm lại: M11:2 M12:3 M13:4 M14:3 => 112/140 | 112 | ✔ | 112 |
-| E13 | Nhạc nền synth C3-G3-E4 + sidechain duck (I=-16.0 LUFS) | **120** | ✔ best | **120** |
+| E13 | Nhạc nền synth C3-G3-E4 + sidechain duck (I=-16.0 LUFS) | 120 | ✔ | 120 |
+| E14b | Hook intro lime 1.8s đầu fade-in nêu lợi ích | **127** | ✔ best | **127** |
 
 ## E0 — Baseline: 86 điểm (tag v0)
 
@@ -99,6 +100,11 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
   lowpass 1200; amix normalize=0; loudnorm ra I=-16.0 chính xác).
 - Pitfall mới: idx input nhạc phải = 3 + (1 nếu badge) — đếm nhầm là bind error.
 - Best → output/best.mp4.
+
+## E14b — Hook intro: 127/140 (tag v12)
+
+- M12: 3 → 10 (chữ Hook 74px lime nền tối, fade 160/220ms, nêu đúng lợi ích 5 phần; code đang ghost nên không che gì).
+- Pitfall vận hành: file output bị ffmpeg cũ giữ lock → render bằng tên mới thay vì chờ.
 
 ## PHIÊN 1 ĐÓNG TẠI ĐÂY (quota zai ~42%)
 
