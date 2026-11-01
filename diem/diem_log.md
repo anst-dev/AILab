@@ -22,7 +22,8 @@ Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 | — | THANG MỞ RỘNG 140 (M11-M14) — v10 chấm lại: M11:2 M12:3 M13:4 M14:3 => 112/140 | 112 | ✔ | 112 |
 | E13 | Nhạc nền synth C3-G3-E4 + sidechain duck (I=-16.0 LUFS) | 120 | ✔ | 120 |
 | E14b | Hook intro lime 1.8s đầu fade-in nêu lợi ích | 127 | ✔ | 127 |
-| E15 | Ken burns zoom footage 1.0→1.07 (M13) | **133** | ✔ best | **133** |
+| E15 | Ken burns zoom footage 1.0→1.07 (M13) | 133 | ✔ | 133 |
+| E16 | Outro 3s + fade giọng (M14) — đè pill cuối | **139** | ✔ best | **139** |
 
 ## E0 — Baseline: 86 điểm (tag v0)
 
@@ -110,6 +111,10 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 ## E15 — Ken burns: 133/140 (tag v13, integrity + 50.00s)
 
 - M13: 4 → 10 (zoompan 2200px nguồn, zoom 1.0→1.07 center, không méo).
+
+## E16 — Outro: 139/140 (tag v14)
+
+- M14: 3 → 10 (outro riêng + fade giọng 2.5s). M2 bị trừ 1: outro đè dòng 2 pill cuối.
 
 ## PHIÊN 1 ĐÓNG TẠI ĐÂY (quota zai ~42%)
 

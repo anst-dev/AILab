@@ -275,7 +275,10 @@ def main() -> int:
     audio_tail = "[0:a]loudnorm=I=-16:TP=-1.5:LRA=11[aout]"
     if n_split == 3:
         idx_music = 3 + (1 if badge else 0)   # pad luôn là input sau canvas + (badge)
-        chain += "[0:a]asplit=3[aw][al][ak];"
+        voice_fade = ""
+        if v.get("outro"):
+            voice_fade = f"afade=t=out:st={dur - 2.5:.2f}:d=2.5,"
+        chain += f"[0:a]asplit=3[aw][al0][ak];[al0]{voice_fade}asetpts=PTS-STARTPTS[al];"
         chain += "[aw]showwaves=s=900x44:mode=cline:colors=0xFFFFFF:rate=25[wave];"
         chain += f"[{last}][wave]overlay=x=(W-w)/2:y={int(v.get('waveform_y', 986))}:shortest=1[wv];"
         last = "wv"
