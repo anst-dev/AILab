@@ -242,7 +242,17 @@ def main() -> int:
         "[bgsrc]scale=1080:1920:force_original_aspect_ratio=increase,"
         "crop=1080:1920,boxblur=30:2,eq=brightness=-0.28:saturation=0.65,"
         "crop=1080:1120:0:400[bg];"
-        "[fgsrc]scale=1080:-2[fg];"
+    )
+    if v.get("kenburns"):
+        # zoom chậm (ken burns) trên footage: 1.0 -> ~1.07 trong suốt clip
+        chain += (
+            "[fgsrc]scale=2200:-2,"
+            "zoompan=z='min(1+0.00045*in,1.07)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
+            ":d=1:s=1080x608:fps=25[fg];"
+        )
+    else:
+        chain += "[fgsrc]scale=1080:-2[fg];"
+    chain += (
         "[2:v][1:v]overlay=0:0[c1];"
         "[c1][bg]overlay=0:800[c2];"
         "[c2][fg]overlay=(W-w)/2:1080[c3];"
