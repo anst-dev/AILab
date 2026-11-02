@@ -55,7 +55,9 @@ Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 | — | THANG v17: +M29 tick SFX (trần 280) — v29 chấm lại M29:3 => 257/280 | 257 | ✔ | 257 |
 | E33 | SFX ting 880Hz khi mỗi tick hiện (wave stdlib) | 261/280 | ✔ | 261 |
 | — | THANG v18: +M30 mid-card (trần 290) — v30 chấm lại M30:2 => 263/290 | 263 | ✔ | 263 |
-| E34 | Mid-card Lưu lại Khung PCTPR 20.5-24.5s | **269/290** | ✔ best | **269** |
+| E34 | Mid-card Lưu lại Khung PCTPR 20.5-24.5s | 269/290 | ✔ | 269 |
+| — | THANG v19: +M31 countdown (trần 310) — v31 chấm lại M31:2 => 271/310 | 271 | ✔ | 271 |
+| E35 | Countdown 3-2-1 lime trên gradient trước CTA | **279/310** | ✔ best | **279** |
 
 ## E0 — Baseline: 86 điểm (tag v0)
 
@@ -219,6 +221,10 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 ## E34 — Mid-card: 269/290 (tag v31)
 
 - M30: 2 → 10 (card viền đúng lúc nhắc 5 thành phần, khuyến khích lưu video — tín hiệu TikTok tốt).
+
+## E35 — Countdown: 279/310 (tag v32)
+
+- M31: 2 → 10 (số 120px lime khối tối, fade 60/60ms, 3 giây cuối — dẫn mắt vào CTA).
 
 ## PHIÊN 1 ĐÓNG TẠI ĐÂY (quota zai ~42%)
 

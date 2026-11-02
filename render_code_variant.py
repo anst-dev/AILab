@@ -273,6 +273,11 @@ def build_ass(v: dict, dur: float) -> str:
                   f"{{\\fad(240,0)}}{o['text']}")
     if v.get("watermark"):
         ev.append(f"Dialogue: 1,0:00:00.00,{fmt_ass(dur)},WM,,0,0,0,,{v['watermark']}")
+    if v.get("countdown"):
+        for k in range(3):
+            ts = dur - 3 + k
+            ev.append(f"Dialogue: 2,{fmt_ass(ts)},{fmt_ass(ts + 1)},Hook,,0,0,0,,"
+                      f"{{\\fad(60,60)\\fs120}}{3 - k}")
     if v.get("midcard"):
         mc = v["midcard"]
         ev.append(f"Dialogue: 2,{fmt_ass(mc['t0'])},{fmt_ass(mc['t1'])},Card,,0,0,0,,"

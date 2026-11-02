@@ -67,3 +67,5 @@ Chấm bằng 3 frame (đầu/giữa/cuối) + ffprobe + review diff. Mỗi mụ
 ## MỞ RỘNG v17 (E33): +M29 tick SFX 880Hz decay (trần 280)
 
 ## MỞ RỘNG v18 (E34): +M30 mid-card Lưu lại (trần 290)
+
+## MỞ RỘNG v19 (E35): +M31 countdown 3-2-1 trước outro (trần 310)
