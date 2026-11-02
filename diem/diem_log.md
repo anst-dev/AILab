@@ -39,7 +39,9 @@ Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 | — | THANG v8: +M20 pill pop-in (trần 200) — v20 chấm lại M20:3 => 178/200 | 178 | ✔ | 178 |
 | E24 | Pill pop-in scale 140ms mỗi câu | 182/200 | ✔ | 182 |
 | — | THANG v9: +M21 REC dot (trần 210) — v21 chấm lại M21:2 => 184/210 | 184 | ✔ | 184 |
-| E25 | Chấm REC đỏ nhấp nháy trong tab bar | **190/210** | ✔ best | **190** |
+| E25 | Chấm REC đỏ nhấp nháy trong tab bar | 190/210 | ✔ | 190 |
+| — | THANG v11: +M23 chip pop (trần 230) — v22 chấm lại M23:2 => 192/230 | 192 | ✔ | 192 |
+| E27 | Chip nảy to 0.3s khi tăng phần | **206/230** | ✔ best | **206** |
 
 ## E0 — Baseline: 86 điểm (tag v0)
 
@@ -167,6 +169,10 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 
 - M22: 2 → 10 (5 tick lime cột phải hiện dần theo từng phần gõ xong; v1 đè chữ — dời x 992-1030 sửa).
 - Vòng vi mô tiếp theo cần cân nhắc: giá trị biên giảm — ưu tiên ý tưởng tăng giữ chân thật.
+
+## E27 — Chip pop: 206/230 (tag v24)
+
+- M23: 2 → 10 (font chip 40px trong 0.3s khi vừa tăng phần, rồi về 30px).
 
 ## PHIÊN 1 ĐÓNG TẠI ĐÂY (quota zai ~42%)
 

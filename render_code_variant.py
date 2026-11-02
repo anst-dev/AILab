@@ -42,7 +42,7 @@ def font_code(size=CODE_SIZE):
 
 def code_config_hash(v: dict) -> str:
     payload = json.dumps({"tab": v.get("tab"), "lines": v["code_lines"]}, ensure_ascii=False, sort_keys=True)
-    payload += f"|{CODE_FONT}|{CODE_SIZE}|{LINE_H}|{BODY_Y0}|{W}x{H_CODE}|v7-tickpos"
+    payload += f"|{CODE_FONT}|{CODE_SIZE}|{LINE_H}|{BODY_Y0}|{W}x{H_CODE}|v8-chippop"
     return hashlib.sha1(payload.encode()).hexdigest()[:12]
 
 
@@ -173,13 +173,18 @@ def render_code_frames(v: dict, out_dir: Path, dur: float, reuse: bool = True):
                 ty += 58
 
         # chip tiến trình "n/5 phần" góc phải trên (n = số dòng key đã gõ xong)
-        n_done = sum(1 for ln in lines if ln.get("kind") == "key"
-                     and t >= ln["t0"] + len(ln["full"]) / 40.0 + 0.10)
+        def chip_count(tt):
+            return sum(1 for ln in lines if ln.get("kind") == "key"
+                       and tt >= ln["t0"] + len(ln["full"]) / 40.0 + 0.10)
+
+        n_done = chip_count(t)
         chip = f"{n_done}/5"
-        d.rounded_rectangle([W - 150, 76, W - 40, 128], 14, fill=(26, 33, 41), outline=LIME, width=2)
         cf = font_code(30)
+        if v.get("chip_pop") and n_done > chip_count(max(t - 0.3, 0.0)):
+            cf = font_code(40)  # nảy to 0.3s khi vừa tăng phần
+        d.rounded_rectangle([W - 150, 76, W - 40, 128], 14, fill=(26, 33, 41), outline=LIME, width=2)
         cw = d.textlength(chip, font=cf)
-        d.text((W - 95 - cw / 2, 86), chip, font=cf, fill=LIME)
+        d.text((W - 95 - cw / 2, 106 - cf.size / 2), chip, font=cf, fill=LIME)
 
         img.save(out_dir / f"{i:05d}.png")
     meta_path.write_text(json.dumps({"hash": code_config_hash(v), "frames": n}, ensure_ascii=False), encoding="utf-8")
