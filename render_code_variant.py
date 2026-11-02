@@ -229,6 +229,8 @@ def build_ass(v: dict, dur: float) -> str:
         if t1 - s["t0"] < 0.4:
             continue
         txt = fmt_inline(s["text"])
+        if v.get("popin"):
+            txt = "{\\fscx82\\fscy82\\t(0,140,\\fscx100\\fscy100)}" + txt
         ev.append(f"Dialogue: 0,{fmt_ass(s['t0'])},{fmt_ass(t1)},Pill,,0,0,0,,{txt}")
     cta = v["cta"]
     ev.append(

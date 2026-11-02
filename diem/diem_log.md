@@ -34,7 +34,9 @@ Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 | — | THANG v6: +M18 chip n/5 (trần 180) — v18 chấm lại M18:2 => 162/180 | 162 | ✔ | 162 |
 | E22 | Chip tiến trình n/5 góc phải | 168/180 | ✔ | 168 |
 | — | THANG v7: +M19 badge pulse (trần 190) — v19 chấm lại M19:3 => 171/190 | 171 | ✔ | 171 |
-| E23 | Badge pulse 1.55s hiện/0.45s ẩn (enable expression) | **175/190** | ✔ best | **175** |
+| E23 | Badge pulse 1.55s hiện/0.45s ẩn (enable expression) | 175/190 | ✔ | 175 |
+| — | THANG v8: +M20 pill pop-in (trần 200) — v20 chấm lại M20:3 => 178/200 | 178 | ✔ | 178 |
+| E24 | Pill pop-in scale 140ms mỗi câu | **182/200** | ✔ best | **182** |
 
 ## E0 — Baseline: 86 điểm (tag v0)
 
@@ -149,6 +151,10 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 
 - M19: 3 → 10. Pitfall: overlay option phân tách bằng ':' — ',enable=' bị đọc là filter mới
   (cần ':enable='), expression chứa ',' phải escape '\,' và KHÔNG bọc quote trong chuỗi lớn.
+
+## E24 — Pop-in: 182/200 (tag v21)
+
+- M20: 3 → 10 (ASS scx82scy82 → 	 140ms về 100 — pill nảy nhẹ khi câu mới).
 
 ## PHIÊN 1 ĐÓNG TẠI ĐÂY (quota zai ~42%)
 
