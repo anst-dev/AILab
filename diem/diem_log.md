@@ -36,7 +36,9 @@ Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 | — | THANG v7: +M19 badge pulse (trần 190) — v19 chấm lại M19:3 => 171/190 | 171 | ✔ | 171 |
 | E23 | Badge pulse 1.55s hiện/0.45s ẩn (enable expression) | 175/190 | ✔ | 175 |
 | — | THANG v8: +M20 pill pop-in (trần 200) — v20 chấm lại M20:3 => 178/200 | 178 | ✔ | 178 |
-| E24 | Pill pop-in scale 140ms mỗi câu | **182/200** | ✔ best | **182** |
+| E24 | Pill pop-in scale 140ms mỗi câu | 182/200 | ✔ | 182 |
+| — | THANG v9: +M21 REC dot (trần 210) — v21 chấm lại M21:2 => 184/210 | 184 | ✔ | 184 |
+| E25 | Chấm REC đỏ nhấp nháy trong tab bar | **190/210** | ✔ best | **190** |
 
 ## E0 — Baseline: 86 điểm (tag v0)
 
@@ -155,6 +157,10 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 ## E24 — Pop-in: 182/200 (tag v21)
 
 - M20: 3 → 10 (ASS scx82scy82 → 	 140ms về 100 — pill nảy nhẹ khi câu mới).
+
+## E25 — REC dot: 190/210 (tag v22)
+
+- M21: 2 → 10 (đỏ #ff3b30 nhấp 0.48s, mờ khi tắt — chất kể chuyện đang quay).
 
 ## PHIÊN 1 ĐÓNG TẠI ĐÂY (quota zai ~42%)
 

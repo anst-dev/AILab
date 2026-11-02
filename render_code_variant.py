@@ -42,7 +42,7 @@ def font_code(size=CODE_SIZE):
 
 def code_config_hash(v: dict) -> str:
     payload = json.dumps({"tab": v.get("tab"), "lines": v["code_lines"]}, ensure_ascii=False, sort_keys=True)
-    payload += f"|{CODE_FONT}|{CODE_SIZE}|{LINE_H}|{BODY_Y0}|{W}x{H_CODE}|v4-chip"
+    payload += f"|{CODE_FONT}|{CODE_SIZE}|{LINE_H}|{BODY_Y0}|{W}x{H_CODE}|v5-rec"
     return hashlib.sha1(payload.encode()).hexdigest()[:12]
 
 
@@ -96,6 +96,13 @@ def render_code_frames(v: dict, out_dir: Path, dur: float, reuse: bool = True):
         for k, c in enumerate(((255, 95, 86), (255, 189, 46), (39, 201, 63))):
             d.ellipse([28 + k * 34, TAB_H // 2 - 8, 44 + k * 34, TAB_H // 2 + 8], fill=c)
         d.text((150, TAB_H // 2), v.get("tab", "session"), font=tab_f, fill=TXT)
+        if v.get("rec_dot", True):
+            blink = (i // 12) % 2 == 0
+            rec_f = font_code(22)
+            d.ellipse([W - 260, TAB_H // 2 - 9, W - 234, TAB_H // 2 + 17],
+                      fill=(255, 59, 48) if blink else (90, 40, 40))
+            d.text((W - 226, TAB_H // 2), "REC", font=rec_f,
+                   fill=(255, 120, 110) if blink else (110, 90, 90))
         d.line([0, TAB_H, W, TAB_H], fill=(48, 54, 61))
 
         # các dòng code typing (tăng dần theo t0); dòng chưa tới giờ hiện ghost mờ
