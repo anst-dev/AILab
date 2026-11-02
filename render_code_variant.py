@@ -42,7 +42,7 @@ def font_code(size=CODE_SIZE):
 
 def code_config_hash(v: dict) -> str:
     payload = json.dumps({"tab": v.get("tab"), "lines": v["code_lines"]}, ensure_ascii=False, sort_keys=True)
-    payload += f"|{CODE_FONT}|{CODE_SIZE}|{LINE_H}|{BODY_Y0}|{W}x{H_CODE}|v8-chippop"
+    payload += f"|{CODE_FONT}|{CODE_SIZE}|{LINE_H}|{BODY_Y0}|{W}x{H_CODE}|v9-ticker"
     return hashlib.sha1(payload.encode()).hexdigest()[:12]
 
 
@@ -186,6 +186,15 @@ def render_code_frames(v: dict, out_dir: Path, dur: float, reuse: bool = True):
         cw = d.textlength(chip, font=cf)
         d.text((W - 95 - cw / 2, 106 - cf.size / 2), chip, font=cf, fill=LIME)
 
+        # ticker status bar: dòng chữ lime chạy phải → trái trong dải đáy khung code
+        if v.get("ticker"):
+            bar_y = H_CODE - 40
+            d.rectangle([0, bar_y - 6, W, H_CODE], fill=(16, 16, 16))
+            tick_w = int(d.textlength(v["ticker"], font=tab_f)) + 220
+            x_off = W - (t * 80 % (tick_w + W))
+            d.text((x_off, bar_y), v["ticker"], font=tab_f, fill=LIME)
+            d.text((x_off + tick_w, bar_y), v["ticker"], font=tab_f, fill=LIME)
+
         img.save(out_dir / f"{i:05d}.png")
     meta_path.write_text(json.dumps({"hash": code_config_hash(v), "frames": n}, ensure_ascii=False), encoding="utf-8")
     return n
@@ -206,6 +215,7 @@ Style: Hook,Segoe UI,74,&H0035E6A3,&H00FFFFFF,&H00101010,&H00000000,-1,0,0,0,100
 Style: Outro,Segoe UI,58,&H00FFFFFF,&H00FFFFFF,&H50141414,&H00000000,-1,0,0,0,100,100,0,0,3,12,0,5,60,60,560,1
 Style: WM,Segoe UI,34,&H78FFFFFF,&H78FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,0,0,7,30,30,1105,1
 Style: Card,Segoe UI,46,&H00FFFFFF,&H00FFFFFF,&H98142814,&H00000000,-1,0,0,0,100,100,0,0,3,14,0,8,50,50,640,1
+Style: Ticker,Segoe UI,30,&H00A3E6A3,&H00A3E6A3,&H00101010,&H00000000,-1,0,0,0,100,100,0,0,1,2,0,2,0,0,330,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text

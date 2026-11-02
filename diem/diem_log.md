@@ -233,6 +233,12 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 - M32: 2 → 10 (medium 6.2MB, I=-16.2, decode sạch; publish pack = FINAL + srt + poster + meta).
 - Chu kỳ 2 (E31-E36): kenburns-both, A/B hook, tick sfx, mid-card, countdown, final — 6 vòng giữ liên tiếp.
 
+## Chu kỳ 3 (E31-E37, thang v21: 33 mục trần 330)
+
+- E31 244/260 → E32 254/270 → E33 261/280 → E34 269/290 → E35 279/310 (chu kỳ 2, tag v32)
+- E36 289/320 (tag v33) → E37 **298/330** (tag v34): ticker status bar trong khung code
+  (ASS \move không vẽ ổn định → chuyển PIL status bar — chạy chắc chắn, đúng chủ đề terminal)
+
 ## PHIÊN 1 ĐÓNG TẠI ĐÂY (quota zai ~42%)
 
 Best: 97/100 (v8). Tiến trình: 86 → 87 → 90 → (91 fail 90) → 91 → 92 → 93 → 95 → 97.
