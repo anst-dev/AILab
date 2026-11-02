@@ -43,7 +43,9 @@ Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 | — | THANG v11: +M23 chip pop (trần 230) — v22 chấm lại M23:2 => 192/230 | 192 | ✔ | 192 |
 | E27 | Chip nảy to 0.3s khi tăng phần | 206/230 | ✔ | 206 |
 | — | THANG v12: +M24 watermark (trần 240) — v24 chấm lại M24:2 => 208/240 | 208 | ✔ | 208 |
-| E28 | Watermark AnhNST.AI mờ trên footage | **214/240** | ✔ best | **214** |
+| E28 | Watermark AnhNST.AI mờ trên footage | 214/240 | ✔ | 214 |
+| — | THANG v13: +M25 gói publish (trần 250) — v25 chấm lại M25:2 => 216/250 | 216 | ✔ | 216 |
+| E29 | export_publish.py: SRT + poster + meta | **224/250** | ✔ best | **224** |
 
 ## E0 — Baseline: 86 điểm (tag v0)
 
@@ -179,6 +181,11 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 ## E28 — Watermark: 214/240 (tag v25)
 
 - M24: 2 → 10 (chữ AnhNST.AI trắng 47% alpha, góc trái footage, toàn clip).
+
+## E29 — Gói publish: 224/250 (tag v26)
+
+- M25: 2 → 10 (export_publish.py: caption.srt khớp timing + poster.jpg q2 + meta.json khung giờ đăng).
+- output/publish/ là gói đưa thẳng vào đăng.
 
 ## PHIÊN 1 ĐÓNG TẠI ĐÂY (quota zai ~42%)
 
