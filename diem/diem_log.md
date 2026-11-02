@@ -53,7 +53,9 @@ Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 | — | THANG v16: +M28 bộ A/B hook (trần 270) — v28 chấm lại M28:2 => 246/270 | 246 | ✔ | 246 |
 | E32 | Xuất đủ bộ A/B: hook A (best) + hook B | 254/270 | ✔ | 254 |
 | — | THANG v17: +M29 tick SFX (trần 280) — v29 chấm lại M29:3 => 257/280 | 257 | ✔ | 257 |
-| E33 | SFX ting 880Hz khi mỗi tick hiện (wave stdlib) | **261/280** | ✔ best | **261** |
+| E33 | SFX ting 880Hz khi mỗi tick hiện (wave stdlib) | 261/280 | ✔ | 261 |
+| — | THANG v18: +M30 mid-card (trần 290) — v30 chấm lại M30:2 => 263/290 | 263 | ✔ | 263 |
+| E34 | Mid-card Lưu lại Khung PCTPR 20.5-24.5s | **269/290** | ✔ best | **269** |
 
 ## E0 — Baseline: 86 điểm (tag v0)
 
@@ -213,6 +215,10 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 
 - M29: 3 → 10 (wave stdlib sinh tick.wav sine 880Hz 90ms decay tại từng done_t;
   amix inputs=3 với pad-duck + voice).
+
+## E34 — Mid-card: 269/290 (tag v31)
+
+- M30: 2 → 10 (card viền đúng lúc nhắc 5 thành phần, khuyến khích lưu video — tín hiệu TikTok tốt).
 
 ## PHIÊN 1 ĐÓNG TẠI ĐÂY (quota zai ~42%)
 

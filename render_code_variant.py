@@ -205,6 +205,7 @@ Style: CTA,Segoe UI,54,&H00111111,&H00111111,&H0035E6A3,&H00000000,-1,0,0,0,100,
 Style: Hook,Segoe UI,74,&H0035E6A3,&H00FFFFFF,&H00101010,&H00000000,-1,0,0,0,100,100,0,0,3,6,2,8,60,60,760,1
 Style: Outro,Segoe UI,58,&H00FFFFFF,&H00FFFFFF,&H50141414,&H00000000,-1,0,0,0,100,100,0,0,3,12,0,5,60,60,560,1
 Style: WM,Segoe UI,34,&H78FFFFFF,&H78FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,0,0,7,30,30,1105,1
+Style: Card,Segoe UI,46,&H00FFFFFF,&H00FFFFFF,&H98142814,&H00000000,-1,0,0,0,100,100,0,0,3,14,0,8,50,50,640,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -272,6 +273,10 @@ def build_ass(v: dict, dur: float) -> str:
                   f"{{\\fad(240,0)}}{o['text']}")
     if v.get("watermark"):
         ev.append(f"Dialogue: 1,0:00:00.00,{fmt_ass(dur)},WM,,0,0,0,,{v['watermark']}")
+    if v.get("midcard"):
+        mc = v["midcard"]
+        ev.append(f"Dialogue: 2,{fmt_ass(mc['t0'])},{fmt_ass(mc['t1'])},Card,,0,0,0,,"
+                  f"{{\\fad(160,160)}}{mc['text']}")
     return ASS_HEAD + "\n".join(ev) + "\n"
 
 
