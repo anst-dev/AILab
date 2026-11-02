@@ -41,7 +41,9 @@ Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 | — | THANG v9: +M21 REC dot (trần 210) — v21 chấm lại M21:2 => 184/210 | 184 | ✔ | 184 |
 | E25 | Chấm REC đỏ nhấp nháy trong tab bar | 190/210 | ✔ | 190 |
 | — | THANG v11: +M23 chip pop (trần 230) — v22 chấm lại M23:2 => 192/230 | 192 | ✔ | 192 |
-| E27 | Chip nảy to 0.3s khi tăng phần | **206/230** | ✔ best | **206** |
+| E27 | Chip nảy to 0.3s khi tăng phần | 206/230 | ✔ | 206 |
+| — | THANG v12: +M24 watermark (trần 240) — v24 chấm lại M24:2 => 208/240 | 208 | ✔ | 208 |
+| E28 | Watermark AnhNST.AI mờ trên footage | **214/240** | ✔ best | **214** |
 
 ## E0 — Baseline: 86 điểm (tag v0)
 
@@ -173,6 +175,10 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 ## E27 — Chip pop: 206/230 (tag v24)
 
 - M23: 2 → 10 (font chip 40px trong 0.3s khi vừa tăng phần, rồi về 30px).
+
+## E28 — Watermark: 214/240 (tag v25)
+
+- M24: 2 → 10 (chữ AnhNST.AI trắng 47% alpha, góc trái footage, toàn clip).
 
 ## PHIÊN 1 ĐÓNG TẠI ĐÂY (quota zai ~42%)
 
