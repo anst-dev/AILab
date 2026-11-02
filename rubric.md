@@ -39,3 +39,5 @@ Chấm bằng 3 frame (đầu/giữa/cuối) + ffprobe + review diff. Mỗi mụ
 | 15 | Code đa sắc + số dòng | key xanh dương #79c0ff, nội dung trắng, comment xanh lá, số dòng mờ bên trái | đơn sắc trắng |
 
 ## MỞ RỘNG v4 (E20): +M16 typing nhịp từ + flash viền hoàn thành (trần 160)
+
+## MỞ RỘNG v5 (E21): +M17 gradient phân tầng (trần 170)

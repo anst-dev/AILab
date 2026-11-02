@@ -42,7 +42,7 @@ def font_code(size=CODE_SIZE):
 
 def code_config_hash(v: dict) -> str:
     payload = json.dumps({"tab": v.get("tab"), "lines": v["code_lines"]}, ensure_ascii=False, sort_keys=True)
-    payload += f"|{CODE_FONT}|{CODE_SIZE}|{LINE_H}|{BODY_Y0}|{W}x{H_CODE}|v2-word"
+    payload += f"|{CODE_FONT}|{CODE_SIZE}|{LINE_H}|{BODY_Y0}|{W}x{H_CODE}|v3-grad"
     return hashlib.sha1(payload.encode()).hexdigest()[:12]
 
 
@@ -146,6 +146,12 @@ def render_code_frames(v: dict, out_dir: Path, dur: float, reuse: bool = True):
             cursor_pos = (BODY_X, BODY_Y0)
         if (i // 7) % 2 == 0:
             d.rectangle([cursor_pos[0], cursor_pos[1] + 2, cursor_pos[0] + 16, cursor_pos[1] + 46], fill=LIME)
+
+        # gradient phân tầng: mép dưới khung code chuyển dần sang lime
+        for gy in range(H_CODE - 14, H_CODE):
+            k = (gy - (H_CODE - 14)) / 14.0
+            col = tuple(int(BG[c] * (1 - k) + LIME[c] * k * 0.85) for c in range(3))
+            d.line([0, gy, W, gy], fill=col)
 
         img.save(out_dir / f"{i:05d}.png")
     meta_path.write_text(json.dumps({"hash": code_config_hash(v), "frames": n}, ensure_ascii=False), encoding="utf-8")
@@ -345,6 +351,9 @@ def main() -> int:
         chain += f"[{last}][wave]overlay=x=(W-w)/2:y={int(v.get('waveform_y', 986))}:shortest=1[wv];"
         last = "wv"
         audio_tail = "[al]loudnorm=I=-16:TP=-1.5:LRA=11[aout]"
+    if v.get("gradient"):
+        chain += f"[{last}]drawbox=x=0:y=1079:w=1080:h=3:color=0xa3e635@0.85:t=fill[gb];"
+        last = "gb"
     chain += f"[{last}]ass={ass_path.relative_to(out_buoi).as_posix()}[vout];{audio_tail}"
     cmd += ["-filter_complex", chain, "-map", "[vout]", "-map", "[aout]",
         "-t", f"{dur:.3f}",

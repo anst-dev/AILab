@@ -28,7 +28,9 @@ Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 | — | THANG MỞ RỘNG v3: +M15 code đa sắc & số dòng (trần 150) — v17 chấm lại M15:4 => 144/150 | 144 | ✔ | 144 |
 | E19 | Đa sắc key xanh dương + số dòng | 146/150 | ✔ | 146 |
 | — | THANG v4: +M16 nhịp từ + flash viền (trần 160) — v16 chấm lại M16:3 => 149/160 | 149 | ✔ | 149 |
-| E20 | Typing nhịp từ + flash viền hoàn thành dòng | **153/160** | ✔ best | **153** |
+| E20 | Typing nhịp từ + flash viền hoàn thành dòng | 153/160 | ✔ | 153 |
+| — | THANG v5: +M17 gradient phân tầng (trần 170) — v17 chấm lại M17:3 => 156/170 | 156 | ✔ | 156 |
+| E21 | Gradient đáy code + viền lime tách tầng | **160/170** | ✔ best | **160** |
 
 ## E0 — Baseline: 86 điểm (tag v0)
 
@@ -130,6 +132,10 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 ## E20 — Nhịp từ + flash: 153/160 (tag v17)
 
 - M16: 3 → 10 (typing word-beat 40 chars/s + nghỉ 0.1s giữa từ; viền lime flash 0.25s khi dòng xong).
+
+## E21 — Gradient phân tầng: 160/170 (tag v18)
+
+- M17: 3 → 10 (gradient 14px đáy code + line lime 3px đỉnh footage — ranh giới 3 tầng rõ).
 
 ## PHIÊN 1 ĐÓNG TẠI ĐÂY (quota zai ~42%)
 
