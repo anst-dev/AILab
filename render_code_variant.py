@@ -365,10 +365,12 @@ def main() -> int:
         buf = bytearray()
         for i in range(n_tot):
             s = 0.0
-            for tt in ticks:
+            for k, tt in enumerate(ticks):
                 dt = i / sr - tt
                 if 0.0 <= dt <= 0.09:
-                    s += 0.22 * math.sin(2 * math.pi * 880 * dt) * (1 - dt / 0.09)
+                    # pitch tăng dần theo tiến trình: 700 → 1150 Hz (lên đỉnh)
+                    freq = 700 + k * 90
+                    s += 0.22 * math.sin(2 * math.pi * freq * dt) * (1 - dt / 0.09)
             buf += int(max(min(s, 0.9), -0.9) * 32767).to_bytes(2, "little", signed=True)
         wav_path = work / "tick.wav"
         with wave.open(str(wav_path), "wb") as wf:

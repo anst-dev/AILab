@@ -77,3 +77,5 @@ Chấm bằng 3 frame (đầu/giữa/cuối) + ffprobe + review diff. Mỗi mụ
 ## MỞ RỘNG v22 (E39): +M35 zoom breathe theo LFO pad (trần 350)
 
 ## MỞ RỘNG v23 (E40): +M36 story cut-down 15s (trần 360)
+
+## MỞ RỘNG v24 (E41): +M37 tick pitch tăng dần 700→1150Hz (trần 370)

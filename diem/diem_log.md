@@ -251,6 +251,10 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 
 - M36: 2 → 10 (output/E40_story15.mp4 — 15s đầu: hook + typing 3 phần đầu, đăng story dẫn về video chính).
 
+## E41 — Tick pitch: 338/370 (tag v38)
+
+- M37: 2 → 10 (freq = 700 + k*90 — âm tick leo thang theo tiến trình 5 phần).
+
 ## PHIÊN 1 ĐÓNG TẠI ĐÂY (quota zai ~42%)
 
 Best: 97/100 (v8). Tiến trình: 86 → 87 → 90 → (91 fail 90) → 91 → 92 → 93 → 95 → 97.
