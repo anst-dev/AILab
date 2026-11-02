@@ -79,3 +79,7 @@ Chấm bằng 3 frame (đầu/giữa/cuối) + ffprobe + review diff. Mỗi mụ
 ## MỞ RỘNG v23 (E40): +M36 story cut-down 15s (trần 360)
 
 ## MỞ RỘNG v24 (E41): +M37 tick pitch tăng dần 700→1150Hz (trần 370)
+
+## MỞ RỘNG v25 (E42): +M38 final render + verify bộ đầy đủ (trần 380)
+
+## MỞ RỘNG v26 (E42): +M38 final render + verify bộ đầy đủ (trần 380)

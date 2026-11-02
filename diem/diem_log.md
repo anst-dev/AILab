@@ -255,6 +255,11 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 
 - M37: 2 → 10 (freq = 700 + k*90 — âm tick leo thang theo tiến trình 5 phần).
 
+## E42 — FINAL verify: 348/380 (tag v39) — CHU KỲ 3 KHÉP
+
+- M38: 2 → 10 (decode 0 lỗi + ebur128 -16.2 LUFS + ffprobe 1080x1920/50s + publish pack 6 file).
+- output/publish/ cập nhật FULL: FINAL.mp4 (v38 22 tính năng) + caption.srt + poster.jpg + poster_a/b/c.jpg + meta.json.
+
 ## PHIÊN 1 ĐÓNG TẠI ĐÂY (quota zai ~42%)
 
 Best: 97/100 (v8). Tiến trình: 86 → 87 → 90 → (91 fail 90) → 91 → 92 → 93 → 95 → 97.
