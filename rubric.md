@@ -63,3 +63,5 @@ Chấm bằng 3 frame (đầu/giữa/cuối) + ffprobe + review diff. Mỗi mụ
 ## MỞ RỘNG v15 (E31): +M27 ken burns hai pha in/out (trần 260)
 
 ## MỞ RỘNG v16 (E32): +M28 bộ A/B hook 2 biến thể (trần 270)
+
+## MỞ RỘNG v17 (E33): +M29 tick SFX 880Hz decay (trần 280)

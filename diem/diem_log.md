@@ -51,7 +51,9 @@ Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 | — | THANG v15: +M27 ken burns hai pha (trần 260) — v27 chấm lại M27:3 => 237/260 | 237 | ✔ | 237 |
 | E31 | Ken burns hai pha: in nửa đầu, out nửa sau | 244/260 | ✔ | 244 |
 | — | THANG v16: +M28 bộ A/B hook (trần 270) — v28 chấm lại M28:2 => 246/270 | 246 | ✔ | 246 |
-| E32 | Xuất đủ bộ A/B: hook A (best) + hook B | **254/270** | ✔ best | **254** |
+| E32 | Xuất đủ bộ A/B: hook A (best) + hook B | 254/270 | ✔ | 254 |
+| — | THANG v17: +M29 tick SFX (trần 280) — v29 chấm lại M29:3 => 257/280 | 257 | ✔ | 257 |
+| E33 | SFX ting 880Hz khi mỗi tick hiện (wave stdlib) | **261/280** | ✔ best | **261** |
 
 ## E0 — Baseline: 86 điểm (tag v0)
 
@@ -206,6 +208,11 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 
 - M28: 2 → 10 (output/best.mp4 = hook A "ĐÚNG 5 PHẦN", output/AB_hookB.mp4 = hook B "nhanh gấp 5"
   — đăng xen kẽ đo view giữ chân để chọn hook thắng cho các video sau).
+
+## E33 — Tick SFX: 261/280 (tag v30, RMS đoạn tick -10.1dB)
+
+- M29: 3 → 10 (wave stdlib sinh tick.wav sine 880Hz 90ms decay tại từng done_t;
+  amix inputs=3 với pad-duck + voice).
 
 ## PHIÊN 1 ĐÓNG TẠI ĐÂY (quota zai ~42%)
 

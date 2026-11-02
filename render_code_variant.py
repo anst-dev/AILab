@@ -330,6 +330,32 @@ def main() -> int:
             f":s=48000:d={dur:.2f}"
         )
         cmd += ["-f", "lavfi", "-i", pad]
+    show_tick_sfx = bool(v.get("tick_sfx"))
+    if show_tick_sfx:
+        cmd += ["-i", str(work / "tick.wav")]
+    show_tick_sfx = bool(v.get("tick_sfx"))
+    if show_tick_sfx:
+        # sine 880Hz 45ms decay tại từng thời điểm tick checklist — sinh wav stdlib
+        import wave
+        import math
+        sr = 48000
+        ticks = sorted(float(cl["t"]) + len(cl["text"] + cl.get("val", "")) / 40.0 + 0.15
+                       for cl in v["code_lines"] if cl.get("kind") == "key")
+        n_tot = int(dur * sr)
+        buf = bytearray()
+        for i in range(n_tot):
+            s = 0.0
+            for tt in ticks:
+                dt = i / sr - tt
+                if 0.0 <= dt <= 0.09:
+                    s += 0.22 * math.sin(2 * math.pi * 880 * dt) * (1 - dt / 0.09)
+            buf += int(max(min(s, 0.9), -0.9) * 32767).to_bytes(2, "little", signed=True)
+        wav_path = work / "tick.wav"
+        with wave.open(str(wav_path), "wb") as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)
+            wf.setframerate(sr)
+            wf.writeframes(bytes(buf))
 
     chain = (
         "[0:v]split=2[bgsrc][fgsrc];"
@@ -380,6 +406,7 @@ def main() -> int:
     audio_tail = "[0:a]loudnorm=I=-16:TP=-1.5:LRA=11[aout]"
     if n_split == 3:
         idx_music = 3 + (1 if badge else 0)   # pad luôn là input sau canvas + (badge)
+        idx_tick = idx_music + 1              # tick.wav nằm ngay sau pad (nếu bật)
         voice_fade = ""
         if v.get("outro"):
             voice_fade = f"afade=t=out:st={dur - 2.5:.2f}:d=2.5,"
@@ -391,8 +418,12 @@ def main() -> int:
             f"[{idx_music}:a]volume=0.45,afade=t=in:d=2,afade=t=out:st={dur - 3:.2f}:d=3[mus];"
             f"[mus][ak]sidechaincompress=threshold=0.035:ratio=8:attack=80:release=600[md];"
             "[md]lowpass=f=1200,aresample=48000,aformat=channel_layouts=stereo[mdf];"
-            "[mdf][al]amix=inputs=2:duration=first:normalize=0[amx];"
         )
+        if show_tick_sfx:
+            chain += f"[{idx_tick}:a]volume=0.55[sfx];"
+            chain += "[mdf][al][sfx]amix=inputs=3:duration=first:normalize=0[amx];"
+        else:
+            chain += "[mdf][al]amix=inputs=2:duration=first:normalize=0[amx];"
         audio_tail = "[amx]loudnorm=I=-16:TP=-1.5:LRA=11[aout]"
     elif show_wave:
         chain += "[0:a]asplit=2[aw][al];"
