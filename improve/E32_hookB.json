@@ -1,0 +1,192 @@
+{
+  "nguon": {
+    "buoi": "BH1593477",
+    "segment_id": "S06",
+    "start": 333.0,
+    "end": 383.0,
+    "title": "Prompt la gi - loi nhac giao viec du 5 phan"
+  },
+  "tab": "khoa-doi-bot · prompt-pctpr",
+  "code_lines": [
+    {
+      "t": 0.5,
+      "kind": "comment",
+      "text": "// KHUNG PROMPT 5 PHẦN (PCTPR)",
+      "sync": [
+        "khung"
+      ],
+      "_sync_hit": "0.5 -> 0.5 (win 0.5#1)"
+    },
+    {
+      "t": 11.2,
+      "kind": "comment",
+      "text": "// Làm việc với AI = giao việc qua lời nhắc",
+      "sync": [
+        "lời nhắc"
+      ],
+      "_sync_hit": "11.2 -> 11.2 (win 11.2#1)"
+    },
+    {
+      "t": 18.9,
+      "kind": "key",
+      "text": "[P] Persona",
+      "val": "  đóng vai chuyên gia trong nghề",
+      "sync": [
+        "năm thành phần",
+        "năm cấu phần",
+        "chia cái"
+      ],
+      "_sync_hit": "13.7 -> 18.9 (win 11.2#2)"
+    },
+    {
+      "t": 20.1,
+      "kind": "key",
+      "text": "[C] Context",
+      "val": "  nói rõ hoàn cảnh đang gặp",
+      "sync": [
+        "năm thành phần",
+        "chia cái"
+      ],
+      "_sync_hit": "16.2 -> 20.1 (win 11.2#3)"
+    },
+    {
+      "t": 21.3,
+      "kind": "key",
+      "text": "[T] Task",
+      "val": "  giao nhiệm vụ rõ ràng",
+      "sync": [
+        "năm thành phần",
+        "chia cái"
+      ],
+      "_sync_hit": "18.7 -> 21.3 (win 11.2#4)"
+    },
+    {
+      "t": 22.6,
+      "kind": "key",
+      "text": "[P] Pattern",
+      "val": "  quy định định dạng đầu ra",
+      "sync": [
+        "năm thành phần",
+        "chia cái"
+      ],
+      "_sync_hit": "21.2 -> 22.6 (win 11.2#5)"
+    },
+    {
+      "t": 27.4,
+      "kind": "key",
+      "text": "[R] Rules",
+      "val": "  ngắn gọn + bắt ghi nguồn",
+      "sync": [
+        "đọc qua",
+        "đọc một lượt"
+      ],
+      "_sync_hit": "27.4 -> 27.4 (win 27.4#1)"
+    },
+    {
+      "t": 36.0,
+      "kind": "comment",
+      "text": "→ Em đọc qua, giải thích từng phần nhé"
+    }
+  ],
+  "subs": [
+    {
+      "t0": 2.3,
+      "t1": 7.2,
+      "text": "Bây giờ anh sẽ giới thiệu cho em\ncái **khung** để mình làm prompt"
+    },
+    {
+      "t0": 7.6,
+      "t1": 10.1,
+      "text": "làm **prompt** lúc đầu ấy"
+    },
+    {
+      "t0": 11.6,
+      "t1": 14.8,
+      "text": "Một cái **khung**. Đầu tiên là mình\nlàm việc với **AI**"
+    },
+    {
+      "t0": 14.8,
+      "t1": 18.2,
+      "text": "qua **lời nhắc**, đúng không?\nGọi là **prompt**"
+    },
+    {
+      "t0": 18.3,
+      "t1": 22.7,
+      "text": "thì **prompt**: nói gì là ra một\n**lời nhắc** đấy thế thôi"
+    },
+    {
+      "t0": 22.7,
+      "t1": 27.1,
+      "text": "Còn cụ thể: nó sẽ chia lời nhắc\nthành **5 thành phần**"
+    },
+    {
+      "t0": 27.8,
+      "t1": 29.8,
+      "text": "để giúp mình làm việc với **AI**"
+    },
+    {
+      "t0": 30.7,
+      "t1": 32.3,
+      "text": "Bây giờ em thử đọc qua nhé"
+    },
+    {
+      "t0": 32.5,
+      "t1": 35.1,
+      "text": "Phần đó thì anh nói nhiều rồi,\ngiờ đến lượt em"
+    },
+    {
+      "t0": 35.1,
+      "t1": 37.6,
+      "text": "Thứ nhất, em đọc qua một lượt\ncho anh"
+    },
+    {
+      "t0": 38.4,
+      "t1": 40.4,
+      "text": "Em sẽ giải thích cho anh"
+    },
+    {
+      "t0": 40.9,
+      "t1": 42.7,
+      "text": "từng phần nó có chức năng gì"
+    },
+    {
+      "t0": 43.0,
+      "t1": 44.7,
+      "text": "Sau đây anh sẽ giải thích lại"
+    },
+    {
+      "t0": 46.2,
+      "t1": 47.9,
+      "text": "Em cứ đọc đi. Chào em,\nanh cần khoảng mười phút nha"
+    },
+    {
+      "t0": 47.9,
+      "t1": 50.0,
+      "text": "**5 phút** trò chuyện, suy nghĩ nhé"
+    }
+  ],
+  "cta": {
+    "t0": 0.5,
+    "line1": "CMT \"PROMPT\"",
+    "line2": "nhận khung prompt 5 phần miễn phí"
+  },
+  "note": "S06 mentor share màn NotebookLM (đã duyệt sạch). Sub viết tay từ VTT gốc.",
+  "badge": {
+    "text": "AN"
+  },
+  "waveform": true,
+  "waveform_y": 986,
+  "mid_clean": true,
+  "music": true,
+  "hook_intro": "Prompt chuẩn giúp bạn làm nhanh gấp 5",
+  "kenburns": "both",
+  "outro": {
+    "text": "Hẹn gặp lại — Nhắn \"PROMPT\" nhận khung",
+    "secs": 3
+  },
+  "gradient": true,
+  "badge_pulse": true,
+  "checklist": true,
+  "chip_pop": true,
+  "watermark": "AnhNST.AI"
+}

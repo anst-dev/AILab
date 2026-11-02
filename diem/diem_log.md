@@ -49,7 +49,9 @@ Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 | — | THANG v14: +M26 final render medium + verify (trần 250) — v26 chấm lại M26:2 => 226/250 | 226 | ✔ | 226 |
 | E30 | FINAL medium 5.0MB — I=-16.2 LUFS, decode sạch | 234/250 | ✔ | 234 |
 | — | THANG v15: +M27 ken burns hai pha (trần 260) — v27 chấm lại M27:3 => 237/260 | 237 | ✔ | 237 |
-| E31 | Ken burns hai pha: in nửa đầu, out nửa sau | **244/260** | ✔ best | **244** |
+| E31 | Ken burns hai pha: in nửa đầu, out nửa sau | 244/260 | ✔ | 244 |
+| — | THANG v16: +M28 bộ A/B hook (trần 270) — v28 chấm lại M28:2 => 246/270 | 246 | ✔ | 246 |
+| E32 | Xuất đủ bộ A/B: hook A (best) + hook B | **254/270** | ✔ best | **254** |
 
 ## E0 — Baseline: 86 điểm (tag v0)
 
@@ -199,6 +201,11 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 ## E31 — Ken burns hai pha: 244/260 (tag v28)
 
 - M27: 3 → 10 (zoompan if(lte(in,half)) — in 0-25s, out 25-50s; chống zoom một chiều nhàm).
+
+## E32 — Bộ A/B hook: 254/270 (tag v29)
+
+- M28: 2 → 10 (output/best.mp4 = hook A "ĐÚNG 5 PHẦN", output/AB_hookB.mp4 = hook B "nhanh gấp 5"
+  — đăng xen kẽ đo view giữ chân để chọn hook thắng cho các video sau).
 
 ## PHIÊN 1 ĐÓNG TẠI ĐÂY (quota zai ~42%)
 
