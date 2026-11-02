@@ -45,7 +45,9 @@ Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 | — | THANG v12: +M24 watermark (trần 240) — v24 chấm lại M24:2 => 208/240 | 208 | ✔ | 208 |
 | E28 | Watermark AnhNST.AI mờ trên footage | 214/240 | ✔ | 214 |
 | — | THANG v13: +M25 gói publish (trần 250) — v25 chấm lại M25:2 => 216/250 | 216 | ✔ | 216 |
-| E29 | export_publish.py: SRT + poster + meta | **224/250** | ✔ best | **224** |
+| E29 | export_publish.py: SRT + poster + meta | 224/250 | ✔ | 224 |
+| — | THANG v14: +M26 final render medium + verify (trần 250) — v26 chấm lại M26:2 => 226/250 | 226 | ✔ | 226 |
+| E30 | FINAL medium 5.0MB — I=-16.2 LUFS, decode sạch | **234/250** | ✔ best | **234** |
 
 ## E0 — Baseline: 86 điểm (tag v0)
 
@@ -186,6 +188,11 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 
 - M25: 2 → 10 (export_publish.py: caption.srt khớp timing + poster.jpg q2 + meta.json khung giờ đăng).
 - output/publish/ là gói đưa thẳng vào đăng.
+
+## E30 — FINAL đăng được: 234/250 (tag v27)
+
+- M26: 2 → 10 (medium 5.0MB vs ultrafast 17MB; ebur128 -16.2; decode 0 lỗi).
+- output/publish/: FINAL.mp4 + caption.srt + poster.jpg + meta.json — gói đăng hoàn chỉnh.
 
 ## PHIÊN 1 ĐÓNG TẠI ĐÂY (quota zai ~42%)
 

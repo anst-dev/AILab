@@ -57,3 +57,5 @@ Chấm bằng 3 frame (đầu/giữa/cuối) + ffprobe + review diff. Mỗi mụ
 ## MỞ RỘNG v12 (E28): +M24 watermark kênh (trần 240)
 
 ## MỞ RỘNG v13 (E29): +M25 gói publish SRT + poster + meta (trần 250)
+
+## MỞ RỘNG v14 (E30): +M26 final render medium + verify full (trần 260)
