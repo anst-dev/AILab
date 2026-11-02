@@ -239,6 +239,10 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 - E36 289/320 (tag v33) → E37 **298/330** (tag v34): ticker status bar trong khung code
   (ASS \move không vẽ ổn định → chuyển PIL status bar — chạy chắc chắn, đúng chủ đề terminal)
 
+## E38 — 3 posters: 308/340 (tag v35)
+
+- M34: 2 → 10 (poster_a/b/c.jpg giây 1.2/13/26 — 3 phong cách: hook/code-đa-sắc/checklist-đủ).
+
 ## PHIÊN 1 ĐÓNG TẠI ĐÂY (quota zai ~42%)
 
 Best: 97/100 (v8). Tiến trình: 86 → 87 → 90 → (91 fail 90) → 91 → 92 → 93 → 95 → 97.
