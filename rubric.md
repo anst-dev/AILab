@@ -37,3 +37,5 @@ Chấm bằng 3 frame (đầu/giữa/cuối) + ffprobe + review diff. Mỗi mụ
 ## MỞ RỘNG v3 (E19): +1 tiêu chí — trần 150
 
 | 15 | Code đa sắc + số dòng | key xanh dương #79c0ff, nội dung trắng, comment xanh lá, số dòng mờ bên trái | đơn sắc trắng |
+
+## MỞ RỘNG v4 (E20): +M16 typing nhịp từ + flash viền hoàn thành (trần 160)

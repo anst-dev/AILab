@@ -26,7 +26,9 @@ Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 | E16 | Outro 3s + fade giọng (M14) — đè pill cuối | 139 | ✔ | 139 |
 | E17 | Subs tự cắt trước outro — không chồng lấp | 140/140 | ✔ | 140 |
 | — | THANG MỞ RỘNG v3: +M15 code đa sắc & số dòng (trần 150) — v17 chấm lại M15:4 => 144/150 | 144 | ✔ | 144 |
-| E19 | Đa sắc key xanh dương + số dòng | **146/150** | ✔ best | **146** |
+| E19 | Đa sắc key xanh dương + số dòng | 146/150 | ✔ | 146 |
+| — | THANG v4: +M16 nhịp từ + flash viền (trần 160) — v16 chấm lại M16:3 => 149/160 | 149 | ✔ | 149 |
+| E20 | Typing nhịp từ + flash viền hoàn thành dòng | **153/160** | ✔ best | **153** |
 
 ## E0 — Baseline: 86 điểm (tag v0)
 
@@ -124,6 +126,10 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 ## E19 — Đa sắc + số dòng: 146/150 (tag v16, integrity OK)
 
 - Chuẩn M2 nâng: từ khóa pill màu lime (đạt). M15 mới: 4 → 10.
+
+## E20 — Nhịp từ + flash: 153/160 (tag v17)
+
+- M16: 3 → 10 (typing word-beat 40 chars/s + nghỉ 0.1s giữa từ; viền lime flash 0.25s khi dòng xong).
 
 ## PHIÊN 1 ĐÓNG TẠI ĐÂY (quota zai ~42%)
 

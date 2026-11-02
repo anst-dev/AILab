@@ -42,7 +42,7 @@ def font_code(size=CODE_SIZE):
 
 def code_config_hash(v: dict) -> str:
     payload = json.dumps({"tab": v.get("tab"), "lines": v["code_lines"]}, ensure_ascii=False, sort_keys=True)
-    payload += f"|{CODE_FONT}|{CODE_SIZE}|{LINE_H}|{BODY_Y0}|{W}x{H_CODE}"
+    payload += f"|{CODE_FONT}|{CODE_SIZE}|{LINE_H}|{BODY_Y0}|{W}x{H_CODE}|v2-word"
     return hashlib.sha1(payload.encode()).hexdigest()[:12]
 
 
@@ -69,6 +69,23 @@ def render_code_frames(v: dict, out_dir: Path, dur: float, reuse: bool = True):
         full = cl["text"] + cl.get("val", "")
         lines.append({"t0": float(cl["t"]), "kind": cl["kind"], "key": cl["text"], "full": full})
 
+    def typed_upto(t, ln):
+        """Trả về (chuỗi hiển thị, đang_gõ_không) — nhịp theo TỪ: gõ nhanh trong từ,
+        nghỉ 0.1s giữa các từ (đọc mượt như người gõ)."""
+        words = ln["full"].split(" ")
+        tt = ln["t0"]
+        shown_parts = []
+        for w in words:
+            need = max(len(w) / 40.0, 0.03)
+            if t >= tt + need:
+                shown_parts.append(w)
+                tt += need + 0.10
+            else:
+                frac = max(min((t - tt) / need, 1.0), 0.0)
+                shown_parts.append(w[:max(int(round(len(w) * frac)), 0)])
+                return " ".join(shown_parts), True
+        return " ".join(shown_parts), False
+
     n = int(dur * FPS)
     for i in range(n):
         t = i / FPS
@@ -85,6 +102,7 @@ def render_code_frames(v: dict, out_dir: Path, dur: float, reuse: bool = True):
         cursor_pos = None
         line_no = 0
         y = BODY_Y0
+        flash_until = 0.0
         for ln in lines:
             line_no += 1
             d.text((BODY_X - 38, y + 8), f"{line_no:02d}", font=tab_f, fill=(48, 54, 61))
@@ -92,11 +110,10 @@ def render_code_frames(v: dict, out_dir: Path, dur: float, reuse: bool = True):
                 d.text((BODY_X, y), ln["full"], font=f, fill=(61, 68, 77))  # ghost
                 y += LINE_H
                 continue
-            chars = int((t - ln["t0"]) * TYPE_SPEED)
-            shown = ln["full"][:chars]
+            shown, typing = typed_upto(t, ln)
             key_len = len(ln["key"]) if ln.get("kind") == "key" else 0
             x_end = BODY_X + d.textlength(shown, font=f)
-            if chars < len(ln["full"]):
+            if typing:
                 # highlight nền dòng đang gõ
                 d.rounded_rectangle([BODY_X - 16, y - 9, BODY_X + 900, y + 50], 10, fill=(26, 33, 41))
                 if ln["kind"] == "comment":
@@ -116,7 +133,13 @@ def render_code_frames(v: dict, out_dir: Path, dur: float, reuse: bool = True):
                         d.text((BODY_X + d.textlength(shown[:key_len], font=f), y),
                                shown[key_len:], font=f, fill=TXT)
                 cursor_pos = (x_end + 6, y)
+                # flash viền 0.25s khi dòng vừa hoàn thành
+                words = ln["full"].split(" ")
+                done_t = ln["t0"] + sum(max(len(w) / 40.0, 0.03) + 0.10 for w in words)
+                flash_until = max(flash_until, done_t + 0.25) if done_t <= t <= done_t + 0.25 else flash_until
             y += LINE_H
+        if t <= flash_until <= t + 0.25 and flash_until > 0:
+            d.rounded_rectangle([6, 6, W - 7, H_CODE - 7], 14, outline=LIME, width=3)
 
         # con trỏ nhấp nháy (mặc định tại chỗ sẽ gõ tiếp)
         if cursor_pos is None:
