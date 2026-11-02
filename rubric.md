@@ -69,3 +69,5 @@ Chấm bằng 3 frame (đầu/giữa/cuối) + ffprobe + review diff. Mỗi mụ
 ## MỞ RỘNG v18 (E34): +M30 mid-card Lưu lại (trần 290)
 
 ## MỞ RỘNG v19 (E35): +M31 countdown 3-2-1 trước outro (trần 310)
+
+## MỞ RỘNG v20 (E36): +M32 final render + publish pack chu kỳ (trần 320)

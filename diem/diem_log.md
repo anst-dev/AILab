@@ -57,7 +57,9 @@ Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 | — | THANG v18: +M30 mid-card (trần 290) — v30 chấm lại M30:2 => 263/290 | 263 | ✔ | 263 |
 | E34 | Mid-card Lưu lại Khung PCTPR 20.5-24.5s | 269/290 | ✔ | 269 |
 | — | THANG v19: +M31 countdown (trần 310) — v31 chấm lại M31:2 => 271/310 | 271 | ✔ | 271 |
-| E35 | Countdown 3-2-1 lime trên gradient trước CTA | **279/310** | ✔ best | **279** |
+| E35 | Countdown 3-2-1 lime trên gradient trước CTA | 279/310 | ✔ | 279 |
+| — | THANG v20: +M32 final+publish chu kỳ (trần 320) — v32 chấm lại M32:2 => 281/320 | 281 | ✔ | 281 |
+| E36 | FINAL_v32 medium 6.2MB + publish pack cập nhật | **289/320** | ✔ best | **289** |
 
 ## E0 — Baseline: 86 điểm (tag v0)
 
@@ -225,6 +227,11 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 ## E35 — Countdown: 279/310 (tag v32)
 
 - M31: 2 → 10 (số 120px lime khối tối, fade 60/60ms, 3 giây cuối — dẫn mắt vào CTA).
+
+## E36 — FINAL v32 + publish pack: 289/320 (tag v33) — CHU KỲ 2 KHÉP
+
+- M32: 2 → 10 (medium 6.2MB, I=-16.2, decode sạch; publish pack = FINAL + srt + poster + meta).
+- Chu kỳ 2 (E31-E36): kenburns-both, A/B hook, tick sfx, mid-card, countdown, final — 6 vòng giữ liên tiếp.
 
 ## PHIÊN 1 ĐÓNG TẠI ĐÂY (quota zai ~42%)
 
