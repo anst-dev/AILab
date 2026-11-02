@@ -24,7 +24,9 @@ Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 | E14b | Hook intro lime 1.8s đầu fade-in nêu lợi ích | 127 | ✔ | 127 |
 | E15 | Ken burns zoom footage 1.0→1.07 (M13) | 133 | ✔ | 133 |
 | E16 | Outro 3s + fade giọng (M14) — đè pill cuối | 139 | ✔ | 139 |
-| E17 | Subs tự cắt trước outro — không chồng lấp | **140/140** | ✔ best | **140** |
+| E17 | Subs tự cắt trước outro — không chồng lấp | 140/140 | ✔ | 140 |
+| — | THANG MỞ RỘNG v3: +M15 code đa sắc & số dòng (trần 150) — v17 chấm lại M15:4 => 144/150 | 144 | ✔ | 144 |
+| E19 | Đa sắc key xanh dương + số dòng | **146/150** | ✔ best | **146** |
 
 ## E0 — Baseline: 86 điểm (tag v0)
 
@@ -118,6 +120,10 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 - M14: 3 → 10 (outro riêng + fade giọng 2.5s). M2 bị trừ 1: outro đè dòng 2 pill cuối.
 
 ## E17 — Không chồng lấp: 140/140 (tag v15). Chuẩn M2 nâng: từ khóa phải màu lime.
+
+## E19 — Đa sắc + số dòng: 146/150 (tag v16, integrity OK)
+
+- Chuẩn M2 nâng: từ khóa pill màu lime (đạt). M15 mới: 4 → 10.
 
 ## PHIÊN 1 ĐÓNG TẠI ĐÂY (quota zai ~42%)
 

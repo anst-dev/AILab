@@ -83,26 +83,38 @@ def render_code_frames(v: dict, out_dir: Path, dur: float, reuse: bool = True):
 
         # các dòng code typing (tăng dần theo t0); dòng chưa tới giờ hiện ghost mờ
         cursor_pos = None
-        typing_y = None
+        line_no = 0
         y = BODY_Y0
         for ln in lines:
+            line_no += 1
+            d.text((BODY_X - 38, y + 8), f"{line_no:02d}", font=tab_f, fill=(48, 54, 61))
             if t < ln["t0"]:
                 d.text((BODY_X, y), ln["full"], font=f, fill=(61, 68, 77))  # ghost
                 y += LINE_H
                 continue
             chars = int((t - ln["t0"]) * TYPE_SPEED)
             shown = ln["full"][:chars]
+            key_len = len(ln["key"]) if ln.get("kind") == "key" else 0
             x_end = BODY_X + d.textlength(shown, font=f)
             if chars < len(ln["full"]):
                 # highlight nền dòng đang gõ
                 d.rounded_rectangle([BODY_X - 16, y - 9, BODY_X + 900, y + 50], 10, fill=(26, 33, 41))
-                typing_y = y
-                color = GREEN if ln["kind"] == "comment" else TXT
-                d.text((BODY_X, y), shown, font=f, fill=color)
+                if ln["kind"] == "comment":
+                    d.text((BODY_X, y), shown, font=f, fill=GREEN)
+                else:
+                    d.text((BODY_X, y), shown[:key_len], font=f, fill=(121, 192, 255))
+                    if len(shown) > key_len:
+                        d.text((BODY_X + d.textlength(shown[:key_len], font=f), y),
+                               shown[key_len:], font=f, fill=TXT)
                 cursor_pos = (x_end + 4, y)
             else:
-                color = GREEN if ln["kind"] == "comment" else TXT
-                d.text((BODY_X, y), shown, font=f, fill=color)
+                if ln["kind"] == "comment":
+                    d.text((BODY_X, y), shown, font=f, fill=GREEN)
+                else:
+                    d.text((BODY_X, y), shown[:key_len], font=f, fill=(121, 192, 255))
+                    if len(shown) > key_len:
+                        d.text((BODY_X + d.textlength(shown[:key_len], font=f), y),
+                               shown[key_len:], font=f, fill=TXT)
                 cursor_pos = (x_end + 6, y)
             y += LINE_H
 
@@ -160,6 +172,17 @@ def make_badge(v: dict, work: Path) -> Path | None:
     return p
 
 
+LIME_TAG = "{\\c&H35E6A3&}"
+WHITE_TAG = "{\\c&HFFFFFF&}"
+
+
+def fmt_inline(text: str) -> str:
+    """'chia **5 thành phần**' → từ khóa màu lime trong pill."""
+    text = text.replace("\\N", "\n")
+    text = re.sub(r"\*\*(.+?)\*\*", lambda m: LIME_TAG + m.group(1) + WHITE_TAG, text)
+    return text.replace("\n", "\\N")
+
+
 def build_ass(v: dict, dur: float) -> str:
     ev = []
     outro_t0 = dur - float(v.get("outro", {}).get("secs", 3)) if v.get("outro") else dur
@@ -167,7 +190,7 @@ def build_ass(v: dict, dur: float) -> str:
         t1 = min(s["t1"], outro_t0 - 0.2)          # subs không lấn vào outro
         if t1 - s["t0"] < 0.4:
             continue
-        txt = s["text"].replace("\n", "\\N")
+        txt = fmt_inline(s["text"])
         ev.append(f"Dialogue: 0,{fmt_ass(s['t0'])},{fmt_ass(t1)},Pill,,0,0,0,,{txt}")
     cta = v["cta"]
     ev.append(

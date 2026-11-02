@@ -33,3 +33,7 @@ Chấm bằng 3 frame (đầu/giữa/cuối) + ffprobe + review diff. Mỗi mụ
 | 14 | Kết clip có chủ đích | outro riêng (fade + lời hẹn/CTA nhắc lại), không đứt đột ngột | cắt đen sỗ sàng |
 
 **Trần mới: 140 điểm.** Best v10 chấm lại theo thang mới làm điểm khởi đầu.
+
+## MỞ RỘNG v3 (E19): +1 tiêu chí — trần 150
+
+| 15 | Code đa sắc + số dòng | key xanh dương #79c0ff, nội dung trắng, comment xanh lá, số dòng mờ bên trái | đơn sắc trắng |
