@@ -338,12 +338,22 @@ def main() -> int:
         "crop=1080:1120:0:400[bg];"
     )
     if v.get("kenburns"):
-        # zoom chậm (ken burns) trên footage: 1.0 -> ~1.07 trong suốt clip
-        chain += (
-            "[fgsrc]scale=2200:-2,"
-            "zoompan=z='min(1+0.00045*in,1.07)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
-            ":d=1:s=1080x608:fps=25[fg];"
-        )
+        # ken burns: "both" = zoom-in nửa đầu + zoom-out nửa sau (chuyển động đối xứng)
+        if v.get("kenburns") == "both":
+            half = int(dur * FPS / 2)
+            chain += (
+                "[fgsrc]scale=2200:-2,"
+                f"zoompan=z='if(lte(in\\,{half})\\,min(1+0.00045*in\\,1.07)\\,"
+                f"max(1.07-0.00045*(in-{half})\\,1.0))'"
+                ":x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
+                ":d=1:s=1080x608:fps=25[fg];"
+            )
+        else:
+            chain += (
+                "[fgsrc]scale=2200:-2,"
+                "zoompan=z='min(1+0.00045*in,1.07)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
+                ":d=1:s=1080x608:fps=25[fg];"
+            )
     else:
         chain += "[fgsrc]scale=1080:-2[fg];"
     chain += (

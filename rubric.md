@@ -59,3 +59,5 @@ Chấm bằng 3 frame (đầu/giữa/cuối) + ffprobe + review diff. Mỗi mụ
 ## MỞ RỘNG v13 (E29): +M25 gói publish SRT + poster + meta (trần 250)
 
 ## MỞ RỘNG v14 (E30): +M26 final render medium + verify full (trần 260)
+
+## MỞ RỘNG v15 (E31): +M27 ken burns hai pha in/out (trần 260)

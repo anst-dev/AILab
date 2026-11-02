@@ -47,7 +47,9 @@ Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 | — | THANG v13: +M25 gói publish (trần 250) — v25 chấm lại M25:2 => 216/250 | 216 | ✔ | 216 |
 | E29 | export_publish.py: SRT + poster + meta | 224/250 | ✔ | 224 |
 | — | THANG v14: +M26 final render medium + verify (trần 250) — v26 chấm lại M26:2 => 226/250 | 226 | ✔ | 226 |
-| E30 | FINAL medium 5.0MB — I=-16.2 LUFS, decode sạch | **234/250** | ✔ best | **234** |
+| E30 | FINAL medium 5.0MB — I=-16.2 LUFS, decode sạch | 234/250 | ✔ | 234 |
+| — | THANG v15: +M27 ken burns hai pha (trần 260) — v27 chấm lại M27:3 => 237/260 | 237 | ✔ | 237 |
+| E31 | Ken burns hai pha: in nửa đầu, out nửa sau | **244/260** | ✔ best | **244** |
 
 ## E0 — Baseline: 86 điểm (tag v0)
 
@@ -193,6 +195,10 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 
 - M26: 2 → 10 (medium 5.0MB vs ultrafast 17MB; ebur128 -16.2; decode 0 lỗi).
 - output/publish/: FINAL.mp4 + caption.srt + poster.jpg + meta.json — gói đăng hoàn chỉnh.
+
+## E31 — Ken burns hai pha: 244/260 (tag v28)
+
+- M27: 3 → 10 (zoompan if(lte(in,half)) — in 0-25s, out 25-50s; chống zoom một chiều nhàm).
 
 ## PHIÊN 1 ĐÓNG TẠI ĐÂY (quota zai ~42%)
 
