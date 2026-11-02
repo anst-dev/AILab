@@ -43,3 +43,5 @@ Chấm bằng 3 frame (đầu/giữa/cuối) + ffprobe + review diff. Mỗi mụ
 ## MỞ RỘNG v5 (E21): +M17 gradient phân tầng (trần 170)
 
 ## MỞ RỘNG v6 (E22): +M18 chip tiến trình n/5 (trần 180)
+
+## MỞ RỘNG v7 (E23): +M19 badge pulse nhịp 2s (trần 190)

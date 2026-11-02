@@ -32,7 +32,9 @@ Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 | — | THANG v5: +M17 gradient phân tầng (trần 170) — v17 chấm lại M17:3 => 156/170 | 156 | ✔ | 156 |
 | E21 | Gradient đáy code + viền lime tách tầng | 160/170 | ✔ | 160 |
 | — | THANG v6: +M18 chip n/5 (trần 180) — v18 chấm lại M18:2 => 162/180 | 162 | ✔ | 162 |
-| E22 | Chip tiến trình n/5 góc phải | **168/180** | ✔ best | **168** |
+| E22 | Chip tiến trình n/5 góc phải | 168/180 | ✔ | 168 |
+| — | THANG v7: +M19 badge pulse (trần 190) — v19 chấm lại M19:3 => 171/190 | 171 | ✔ | 171 |
+| E23 | Badge pulse 1.55s hiện/0.45s ẩn (enable expression) | **175/190** | ✔ best | **175** |
 
 ## E0 — Baseline: 86 điểm (tag v0)
 
@@ -142,6 +144,11 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 ## E22 — Chip tiến trình: 168/180 (tag v19)
 
 - M18: 2 → 10 (chip "n/5" viền lime góc phải, đếm dòng key gõ xong).
+
+## E23 — Badge pulse: 175/190 (tag v20, verified on/off frames)
+
+- M19: 3 → 10. Pitfall: overlay option phân tách bằng ':' — ',enable=' bị đọc là filter mới
+  (cần ':enable='), expression chứa ',' phải escape '\,' và KHÔNG bọc quote trong chuỗi lớn.
 
 ## PHIÊN 1 ĐÓNG TẠI ĐÂY (quota zai ~42%)
 

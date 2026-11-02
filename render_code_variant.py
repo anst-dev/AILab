@@ -324,7 +324,8 @@ def main() -> int:
     )
     last = "c3"
     if badge:
-        chain += f"[{last}][3:v]overlay=170:832[c4];"
+        pulse = ":enable=lt(mod(t\\,2)\\,1.55)" if v.get("badge_pulse") else ""
+        chain += f"[{last}][3:v]overlay=170:832{pulse}[c4];"
         last = "c4"
     mid_clean = bool(v.get("mid_clean"))
     if mid_clean:
