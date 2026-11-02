@@ -394,6 +394,14 @@ def main() -> int:
                 ":x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
                 ":d=1:s=1080x608:fps=25[fg];"
             )
+        elif v.get("kenburns") == "breathe":
+            # zoom "thở" theo LFO nhạc pad (0.11 Hz — cùng tần số fade hợp âm)
+            chain += (
+                "[fgsrc]scale=2200:-2,"
+                "zoompan=z='1.04+0.025*sin(2*PI*0.11*(in/25))'"
+                ":x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
+                ":d=1:s=1080x608:fps=25[fg];"
+            )
         else:
             chain += (
                 "[fgsrc]scale=2200:-2,"

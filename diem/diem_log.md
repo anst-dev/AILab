@@ -243,6 +243,10 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 
 - M34: 2 → 10 (poster_a/b/c.jpg giây 1.2/13/26 — 3 phong cách: hook/code-đa-sắc/checklist-đủ).
 
+## E39 — Zoom breathe: 318/350 (tag v36)
+
+- M35: 3 → 10 (zoompan sin 0.11Hz = cùng LFO hợp âm pad — hình thở cùng nhạc, audio-visual sync thật).
+
 ## PHIÊN 1 ĐÓNG TẠI ĐÂY (quota zai ~42%)
 
 Best: 97/100 (v8). Tiến trình: 86 → 87 → 90 → (91 fail 90) → 91 → 92 → 93 → 95 → 97.
