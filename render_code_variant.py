@@ -42,7 +42,7 @@ def font_code(size=CODE_SIZE):
 
 def code_config_hash(v: dict) -> str:
     payload = json.dumps({"tab": v.get("tab"), "lines": v["code_lines"]}, ensure_ascii=False, sort_keys=True)
-    payload += f"|{CODE_FONT}|{CODE_SIZE}|{LINE_H}|{BODY_Y0}|{W}x{H_CODE}|v5-rec"
+    payload += f"|{CODE_FONT}|{CODE_SIZE}|{LINE_H}|{BODY_Y0}|{W}x{H_CODE}|v7-tickpos"
     return hashlib.sha1(payload.encode()).hexdigest()[:12]
 
 
@@ -159,6 +159,18 @@ def render_code_frames(v: dict, out_dir: Path, dur: float, reuse: bool = True):
             k = (gy - (H_CODE - 14)) / 14.0
             col = tuple(int(BG[c] * (1 - k) + LIME[c] * k * 0.85) for c in range(3))
             d.line([0, gy, W, gy], fill=col)
+
+        # checklist tick 5 phần (cột phải, hiện dần khi từng key gõ xong)
+        if v.get("checklist"):
+            key_lines = [ln for ln in lines if ln.get("kind") == "key"]
+            ty = BODY_Y0 + 20
+            for ln in key_lines:
+                done_t = ln["t0"] + len(ln["full"]) / 40.0 + 0.15
+                if t >= done_t:
+                    d.ellipse([992, ty, 1030, ty + 38], outline=LIME, width=3)
+                    d.line([(1001, ty + 19), (1011, ty + 30), (1024, ty + 8)],
+                           fill=LIME, width=4)
+                ty += 58
 
         # chip tiến trình "n/5 phần" góc phải trên (n = số dòng key đã gõ xong)
         n_done = sum(1 for ln in lines if ln.get("kind") == "key"

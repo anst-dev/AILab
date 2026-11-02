@@ -35,6 +35,7 @@ Metric duy nhất: rubric.md (100 điểm). Best hiện tại ghi đầu bảng.
 | E22 | Chip tiến trình n/5 góc phải | 168/180 | ✔ | 168 |
 | — | THANG v7: +M19 badge pulse (trần 190) — v19 chấm lại M19:3 => 171/190 | 171 | ✔ | 171 |
 | E23 | Badge pulse 1.55s hiện/0.45s ẩn (enable expression) | 175/190 | ✔ | 175 |
+| — | THANG v10: +M22 checklist tick (trần 220) — v19 chấm lại M22:2 => 170/220 | 170 | ✔ | 170 |
 | — | THANG v8: +M20 pill pop-in (trần 200) — v20 chấm lại M20:3 => 178/200 | 178 | ✔ | 178 |
 | E24 | Pill pop-in scale 140ms mỗi câu | 182/200 | ✔ | 182 |
 | — | THANG v9: +M21 REC dot (trần 210) — v21 chấm lại M21:2 => 184/210 | 184 | ✔ | 184 |
@@ -161,6 +162,11 @@ Chấm trên diem/E0_baseline/ (ffprobe: 1080x1920, 50.00s — chuẩn).
 ## E25 — REC dot: 190/210 (tag v22)
 
 - M21: 2 → 10 (đỏ #ff3b30 nhấp 0.48s, mờ khi tắt — chất kể chuyện đang quay).
+
+## E26b — Checklist tick: 198/220 (tag v23)
+
+- M22: 2 → 10 (5 tick lime cột phải hiện dần theo từng phần gõ xong; v1 đè chữ — dời x 992-1030 sửa).
+- Vòng vi mô tiếp theo cần cân nhắc: giá trị biên giảm — ưu tiên ý tưởng tăng giữ chân thật.
 
 ## PHIÊN 1 ĐÓNG TẠI ĐÂY (quota zai ~42%)
 

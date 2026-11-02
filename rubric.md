@@ -49,3 +49,5 @@ Chấm bằng 3 frame (đầu/giữa/cuối) + ffprobe + review diff. Mỗi mụ
 ## MỞ RỘNG v8 (E24): +M20 pill pop-in scale 82→100 (trần 200)
 
 ## MỞ RỘNG v9 (E25): +M21 chấm REC nhấp nháy (trần 210)
+
+## MỞ RỘNG v10 (E26b): +M22 checklist tick 5 phần (trần 220)
