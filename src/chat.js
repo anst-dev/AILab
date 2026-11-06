@@ -81,6 +81,7 @@ async function post(url, message) {
   node src/chat.js --catalog, -c     Xem danh mục agent CLI đã cài và lệnh chạy (-c)
   node src/chat.js --runs, -l        Liệt kê tất cả các phiên swarm (cả đang chạy và lịch sử)
   node src/chat.js --run <id>, -i    Xem thông tin chi tiết của một phiên swarm (-i <id>)
+  node src/chat.js --gitlog <id>, -g  Xem lịch sử commit git đã tích lũy trong phiên swarm (-g <id>)
   node src/chat.js --logs <id>       Liệt kê danh sách các file log trong phiên swarm
   node src/chat.js --log <id> [f], -L Xem log của agent/đánh giá trong phiên swarm (-L <id> [file])
   node src/chat.js --stop <id>, -k   Dừng một phiên swarm đang chạy (--graceful để chờ vòng hiện tại) (-k <id>)
@@ -190,6 +191,34 @@ async function post(url, message) {
       console.log(`  Kết quả gần nhất (${recent.length}/${snap.results.length}):`);
       for (const res of recent) {
         console.log(`    - vòng ${res.iter} [${res.agent}]: ${res.status} (score: ${res.score != null ? res.score : '—'}) ${res.desc || ''}`);
+      }
+    }
+    return;
+  }
+
+  const gitlogIdx = args.indexOf('--gitlog') !== -1 ? args.indexOf('--gitlog') : args.indexOf('-g');
+  if (gitlogIdx !== -1) {
+    const runId = args[gitlogIdx + 1];
+    if (!runId || runId.startsWith('-')) {
+      throw new Error('Vui lòng chỉ định ID phiên cần xem git log: node src/chat.js --gitlog <id> (-g <id>)');
+    }
+    const rRun = await fetch(`${url}/api/runs/${encodeURIComponent(runId)}`);
+    if (!rRun.ok) {
+      const j = await rRun.json().catch(() => ({}));
+      throw new Error(j.error || `Không tìm thấy phiên ${runId} (HTTP ${rRun.status})`);
+    }
+    const snap = await rRun.json();
+    const rLog = await fetch(`${url}/api/runs/${encodeURIComponent(runId)}/gitlog?repo=${encodeURIComponent(snap.repoRoot || '')}`);
+    if (!rLog.ok) {
+      throw new Error(`Lỗi khi lấy git log của phiên ${runId} (HTTP ${rLog.status})`);
+    }
+    const commits = await rLog.json();
+    if (!Array.isArray(commits) || !commits.length) {
+      console.log(`Phiên ${runId} chưa có commit nào được tích lũy vào nhánh trung tâm.`);
+    } else {
+      console.log(`Git log phiên ${runId} (${commits.length} commit):`);
+      for (const c of commits) {
+        console.log(`  * ${c.hash} (${c.when || '—'}, ${c.author || '—'}): ${c.subject || ''}`);
       }
     }
     return;

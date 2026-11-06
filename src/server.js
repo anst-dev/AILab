@@ -345,6 +345,11 @@ const coordinator = new Coordinator({
         return [];
       }
     },
+    gitLog: async (id) => {
+      const found = findSnapshot(String(id || ''), '');
+      if (!found) throw new Error(`Không tìm thấy phiên ${id}.`);
+      return gitLog(found.run, found.snap);
+    },
     inspect,
     harvest: async () => {
       const harvestPath = path.join(APP_DIR, 'harvest.js');

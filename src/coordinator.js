@@ -210,6 +210,10 @@ class Coordinator extends EventEmitter {
           const files = await this.ops.listRunLogs(a.id);
           return { type, ok: true, info: true, text: `danh sách log ${a.id}`, data: files };
         }
+        case 'gitlog': {
+          const commits = await this.ops.gitLog(a.id);
+          return { type, ok: true, info: true, text: `git log ${a.id} (${(commits || []).length} commit)`, data: commits };
+        }
         case 'harvest': {
           const r = await this.ops.harvest();
           return { type, ok: true, text: `Đã gom kết quả (+${r.freshCount} dòng mới, tổng ${r.totalCount} dòng vào knowledge/improvements_log.jsonl)`, data: r };
@@ -322,6 +326,7 @@ Actions:
 - {"type":"export_csv","id":"<run id>"} export run results as CSV text
 - {"type":"export_json","id":"<run id>"} export run snapshot as JSON object
 - {"type":"list_logs","id":"<run id>"}   list all log files in a run
+- {"type":"gitlog","id":"<run id>"}      list commits accumulated in the run's central branch
 - {"type":"harvest"}                    harvest/aggregate all run results and git logs into knowledge/improvements_log.jsonl
 - {"type":"stats"}                      summary statistics of improvements_log.jsonl
 - {"type":"list_runs"}                  list recent and active swarm runs
