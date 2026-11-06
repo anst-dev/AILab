@@ -106,10 +106,46 @@ function resultsCsv(rows) {
   return lines.join('\r\n') + '\r\n';
 }
 
+/** results (mảng row trong bộ nhớ) → JSONL. */
+function resultsJsonl(rows) {
+  const lines = [];
+  for (const r of rows || []) {
+    lines.push(
+      JSON.stringify({
+        time: r.t ? new Date(r.t).toISOString() : '',
+        agent: r.agent || '',
+        iter: r.iter,
+        commit: r.commit || '',
+        score: r.score === null || r.score === undefined ? '' : r.score,
+        status: r.status || '',
+        description: r.desc || '',
+      })
+    );
+  }
+  return lines.join('\n') + (lines.length ? '\n' : '');
+}
+
 /** Nội dung results.tsv → CSV (giữ nguyên thứ tự cột, mỗi cột escape theo CSV). */
 function tsvTextToCsv(txt) {
   const lines = txt.split(/\r?\n/).filter((l) => l.length);
   return lines.map((l) => l.split('\t').map(csvField).join(',')).join('\r\n') + '\r\n';
+}
+
+/** Nội dung results.tsv → JSONL. */
+function tsvTextToJsonl(txt) {
+  const lines = txt.split(/\r?\n/).filter((l) => l.trim().length);
+  if (!lines.length) return '';
+  const header = lines[0].split('\t').map((h) => h.trim());
+  const out = [];
+  for (let i = 1; i < lines.length; i++) {
+    const parts = lines[i].split('\t');
+    const obj = {};
+    for (let c = 0; c < header.length; c++) {
+      obj[header[c]] = parts[c] !== undefined ? parts[c] : '';
+    }
+    out.push(JSON.stringify(obj));
+  }
+  return out.join('\n') + (out.length ? '\n' : '');
 }
 
 /** Dòng JSONL trong improvements_log.jsonl → CSV (cột ts,bot,kind,feature,commit,score,status,note). */
@@ -344,6 +380,28 @@ const coordinator = new Coordinator({
       if (!found) throw new Error(`Không tìm thấy phiên ${id}.`);
       return found.snap;
     },
+    exportRunJsonl: async (id) => {
+      const run = runs.get(String(id || ''));
+      if (run) return resultsJsonl(run.results);
+      const roots = [...(loadConfig().recentWorkspaces || [])];
+      const found = findSnapshot(String(id || ''), '');
+      if (found && found.snap && found.snap.repoRoot && !roots.includes(found.snap.repoRoot)) {
+        roots.unshift(found.snap.repoRoot);
+      }
+      for (const root of roots) {
+        try {
+          return tsvTextToJsonl(fs.readFileSync(path.join(root, '.swarm', 'runs', String(id || ''), 'results.tsv'), 'utf8'));
+        } catch {
+          try {
+            const snap = JSON.parse(fs.readFileSync(path.join(root, '.swarm', 'runs', String(id || ''), 'state.json'), 'utf8'));
+            if (snap && Array.isArray(snap.results) && snap.results.length) {
+              return resultsJsonl(snap.results);
+            }
+          } catch {}
+        }
+      }
+      throw new Error(`Không tìm thấy kết quả của phiên ${id}.`);
+    },
     listRunLogs: async (id) => {
       const found = findSnapshot(String(id || ''), '');
       if (!found) throw new Error(`Không tìm thấy phiên ${id}.`);
@@ -456,6 +514,23 @@ const coordinator = new Coordinator({
         try { items.push(JSON.parse(trimmed)); } catch { items.push({ raw: trimmed }); }
       }
       return items;
+    },
+    exportHarvestJsonl: async (filterOpts = {}) => {
+      const harvestPath = path.join(APP_DIR, 'harvest.js');
+      const harvestMod = fs.existsSync(harvestPath) ? require(harvestPath) : null;
+      const logPath = harvestMod && typeof harvestMod.getOutPath === 'function'
+        ? harvestMod.getOutPath()
+        : path.join(APP_DIR, 'knowledge', 'improvements_log.jsonl');
+      if (!fs.existsSync(logPath)) throw new Error('Chưa có file improvements_log.jsonl. Hãy bấm gom log trước.');
+      if (harvestMod && typeof harvestMod.exportKnowledgeJsonl === 'function') {
+        const r = harvestMod.exportKnowledgeJsonl(logPath, null, filterOpts);
+        return r.jsonl;
+      }
+      if (harvestMod && typeof harvestMod.listKnowledge === 'function') {
+        const r = harvestMod.listKnowledge(logPath, filterOpts);
+        return (r.items || []).map((it) => JSON.stringify(it)).join('\n') + (r.items && r.items.length ? '\n' : '');
+      }
+      return fs.readFileSync(logPath, 'utf8');
     },
     knowledge: async (limit = 20, query = '') => {
       const harvestPath = path.join(APP_DIR, 'harvest.js');
