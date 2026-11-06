@@ -399,21 +399,29 @@ class SwarmRun extends EventEmitter {
     });
     this.info(`Đã tạo ${this.agents.length} worktree tại ${this.wtRoot}`);
 
-    if (o.evalMode !== 'none' && o.baseline && !this.stopMode) {
-      this.phase = 'Đo baseline';
-      this.changed();
-      const a0 = this.agents[0];
-      const logRel = path.join('logs', 'baseline.eval.log');
-      const res = await this.evaluate(a0, path.join(this.runDir, logRel));
-      if (res.ok) {
-        if (o.evalMode === 'score') this.best = { score: res.score, commit: this.baseCommit.slice(0, 7), desc: 'baseline', agent: null };
-        this.record(null, 0, { commit: this.baseCommit, score: res.score, status: 'baseline', desc: 'baseline (code ban đầu)', log: logRel });
-        this.info(o.evalMode === 'score' ? `Baseline: ${res.score}` : 'Baseline: PASS');
-      } else {
-        this.record(null, 0, { commit: this.baseCommit, status: 'crash', desc: `baseline lỗi: ${res.reason}`, log: logRel });
-        this.info(`Baseline lỗi (${res.reason}). Kết quả đạt đầu tiên sẽ được giữ.`, 'warn');
-      }
+    if (!this.stopMode) await this.evaluateBaseline();
+  }
+
+  /** Re-baseline: đo lại base commit, ghi kết quả và cập nhật this.best. Dùng lúc start và bởi POST /api/runs/:id/rebaseline. */
+  async evaluateBaseline() {
+    const o = this.opts;
+    if (o.evalMode === 'none' || !o.baseline || !this.baseCommit || !this.agents.length) {
+      return { ok: false, score: null, reason: 'phiên không đo được baseline (không dùng chế độ đánh giá hoặc chưa sẵn sàng)' };
     }
+    this.phase = 'Đo baseline';
+    this.changed();
+    const a0 = this.agents[0];
+    const logRel = path.join('logs', 'baseline.eval.log');
+    const res = await this.evaluate(a0, path.join(this.runDir, logRel));
+    if (res.ok) {
+      if (o.evalMode === 'score') this.best = { score: res.score, commit: this.baseCommit.slice(0, 7), desc: 'baseline', agent: null };
+      this.record(null, 0, { commit: this.baseCommit, score: res.score, status: 'baseline', desc: 'baseline (code ban đầu)', log: logRel });
+      this.info(o.evalMode === 'score' ? `Baseline: ${res.score}` : 'Baseline: PASS');
+    } else {
+      this.record(null, 0, { commit: this.baseCommit, status: 'crash', desc: `baseline lỗi: ${res.reason}`, log: logRel });
+      this.info(`Baseline lỗi (${res.reason}). Kết quả đạt đầu tiên sẽ được giữ.`, 'warn');
+    }
+    return res;
   }
 
   // ----- agent loop --------------------------------------------------------
