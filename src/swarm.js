@@ -402,6 +402,34 @@ class SwarmRun extends EventEmitter {
     if (!this.stopMode) await this.evaluateBaseline();
   }
 
+  /**
+   * Xuất kết quả của phiên ra chuỗi CSV (RFC 4180).
+   * Dùng bởi route GET /api/runs/:id/export.csv hoặc SwarmRun.exportCsv().
+   */
+  exportCsv() {
+    const escField = (v) => {
+      const s = v === null || v === undefined ? '' : String(v);
+      return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const lines = ['time,agent,iter,commit,score,status,description'];
+    for (const r of this.results || []) {
+      lines.push(
+        [
+          new Date(r.t).toISOString(),
+          r.agent,
+          r.iter,
+          r.commit,
+          r.score === null || r.score === undefined ? '' : r.score,
+          r.status,
+          r.desc,
+        ]
+          .map(escField)
+          .join(',')
+      );
+    }
+    return lines.join('\r\n') + '\r\n';
+  }
+
   /** Re-baseline: đo lại base commit, ghi kết quả và cập nhật this.best. Dùng lúc start và bởi POST /api/runs/:id/rebaseline. */
   async evaluateBaseline() {
     const o = this.opts;
