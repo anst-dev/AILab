@@ -528,6 +528,38 @@ async function handle(req, res) {
     }
   }
 
+  if (req.method === 'GET' && (p === '/api/harvest/export.json' || (p === '/api/harvest/download' && url.searchParams.get('format') === 'json'))) {
+    try {
+      const harvestPath = path.join(APP_DIR, 'harvest.js');
+      const harvestMod = fs.existsSync(harvestPath) ? require(harvestPath) : null;
+      const logPath = harvestMod && typeof harvestMod.getOutPath === 'function'
+        ? harvestMod.getOutPath()
+        : path.join(APP_DIR, 'knowledge', 'improvements_log.jsonl');
+      if (!fs.existsSync(logPath)) {
+        return send(res, 404, { error: 'Chưa có file improvements_log.jsonl. Hãy bấm gom log trước.' });
+      }
+      const raw = fs.readFileSync(logPath, 'utf8').split('\n');
+      const items = [];
+      for (const line of raw) {
+        const trimmed = (line || '').replace(/\r$/, '').trim();
+        if (!trimmed) continue;
+        try {
+          items.push(JSON.parse(trimmed));
+        } catch {
+          items.push({ raw: trimmed });
+        }
+      }
+      res.writeHead(200, {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Content-Disposition': 'attachment; filename="improvements_log.json"',
+        'Cache-Control': 'no-store',
+      });
+      return res.end(JSON.stringify(items, null, 2));
+    } catch (e) {
+      return send(res, 500, { error: e.message });
+    }
+  }
+
   if (req.method === 'GET' && p === '/api/harvest/download') {
     try {
       const harvestPath = path.join(APP_DIR, 'harvest.js');
