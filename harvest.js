@@ -221,7 +221,7 @@ function runHarvest(customOut, options = {}) {
   };
 }
 
-function computeStats(target) {
+function computeStats(target, filter) {
   let items = [];
   let logPath = null;
   if (Array.isArray(target)) {
@@ -236,23 +236,37 @@ function computeStats(target) {
     }
   }
 
+  const rawTotal = items.length;
+  const isFiltered = !!(filter && (filter.status || filter.bot || filter.query || (typeof filter.limit === 'number' && filter.limit > 0)));
+  if (isFiltered) {
+    items = filterKnowledge(items, filter);
+  }
+
   const byStatus = {};
   const byBot = {};
   const total = items.length;
+  const scores = [];
   for (const item of items) {
     const st = item.status || 'unknown';
     byStatus[st] = (byStatus[st] || 0) + 1;
     const bot = item.bot || 'unknown';
     byBot[bot] = (byBot[bot] || 0) + 1;
+    if (typeof item.score === 'number' && Number.isFinite(item.score)) {
+      scores.push(item.score);
+    }
   }
   const keepCount = (byStatus['keep'] || 0) + (byStatus['keep-merged'] || 0);
   const discardCount = (byStatus['discard'] || 0) + (byStatus['no-change'] || 0) + (byStatus['duplicate'] || 0);
   const conflictCount = byStatus['conflict'] || 0;
   const errorCount = (byStatus['crash'] || 0) + (byStatus['error'] || 0);
   const keepRate = total > 0 ? Number(((keepCount / total) * 100).toFixed(1)) : 0;
+  const bestScore = scores.length > 0 ? Math.max(...scores) : null;
+  const avgScore = scores.length > 0 ? Number((scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2)) : null;
 
   return {
     total,
+    rawTotal,
+    filtered: isFiltered,
     byStatus,
     byBot,
     keepCount,
@@ -260,6 +274,9 @@ function computeStats(target) {
     conflictCount,
     errorCount,
     keepRate,
+    bestScore,
+    avgScore,
+    scoreCount: scores.length,
     logPath,
   };
 }
@@ -359,7 +376,7 @@ if (require.main === module) {
     console.log(`Sử dụng:
   node harvest.js              Gom kết quả các phiên swarm vào knowledge/improvements_log.jsonl
   node harvest.js --list       Xem danh sách các dòng tri thức trong terminal
-  node harvest.js --stats, -s  Xem thống kê chi tiết các lượt và tỷ lệ keep trong knowledge log
+  node harvest.js --stats, -s  Xem thống kê chi tiết các lượt và tỷ lệ keep trong knowledge log (hỗ trợ kèm -q, --status, --bot)
   node harvest.js --query, -q <keyword>  Lọc theo từ khóa (feature, commit, bot, status, note)
   node harvest.js --status <st> Lọc theo trạng thái (keep, discard, conflict, error, committed)
   node harvest.js --bot <name> Lọc theo tên bot/agent
@@ -395,13 +412,23 @@ if (require.main === module) {
 
   const isJson = args.includes('--json');
   if (args.includes('--stats') || args.includes('-s')) {
-    const stats = computeStats();
+    const stats = computeStats(null, filterOpts);
     if (isJson) {
       console.log(JSON.stringify(stats, null, 2));
     } else {
       console.log(`Knowledge Log: ${stats.logPath || getOutPath()}`);
+      if (stats.filtered) {
+        const filterParts = [];
+        if (queryOpt) filterParts.push(`query="${queryOpt}"`);
+        if (statusOpt) filterParts.push(`status=${statusOpt}`);
+        if (botOpt) filterParts.push(`bot=${botOpt}`);
+        console.log(`(Đã lọc: ${stats.total}/${stats.rawTotal} dòng${filterParts.length ? ` [${filterParts.join(', ')}]` : ''})`);
+      }
       console.log(`Tổng số dòng: ${stats.total}`);
       console.log(`Tỷ lệ keep: ${stats.keepRate}% (keep: ${stats.keepCount}, discard: ${stats.discardCount}, conflict: ${stats.conflictCount}, error: ${stats.errorCount})`);
+      if (stats.bestScore !== null) {
+        console.log(`Điểm số: cao nhất = ${stats.bestScore}, trung bình = ${stats.avgScore} (${stats.scoreCount} lượt có điểm)`);
+      }
       console.log('Theo trạng thái:');
       for (const [st, c] of Object.entries(stats.byStatus)) {
         console.log(`  - ${st}: ${c}`);
