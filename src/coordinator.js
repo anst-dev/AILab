@@ -226,6 +226,12 @@ class Coordinator extends EventEmitter {
           const r = await this.ops.stats();
           return { type, ok: true, info: true, text: `Thống kê tri thức: ${r.total} dòng, tỷ lệ keep ${r.keepRate}%`, data: r };
         }
+        case 'export_harvest': {
+          const fmt = String(a.format || 'json').toLowerCase();
+          const isCsv = fmt === 'csv';
+          const r = isCsv ? await this.ops.exportHarvestCsv() : await this.ops.exportHarvestJson();
+          return { type, ok: true, info: true, text: `xuất tri thức ${fmt.toUpperCase()}`, data: r };
+        }
         case 'list_runs':
           return { type, ok: true, info: true, text: 'danh sách các phiên', data: this.ops.listRuns() };
         case 'catalog':
@@ -334,6 +340,7 @@ Actions:
 - {"type":"diff","id":"<run id>","stat":true|false} view cumulative git diff of changes made in the run
 - {"type":"harvest"}                    harvest/aggregate all run results and git logs into knowledge/improvements_log.jsonl
 - {"type":"stats"}                      summary statistics of improvements_log.jsonl
+- {"type":"export_harvest","format":"csv"|"json"} export knowledge harvest log as CSV text or JSON object
 - {"type":"list_runs"}                  list recent and active swarm runs
 - {"type":"catalog"}                    list available agent CLIs and detection status
 - {"type":"set_agent_template","cli":"<id>","template":"... {prompt} ..."}   change how an agent CLI is launched

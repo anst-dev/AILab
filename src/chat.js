@@ -88,7 +88,8 @@ async function post(url, message) {
   node src/chat.js --log <id> [f], -L Xem log của agent/đánh giá trong phiên swarm (-L <id> [file])
   node src/chat.js --stop <id>, -k   Dừng một phiên swarm đang chạy (--graceful để chờ vòng hiện tại) (-k <id>)
   node src/chat.js --merge <id>, -m  Merge nhánh của phiên đã dừng vào nhánh gốc của dự án (-m <id>)
-  node src/chat.js --export <id> [f] Xuất kết quả phiên swarm ra file CSV/JSON (hoặc in ra terminal) (-e <id>)
+  node src/chat.js --export <id|harvest> [f] Xuất kết quả phiên swarm hoặc tri thức ra file CSV/JSON (-e)
+  node src/chat.js --export-harvest [f], -E  Xuất toàn bộ kho tri thức ra file CSV/JSON (-E [file])
   node src/chat.js --rebaseline <id> Chấm lại baseline cho một phiên đang chạy (-r <id>)
   node src/chat.js --harvest, -H     Gom kết quả các phiên swarm vào knowledge/improvements_log.jsonl
   node src/chat.js --stats, -S       Xem thống kê tổng hợp từ kho tri thức improvements_log.jsonl (-S)
@@ -404,16 +405,12 @@ async function post(url, message) {
     return;
   }
 
-  const exportIdx = args.indexOf('--export') !== -1 ? args.indexOf('--export') : args.indexOf('-e');
-  if (exportIdx !== -1) {
-    const runId = args[exportIdx + 1];
-    if (!runId || runId.startsWith('-')) {
-      throw new Error('Vui lòng chỉ định ID phiên cần export: node src/chat.js --export <id> [file.csv|file.json]');
-    }
-    const outFile = args[exportIdx + 2] && !args[exportIdx + 2].startsWith('-') ? args[exportIdx + 2] : null;
+  const expHarvIdx = args.indexOf('--export-harvest') !== -1 ? args.indexOf('--export-harvest') : args.indexOf('-E');
+  if (expHarvIdx !== -1) {
+    const outFile = args[expHarvIdx + 1] && !args[expHarvIdx + 1].startsWith('-') ? args[expHarvIdx + 1] : null;
     const isJson = (outFile && outFile.endsWith('.json')) || args.includes('--json');
     const endpoint = isJson ? 'export.json' : 'export.csv';
-    const r = await fetch(`${url}/api/runs/${encodeURIComponent(runId)}/${endpoint}`);
+    const r = await fetch(`${url}/api/harvest/${endpoint}`);
     if (!r.ok) {
       const errText = await r.text();
       let msg = errText;
@@ -421,12 +418,45 @@ async function post(url, message) {
         const j = JSON.parse(errText);
         if (j.error) msg = j.error;
       } catch {}
-      throw new Error(msg || `Lỗi khi export ${isJson ? 'JSON' : 'CSV'} phiên ${runId} (HTTP ${r.status})`);
+      throw new Error(msg || `Lỗi khi xuất ${isJson ? 'JSON' : 'CSV'} kho tri thức (HTTP ${r.status})`);
     }
     const outData = await r.text();
     if (outFile) {
       fs.writeFileSync(outFile, outData, 'utf8');
-      console.log(`Đã lưu kết quả phiên ${runId} ra file: ${outFile}`);
+      console.log(`Đã lưu kho tri thức ra file: ${outFile}`);
+    } else {
+      process.stdout.write(outData);
+    }
+    return;
+  }
+
+  const exportIdx = args.indexOf('--export') !== -1 ? args.indexOf('--export') : args.indexOf('-e');
+  if (exportIdx !== -1) {
+    const runId = args[exportIdx + 1];
+    if (!runId || runId.startsWith('-')) {
+      throw new Error('Vui lòng chỉ định ID phiên hoặc "harvest" cần export: node src/chat.js --export <id|harvest> [file.csv|file.json]');
+    }
+    const outFile = args[exportIdx + 2] && !args[exportIdx + 2].startsWith('-') ? args[exportIdx + 2] : null;
+    const isJson = (outFile && outFile.endsWith('.json')) || args.includes('--json');
+    const endpoint = isJson ? 'export.json' : 'export.csv';
+    const isKnowledge = runId.toLowerCase() === 'knowledge' || runId.toLowerCase() === 'harvest';
+    const targetUrl = isKnowledge
+      ? `${url}/api/harvest/${endpoint}`
+      : `${url}/api/runs/${encodeURIComponent(runId)}/${endpoint}`;
+    const r = await fetch(targetUrl);
+    if (!r.ok) {
+      const errText = await r.text();
+      let msg = errText;
+      try {
+        const j = JSON.parse(errText);
+        if (j.error) msg = j.error;
+      } catch {}
+      throw new Error(msg || `Lỗi khi export ${isJson ? 'JSON' : 'CSV'} ${isKnowledge ? 'kho tri thức' : `phiên ${runId}`} (HTTP ${r.status})`);
+    }
+    const outData = await r.text();
+    if (outFile) {
+      fs.writeFileSync(outFile, outData, 'utf8');
+      console.log(`Đã lưu kết quả ${isKnowledge ? 'kho tri thức' : `phiên ${runId}`} ra file: ${outFile}`);
     } else {
       process.stdout.write(outData);
     }

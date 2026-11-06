@@ -383,6 +383,32 @@ const coordinator = new Coordinator({
       const logPath = typeof harvestMod.getOutPath === 'function' ? harvestMod.getOutPath() : path.join(APP_DIR, 'knowledge', 'improvements_log.jsonl');
       return harvestMod.computeStats(logPath);
     },
+    exportHarvestCsv: async () => {
+      const harvestPath = path.join(APP_DIR, 'harvest.js');
+      const harvestMod = fs.existsSync(harvestPath) ? require(harvestPath) : null;
+      const logPath = harvestMod && typeof harvestMod.getOutPath === 'function'
+        ? harvestMod.getOutPath()
+        : path.join(APP_DIR, 'knowledge', 'improvements_log.jsonl');
+      if (!fs.existsSync(logPath)) throw new Error('Chưa có file improvements_log.jsonl. Hãy bấm gom log trước.');
+      const raw = fs.readFileSync(logPath, 'utf8').split('\n');
+      return knowledgeCsv(raw);
+    },
+    exportHarvestJson: async () => {
+      const harvestPath = path.join(APP_DIR, 'harvest.js');
+      const harvestMod = fs.existsSync(harvestPath) ? require(harvestPath) : null;
+      const logPath = harvestMod && typeof harvestMod.getOutPath === 'function'
+        ? harvestMod.getOutPath()
+        : path.join(APP_DIR, 'knowledge', 'improvements_log.jsonl');
+      if (!fs.existsSync(logPath)) throw new Error('Chưa có file improvements_log.jsonl. Hãy bấm gom log trước.');
+      const raw = fs.readFileSync(logPath, 'utf8').split('\n');
+      const items = [];
+      for (const line of raw) {
+        const trimmed = (line || '').replace(/\r$/, '').trim();
+        if (!trimmed) continue;
+        try { items.push(JSON.parse(trimmed)); } catch { items.push({ raw: trimmed }); }
+      }
+      return items;
+    },
   },
 });
 coordinator.on('message', (m) => sse('chat', m));
