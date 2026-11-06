@@ -138,6 +138,9 @@ button.big { padding: 10px 26px; font-size: 15px; }
 
 .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 14px 0 20px; }
 .tile { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; }
+.tile.clickable { cursor: pointer; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+.tile.clickable:hover { border-color: var(--accent); }
+.tile.clickable.active { border-color: var(--accent); background: var(--panel-2); box-shadow: 0 0 0 1px var(--accent); }
 .tile .k { font-size: 12px; color: var(--muted); }
 .tile .v { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .tile .d { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

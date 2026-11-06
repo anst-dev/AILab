@@ -13,6 +13,7 @@ const state = {
   snap: null,
   gitKey: '',
   log: null, // { file, title }
+  resultFilter: 'all',
 };
 
 const store = {
@@ -365,33 +366,55 @@ function renderRun() {
   if (s.opts.evalMode === 'score') {
     const base = s.results.find((r) => r.status === 'baseline');
     const delta = s.best && base && base.score != null ? s.best.score - base.score : null;
-    tiles.push(['Best ' + (s.opts.direction === 'min' ? '(thấp là tốt)' : '(cao là tốt)'), s.best ? s.best.score : '—', s.best ? `${s.best.desc}${delta !== null ? ` · Δ ${delta > 0 ? '+' : ''}${+delta.toFixed(6)}` : ''}` : 'chưa có']);
+    tiles.push(['Best ' + (s.opts.direction === 'min' ? '(thấp là tốt)' : '(cao là tốt)'), s.best ? s.best.score : '—', s.best ? `${s.best.desc}${delta !== null ? ` · Δ ${delta > 0 ? '+' : ''}${+delta.toFixed(6)}` : ''}` : 'chưa có', 'keep']);
   }
-  tiles.push(['Được giữ', cnt('keep'), 'đã merge vào nhánh trung tâm']);
-  tiles.push(['Bị loại / không đổi', cnt('discard') + cnt('no-change') + cnt('duplicate'), '']);
-  tiles.push(['Xung đột', cnt('conflict'), 'thay đổi đè lên nhau']);
-  tiles.push(['Lỗi', cnt('crash') + cnt('error'), '']);
-  tiles.push(['Thời gian', dur(end - s.startedAt), `${rows.length} lượt`]);
-  $('tiles').innerHTML = tiles.map(([k, v, d]) => `<div class="tile"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div><div class="d" title="${esc(d)}">${esc(d)}</div></div>`).join('');
+  tiles.push(['Được giữ', cnt('keep'), 'đã merge vào nhánh trung tâm', 'keep']);
+  tiles.push(['Bị loại / không đổi', cnt('discard') + cnt('no-change') + cnt('duplicate'), '', 'discard']);
+  tiles.push(['Xung đột', cnt('conflict'), 'thay đổi đè lên nhau', 'conflict']);
+  tiles.push(['Lỗi', cnt('crash') + cnt('error'), '', 'crash']);
+  tiles.push(['Thời gian', dur(end - s.startedAt), `${rows.length} lượt`, 'all']);
+
+  const curFilter = state.resultFilter || 'all';
+  $('tiles').innerHTML = tiles.map(([k, v, d, fk]) => `<div class="tile clickable${curFilter === fk && fk !== 'all' ? ' active' : ''}" data-filter="${fk}" title="Nhấn để lọc theo ${esc(k)}"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div><div class="d" title="${esc(d)}">${esc(d)}</div></div>`).join('');
+  $('tiles').querySelectorAll('.tile[data-filter]').forEach((el) => {
+    el.addEventListener('click', () => {
+      const f = el.dataset.filter;
+      state.resultFilter = state.resultFilter === f && f !== 'all' ? 'all' : f;
+      renderRun();
+    });
+  });
 
   renderScoreChart();
   renderAgents();
 
+  if ($('resultFilter')) $('resultFilter').value = curFilter;
+
+  const filtered = s.results
+    .map((r, i) => ({ r, i }))
+    .filter(({ r }) => {
+      if (curFilter === 'all') return true;
+      if (curFilter === 'keep') return r.status === 'keep' || r.status === 'keep-merged';
+      if (curFilter === 'discard') return r.status === 'discard' || r.status === 'no-change' || r.status === 'duplicate';
+      if (curFilter === 'conflict') return r.status === 'conflict';
+      if (curFilter === 'crash') return r.status === 'crash' || r.status === 'error';
+      return r.status === curFilter;
+    });
+
   $('resultRows').innerHTML =
-    s.results
+    filtered
       .slice()
       .reverse()
       .map(
-        (r, i) => `<tr class="${r.log ? 'clickable' : ''}" data-i="${s.results.length - 1 - i}">
+        ({ r, i }) => `<tr class="${r.log ? 'clickable' : ''}" data-i="${i}">
           <td class="mono">${time(r.t)}</td><td>${esc(r.agent)}</td><td>${r.iter || ''}</td>
           <td>${badge(RESULT_STATUS, r.status)}</td><td class="mono">${r.score == null ? '' : esc(r.score)}</td>
           <td class="mono">${esc(r.commit)}</td><td>${esc(r.desc)}</td></tr>`
       )
-      .join('') || '<tr><td colspan="7" class="muted">Chưa có lượt nào hoàn thành.</td></tr>';
+      .join('') || `<tr><td colspan="7" class="muted">${curFilter === 'all' ? 'Chưa có lượt nào hoàn thành.' : 'Không có lượt nào khớp bộ lọc.'}</td></tr>`;
   $('resultRows').querySelectorAll('tr.clickable').forEach((tr) =>
     tr.addEventListener('click', () => {
       const r = s.results[Number(tr.dataset.i)];
-      openLog(r.log, `${r.agent} lượt ${r.iter}`);
+      if (r) openLog(r.log, `${r.agent} lượt ${r.iter}`);
     })
   );
 
@@ -747,6 +770,13 @@ function init() {
   $('newForm').addEventListener('submit', startRun);
   $('btnInspect').addEventListener('click', inspectWorkspace);
   $('workspace').addEventListener('change', inspectWorkspace);
+  const resFilter = $('resultFilter');
+  if (resFilter) {
+    resFilter.addEventListener('change', () => {
+      state.resultFilter = resFilter.value;
+      if (state.snap) renderRun();
+    });
+  }
   $('navNew').addEventListener('click', showNew);
   $('navChat').addEventListener('click', showChat);
   $('chatForm').addEventListener('submit', sendChat);
