@@ -159,6 +159,8 @@ button.big { padding: 10px 26px; font-size: 15px; }
 .score-chart .ct { font: 10px var(--mono); fill: var(--muted); }
 .score-chart .cp { stroke: var(--panel); stroke-width: 1; cursor: pointer; transition: r 0.15s ease, stroke-width 0.15s ease; }
 .score-chart .cp:hover { stroke: var(--text); stroke-width: 2; r: 6; }
+.score-chart .cp.active { stroke: #fff; stroke-width: 2.5; r: 6.5; }
+tr.highlight-row { background: rgba(96, 165, 250, 0.22) !important; }
 
 .agents-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
 .agent { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; cursor: pointer; }

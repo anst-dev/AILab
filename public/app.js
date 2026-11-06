@@ -415,10 +415,24 @@ function renderRun() {
           <td class="mono">${esc(r.commit)}</td><td>${esc(r.desc)}</td></tr>`
       )
       .join('') || `<tr><td colspan="7" class="muted">${curFilter === 'all' ? 'Chưa có lượt nào hoàn thành.' : 'Không có lượt nào khớp bộ lọc.'}</td></tr>`;
-  $('resultRows').querySelectorAll('tr.clickable').forEach((tr) =>
+  $('resultRows').querySelectorAll('tr[data-i]').forEach((tr) =>
     tr.addEventListener('click', () => {
-      const r = s.results[Number(tr.dataset.i)];
-      if (r) openLog(r.log, `${r.agent} lượt ${r.iter}`);
+      const origIdx = Number(tr.dataset.i);
+      const r = s.results[origIdx];
+      if (!r) return;
+      document.querySelectorAll('#resultRows tr.highlight-row').forEach((row) => row.classList.remove('highlight-row'));
+      tr.classList.add('highlight-row');
+      const detail = $('chartDetail');
+      if (detail && r.score != null) {
+        const basePt = (s.results || []).find((b) => b.status === 'baseline');
+        const deltaStr = basePt && basePt.score != null && r.status !== 'baseline'
+          ? ` · Δ ${r.score - basePt.score > 0 ? '+' : ''}${+(r.score - basePt.score).toFixed(4)}`
+          : '';
+        const commitStr = r.commit ? ` · commit ${r.commit.slice(0, 7)}` : '';
+        const descStr = r.desc ? ` · ${r.desc}` : '';
+        detail.textContent = `Lượt #${r.iter || 0} · ${r.agent || '—'} · điểm: ${r.score}${deltaStr} (${r.status})${commitStr}${descStr}`;
+      }
+      if (r.log) openLog(r.log, `${r.agent} lượt ${r.iter}`);
     })
   );
 
@@ -456,6 +470,7 @@ function renderScoreChart() {
   const card = $('chartCard');
   const svg = $('scoreChart');
   const empty = $('chartEmpty');
+  const detail = $('chartDetail');
   const s = state.snap;
   if (!svg || !s) return;
   if (card) {
@@ -466,6 +481,7 @@ function renderScoreChart() {
   if (!pts.length) {
     svg.innerHTML = '';
     if (empty) empty.hidden = false;
+    if (detail) detail.textContent = '';
     return;
   }
   if (empty) empty.hidden = true;
@@ -522,16 +538,28 @@ function renderScoreChart() {
     return isKeepA - isKeepB;
   });
 
-  for (let i = 0; i < sortedPts.length; i++) {
-    const p = sortedPts[i];
-    const color = CHART_COLORS[p.status] || '#ff5f56';
+  const formatDetail = (p) => {
+    if (!p) return '';
     const who = p.agent || '—';
-    const cx = x(p.iter || 0).toFixed(1);
-    const cy = y(p.score).toFixed(1);
     const deltaStr = basePt && basePt.score != null && p.status !== 'baseline'
       ? ` · Δ ${p.score - basePt.score > 0 ? '+' : ''}${+(p.score - basePt.score).toFixed(4)}`
       : '';
-    const tip = `#${p.iter || 0} · ${who} · điểm: ${p.score}${deltaStr} (${p.status})${p.desc ? ' · ' + p.desc : ''}${p.log ? ' (click để xem log)' : ''}`;
+    const commitStr = p.commit ? ` · commit ${p.commit.slice(0, 7)}` : '';
+    const descStr = p.desc ? ` · ${p.desc}` : '';
+    return `Lượt #${p.iter || 0} · ${who} · điểm: ${p.score}${deltaStr} (${p.status})${commitStr}${descStr}`;
+  };
+
+  if (detail && !detail.dataset.pinned) {
+    const lastPt = sortedPts[sortedPts.length - 1];
+    detail.textContent = lastPt ? formatDetail(lastPt) : '';
+  }
+
+  for (let i = 0; i < sortedPts.length; i++) {
+    const p = sortedPts[i];
+    const color = CHART_COLORS[p.status] || '#ff5f56';
+    const cx = x(p.iter || 0).toFixed(1);
+    const cy = y(p.score).toFixed(1);
+    const tip = formatDetail(p) + (p.log ? ' (click để xem log)' : '');
     parts.push(
       `<circle cx="${cx}" cy="${cy}" r="4" fill="${color}" class="cp" data-pt-idx="${i}">` +
         `<title>${esc(tip)}</title>` +
@@ -541,8 +569,33 @@ function renderScoreChart() {
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
   svg.innerHTML = parts.join('');
   svg.querySelectorAll('circle[data-pt-idx]').forEach((el) => {
+    const idx = Number(el.dataset.ptIdx);
+    const p = sortedPts[idx];
+    el.addEventListener('mouseenter', () => {
+      if (detail && !detail.dataset.pinned) detail.textContent = formatDetail(p);
+    });
+    el.addEventListener('mouseleave', () => {
+      if (detail && !detail.dataset.pinned) {
+        const lastPt = sortedPts[sortedPts.length - 1];
+        detail.textContent = lastPt ? formatDetail(lastPt) : '';
+      }
+    });
     el.addEventListener('click', () => {
-      const p = sortedPts[Number(el.dataset.ptIdx)];
+      svg.querySelectorAll('circle.active').forEach((c) => c.classList.remove('active'));
+      el.classList.add('active');
+      if (detail) {
+        detail.textContent = formatDetail(p);
+        detail.dataset.pinned = 'true';
+      }
+      const origIdx = (s.results || []).indexOf(p);
+      if (origIdx >= 0) {
+        const tr = document.querySelector(`#resultRows tr[data-i="${origIdx}"]`);
+        if (tr) {
+          document.querySelectorAll('#resultRows tr.highlight-row').forEach((row) => row.classList.remove('highlight-row'));
+          tr.classList.add('highlight-row');
+          tr.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }
       if (p && p.log) openLog(p.log, `${p.agent || 'baseline'} lượt ${p.iter || 0}`);
     });
   });
