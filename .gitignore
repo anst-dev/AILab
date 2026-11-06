@@ -1,0 +1,7 @@
+﻿node_modules/
+logs/
+agent-swarm/data/
+# nested git repos
+adb-shot-demo/
+android-mcp/
+autoresearch/
