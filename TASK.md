@@ -14,7 +14,7 @@ theo thứ tự ưu tiên, sao cho `node evaluate.js` vẫn PASS (app phải ch�
    best commit hiện tại, cập nhật best mới (điểm có thể khác khi rubric/command đổi).
 3. [ ] **Export CSV** — route GET `/api/runs/:id/export.csv` trả results.tsv dạng CSV
    (cột time,agent,iter,commit,score,status,description; escape dấu phẩy bằng dấu ").
-4. [ ] **UI biểu đồ điểm** — public/app.js + index.html: trong tab phiên đang chạy, vẽ biểu đồ
+4. [x] **UI biểu đồ điểm** — public/app.js + index.html: trong tab phiên đang chạy, vẽ biểu đồ
    điểm theo vòng (SVG inline, trục X = iter, Y = score, điểm keep màu xanh, discard đỏ).
    Không thêm thư viện ngoài.
 5. [ ] **RENDER_CACHE passthrough** — swarm.js: tùy chọn `envExtra` (object) trong
