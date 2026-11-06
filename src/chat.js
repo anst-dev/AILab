@@ -72,8 +72,26 @@ async function post(url, message) {
 }
 
 (async () => {
+  const args = process.argv.slice(2);
+  if (args.includes('--help') || args.includes('-h')) {
+    console.log(`Sử dụng:
+  node src/chat.js "lệnh/tin nhắn"    Gửi tin nhắn một lần tới điều phối viên và in phản hồi
+  node src/chat.js                   Mở chế độ chat tương tác (Ctrl+C để thoát)
+  node src/chat.js --clear           Xóa lịch sử trò chuyện của điều phối viên
+  node src/chat.js --help, -h        Hiện hướng dẫn này`);
+    return;
+  }
+
   const url = await serverUrl();
-  const oneShot = process.argv.slice(2).join(' ').trim();
+
+  if (args.includes('--clear')) {
+    const r = await fetch(`${url}/api/chat/clear`, { method: 'POST' });
+    if (!r.ok) throw new Error('Không thể xóa lịch sử chat.');
+    console.log('Đã xóa toàn bộ lịch sử trò chuyện.');
+    return;
+  }
+
+  const oneShot = args.join(' ').trim();
 
   if (oneShot) {
     let sentId = Infinity;
