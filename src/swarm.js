@@ -77,6 +77,8 @@ function normalizeOptions(raw, catalog) {
   o.protectedFiles = splitList(raw.protectedFiles);
   o.maxIterations = Math.floor(num(raw.maxIterations, 0, 0, 100000));
   o.maxDurationMin = num(raw.maxDurationMin, 0, 0, 100000);
+  // Circuit breaker (bài học trực đêm 06/11: agy hết token quay 1,491 vòng no-change vô nghĩa)
+  o.noChangeLimit = Math.floor(num(raw.noChangeLimit, 15, 0, 100000));
   o.staggerSec = num(raw.staggerSec, 3, 0, 600);
   o.keepWorktrees = !!raw.keepWorktrees;
   o.extraInstructions = String(raw.extraInstructions || '').trim();
@@ -129,6 +131,7 @@ class SwarmRun extends EventEmitter {
     this.mergedBack = null;
     this._emitTimer = null;
     this._saveTimer = null;
+    this._noChangeStreak = 0; // circuit breaker: đếm vòng liên tiếp không ra kết quả gì
   }
 
   // ----- bookkeeping -------------------------------------------------------
@@ -224,6 +227,20 @@ class SwarmRun extends EventEmitter {
         [new Date(row.t).toISOString(), row.agent, iter, row.commit, row.score === null ? '' : row.score, row.status, clean(row.desc)].join('\t') + '\n'
       );
     } catch {}
+    // Circuit breaker: no-change/error/crash liên tục = agent hết token/lỗi hệ thống.
+    // Mọi vòng ra kết quả thật (keep/discard/conflict/...) thì reset. Chạm ngưỡng → dừng graceful.
+    const lim = this.opts.noChangeLimit;
+    if (lim > 0 && this.status === 'running') {
+      if (row.status === 'no-change' || row.status === 'crash') {
+        this._noChangeStreak++;
+        if (this._noChangeStreak >= lim) {
+          this.info(`Circuit breaker: ${this._noChangeStreak} vòng liên tiếp không ra kết quả (agent hết token?) → dừng phiên.`, 'error');
+          this.stop('graceful');
+        }
+      } else if (row.status !== 'baseline' && row.status !== 'stopped') {
+        this._noChangeStreak = 0;
+      }
+    }
     this.changed();
     return row;
   }

@@ -1,4 +1,6 @@
-# Agent Swarm
+# Agent Swarm — AI Lab
+
+> **App này tự cải tiến chính nó.** 72 lượt keep trong ~24 giờ chạy 6 bot (3 agy CLI + 3 bot ZCode), toàn bộ lịch sử trong `knowledge/improvements_log.jsonl` (4,600+ dòng) và git history. Biểu đồ điểm, Export CSV, Re-baseline, publishCommand, envExtra, Knowledge viewer, Harvest, gần 20 lệnh chat CLI — đều là các tính năng **bot tự viết rồi tự merge**.
 
 App điều phối **nhiều agent CLI** (Claude Code, Codex, Gemini, Copilot, OpenCode…) cải tiến **liên tục** một dự án theo mô hình [karpathy/autoresearch](https://github.com/karpathy/autoresearch). Mô hình gốc chỉ có 1 agent, còn app này chạy song song **N agent** và dùng **git làm trung tâm** để các agent không giẫm chân nhau.
 
@@ -87,6 +89,30 @@ Agent điều phối là một CLI ở chế độ chỉ trả lời (`claude -p
 - **Cải thiện tối thiểu**: chỉ giữ khi điểm tốt hơn best ít nhất bằng giá trị này.
 - **Chỉ dẫn thêm**: tương tự `program.md` của autoresearch.
 - **Cấu hình agent** (menu trên cùng): sửa lệnh của từng CLI hoặc thêm CLI tuỳ chỉnh. `{prompt}` được thay bằng câu (đã kèm ngoặc kép) yêu cầu agent đọc file `.swarm_task.md`.
+
+## Tính năng do bot tự thêm (72 keep)
+
+**API:** `POST /api/runs/:id/rebaseline` (chấm lại best khi đổi rubric/command) · `GET /api/runs/:id/export.csv` (RFC4180, đọc cả results.tsv phiên cũ) · `export.json` + JSONL export · logs listing · git diff endpoint · `DELETE /api/runs/:id` · `/api/harvest` + status
+
+**Web UI:** SVG score chart realtime (baseline line, best highlight, legend filter, average line, click điểm → log, keyboard nav) · Export CSV / Re-baseline buttons · Knowledge viewer + tìm kiếm · Diff/log modal có copy · Harvest button + download · Delete run · Search filter sidebar · publishCommand/envExtra inputs trong cấu hình nâng cao
+
+**chat CLI:** `--status --stop --export --rebaseline --merge --runs --run --harvest --log --logs --catalog --knowledge --gitlog --diff --inspect --shutdown --delete --export-csv --export-json --stats` — điều khiển mọi thứ không cần mở web
+
+**Hạ tầng log:** `logImprovement()` tự append JSONL mỗi KEEP (cả 2 evalMode) · `harvest.js` gom results.tsv mọi phiên → JSONL (dedupe commit+iter+status, `--stats --dry-run --export-csv/--json/--jsonl`, lọc status/bot/query) · `postmerge.example.json` mẫu publishCommand
+
+## Labs kèm theo
+
+| Thư mục | Là gì |
+|---|---|
+| `lab-video/` | Lab làm video ngắn từ bài giảng: renderer 3 tầng "code-to-video" (code typing / sub pill / footage + CTA), rubric 38 mục có **Privacy Gate** (lộ người ngoài speaker = 0 điểm), auto-sync timing từ phụ đề, A/B hook, publish pack (FINAL + srt + poster) |
+| `lab-dev/` (repo này) | Workspace 6 bot tự cải tiến app — lịch sử trên nhánh `feat/autov1` + `autov1-swarm-live` |
+| `knowledge/` | `improvements_log.jsonl` (append-only) + `pitfalls.md` (20+ bài học) — dữ liệu train/đánh giá bot sau này |
+
+## Lộ trình (bài học từ 47 lượt discard)
+
+- **Circuit breaker**: N vòng no-change liên tiếp (agent hết token) → tự dừng phiên — tránh 1,491 vòng quay vô nghĩa như đợt trực đêm đầu tiên
+- Persist runs index qua restart (sidebar hiện lại các phiên cũ từ results.tsv)
+- UI hiển thị Knowledge viewer theo từ khóa đã có server-side — mở rộng tìm kiếm ngữ nghĩa
 
 | CLI | Lệnh mặc định |
 |---|---|
