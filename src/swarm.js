@@ -228,6 +228,11 @@ class SwarmRun extends EventEmitter {
     return row;
   }
 
+  /** Xuất kết quả phiên results.tsv dạng CSV (cột time,agent,iter,commit,score,status,description; escape theo RFC 4180). */
+  exportCsv() {
+    return exportCsv(this);
+  }
+
   gitEnv(agent) {
     const name = agent ? `${agent.name} (${agent.cli})` : 'agent-swarm';
     return {
@@ -870,4 +875,39 @@ ${o.extraInstructions ? `\n## Additional instructions\n\n${o.extraInstructions}\
   }
 }
 
-module.exports = { SwarmRun, normalizeOptions, TASK_FILE, NOTE_FILE };
+/** Value → CSV field: chứa dấu phẩy, dấu " hoặc xuống dòng → bọc " và escape " thành "". */
+function csvField(v) {
+  const s = v === null || v === undefined ? '' : String(v);
+  return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+/** Chuyển kết quả (đối tượng SwarmRun, chuỗi TSV, hoặc mảng kết quả) sang định dạng CSV. */
+function exportCsv(target) {
+  if (typeof target === 'string') {
+    const lines = target.split(/\r?\n/).filter((l) => l.length);
+    return lines.map((l) => l.split('\t').map(csvField).join(',')).join('\r\n') + '\r\n';
+  }
+  if (Array.isArray(target)) {
+    const lines = ['time,agent,iter,commit,score,status,description'];
+    for (const r of target) {
+      lines.push(
+        [new Date(r.t).toISOString(), r.agent, r.iter, r.commit, r.score === null || r.score === undefined ? '' : r.score, r.status, r.desc]
+          .map(csvField)
+          .join(',')
+      );
+    }
+    return lines.join('\r\n') + '\r\n';
+  }
+  if (target && typeof target === 'object') {
+    const tsvPath = target.runDir ? path.join(target.runDir, 'results.tsv') : null;
+    if (tsvPath && fs.existsSync(tsvPath)) {
+      return exportCsv(fs.readFileSync(tsvPath, 'utf8'));
+    }
+    if (Array.isArray(target.results)) {
+      return exportCsv(target.results);
+    }
+  }
+  return 'time,agent,iter,commit,score,status,description\r\n';
+}
+
+module.exports = { SwarmRun, normalizeOptions, TASK_FILE, NOTE_FILE, exportCsv };

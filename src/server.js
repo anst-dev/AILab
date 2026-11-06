@@ -379,7 +379,7 @@ async function handle(req, res) {
     const run = runs.get(id);
     let csv = null;
     if (run) {
-      csv = resultsCsv(run.results);
+      csv = typeof run.exportCsv === 'function' ? run.exportCsv() : resultsCsv(run.results);
     } else {
       // phiên cũ không còn trong bộ nhớ: đọc lại results.tsv trên đĩa nếu có
       const roots = [];
