@@ -77,12 +77,31 @@ async function post(url, message) {
     console.log(`Sử dụng:
   node src/chat.js "lệnh/tin nhắn"    Gửi tin nhắn một lần tới điều phối viên và in phản hồi
   node src/chat.js                   Mở chế độ chat tương tác (Ctrl+C để thoát)
+  node src/chat.js --status, -s      Xem trạng thái server và các phiên swarm đang chạy
   node src/chat.js --clear           Xóa lịch sử trò chuyện của điều phối viên
   node src/chat.js --help, -h        Hiện hướng dẫn này`);
     return;
   }
 
   const url = await serverUrl();
+
+  if (args.includes('--status') || args.includes('-s')) {
+    const health = await fetch(`${url}/api/health`).then((r) => r.json()).catch(() => null);
+    const runsList = await fetch(`${url}/api/runs`).then((r) => r.json()).catch(() => []);
+    console.log(`Server: ${url} (PID: ${health ? health.pid : '?'})`);
+    const live = runsList.filter((r) => r.live);
+    if (!live.length) {
+      console.log('Không có phiên swarm nào đang chạy.');
+    } else {
+      console.log(`Đang chạy ${live.length} phiên:`);
+      for (const r of live) {
+        const bestScore = r.best && r.best.score != null ? r.best.score : '—';
+        console.log(`  - [${r.id}] ${r.status} | agents: ${r.agents} | giữ: ${r.kept}/${r.total} | best: ${bestScore}`);
+        if (r.requirement) console.log(`    Yêu cầu: ${r.requirement}`);
+      }
+    }
+    return;
+  }
 
   if (args.includes('--clear')) {
     const r = await fetch(`${url}/api/chat/clear`, { method: 'POST' });
