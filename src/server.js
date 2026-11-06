@@ -415,13 +415,13 @@ const coordinator = new Coordinator({
       if (typeof harvestMod.runHarvest !== 'function') throw new Error('harvest.js không có hàm runHarvest.');
       return harvestMod.runHarvest();
     },
-    stats: async () => {
+    stats: async (filterOpts) => {
       const harvestPath = path.join(APP_DIR, 'harvest.js');
       if (!fs.existsSync(harvestPath)) throw new Error('Không tìm thấy file harvest.js.');
       const harvestMod = require(harvestPath);
       if (typeof harvestMod.computeStats !== 'function') throw new Error('harvest.js không có hàm computeStats.');
       const logPath = typeof harvestMod.getOutPath === 'function' ? harvestMod.getOutPath() : path.join(APP_DIR, 'knowledge', 'improvements_log.jsonl');
-      return harvestMod.computeStats(logPath);
+      return harvestMod.computeStats(logPath, filterOpts);
     },
     exportHarvestCsv: async (filterOpts = {}) => {
       const harvestPath = path.join(APP_DIR, 'harvest.js');
@@ -603,23 +603,30 @@ async function handle(req, res) {
         return send(res, 200, { ok: true, exists: false, totalCount: 0, items: [], stats: null });
       }
       const lines = fs.readFileSync(logPath, 'utf8').split('\n').map((l) => l.trim()).filter(Boolean);
-      const query = (url.searchParams.get('query') || url.searchParams.get('q') || '').toLowerCase().trim();
-      let matchedLines = lines;
-      if (query) {
-        matchedLines = lines.filter((l) => l.toLowerCase().includes(query));
+      const query = (url.searchParams.get('query') || url.searchParams.get('q') || '').trim();
+      const status = (url.searchParams.get('status') || '').trim();
+      const bot = (url.searchParams.get('bot') || '').trim();
+      const filterOpts = { query, status, bot };
+
+      let parsedItems = [];
+      for (const line of lines) {
+        try { parsedItems.push(JSON.parse(line)); } catch { parsedItems.push({ raw: line }); }
       }
-      const items = [];
+      if (harvestMod && typeof harvestMod.filterKnowledge === 'function' && (query || status || bot)) {
+        parsedItems = harvestMod.filterKnowledge(parsedItems, filterOpts);
+      } else if (query) {
+        const q = query.toLowerCase();
+        parsedItems = parsedItems.filter((it) => (it.raw || JSON.stringify(it)).toLowerCase().includes(q));
+      }
+
       const limit = Math.max(1, Math.min(200, parseInt(url.searchParams.get('limit') || '50', 10) || 50));
-      const tail = matchedLines.slice(-limit);
-      for (const line of tail) {
-        try { items.push(JSON.parse(line)); } catch { items.push({ raw: line }); }
-      }
-      const stats = harvestMod && typeof harvestMod.computeStats === 'function' ? harvestMod.computeStats(logPath) : null;
+      const items = parsedItems.slice(-limit);
+      const stats = harvestMod && typeof harvestMod.computeStats === 'function' ? harvestMod.computeStats(logPath, filterOpts) : null;
       return send(res, 200, {
         ok: true,
         exists: true,
         totalCount: lines.length,
-        matchCount: matchedLines.length,
+        matchCount: parsedItems.length,
         outPath: logPath,
         items,
         stats,

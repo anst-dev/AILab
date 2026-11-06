@@ -42,6 +42,7 @@ theo thứ tự ưu tiên, sao cho `node evaluate.js` vẫn PASS (app phải ch�
 20. [x] **Tìm kiếm phiên & đếm kết quả trên Web UI** — thêm ô tìm kiếm phiên theo từ khóa ở sidebar, hiển thị số lượng kết quả đã lọc (Hiển thị X/Y) cho bảng các lượt và kho tri thức.
 21. [x] **Lọc thống kê và chỉ số điểm trong CLI harvest.js** — hỗ trợ lọc theo status, bot, query trong computeStats() và hiển thị điểm cao nhất / trung bình khi chạy harvest.js --stats.
 22. [x] **Lọc xuất tri thức & đồng bộ liên kết tải trên Web UI** — hỗ trợ lọc theo query/q, status, bot cho các API xuất (/api/harvest/export.csv, /api/harvest/export.json, /api/harvest/download) và cập nhật động liên kết tải CSV/JSON/JSONL theo bộ lọc tìm kiếm trên Web UI.
+23. [x] **Lọc thống kê tri thức trong coordinator & chat CLI** — hỗ trợ các tham số lọc (query/-q, status, bot) và hiển thị chỉ số điểm (bestScore, avgScore) trong action stats của coordinator và lệnh chat.js --stats.
 
 ## Luật
 

@@ -94,7 +94,7 @@ async function post(url, message) {
   node src/chat.js --export-harvest [f], -E  Xuất toàn bộ kho tri thức ra file CSV/JSON (-E [file])
   node src/chat.js --rebaseline <id> Chấm lại baseline cho một phiên đang chạy (-r <id>)
   node src/chat.js --harvest, -H     Gom kết quả các phiên swarm vào knowledge/improvements_log.jsonl
-  node src/chat.js --stats, -S       Xem thống kê tổng hợp từ kho tri thức improvements_log.jsonl (-S)
+  node src/chat.js --stats, -S       Xem thống kê tổng hợp từ kho tri thức (hỗ trợ kèm -q, --status, --bot) (-S)
   node src/chat.js --knowledge [n] [-q <query>], -K Xem các dòng tri thức đã gom (mặc định 20 dòng gần nhất, lọc -q) (-K [n] [-q <query>])
   node src/chat.js --clear           Xóa lịch sử trò chuyện của điều phối viên
   node src/chat.js --shutdown, -X    Tắt server điều phối agent-swarm (-X)
@@ -570,10 +570,20 @@ async function post(url, message) {
   const statsIdx = args.indexOf('--stats') !== -1 ? args.indexOf('--stats') : args.indexOf('-S');
   if (statsIdx !== -1) {
     const isJson = args.includes('--json');
-    const r = await fetch(`${url}/api/harvest?limit=1`);
+    const qIdx = args.indexOf('--query') !== -1 ? args.indexOf('--query') : args.indexOf('-q');
+    const query = qIdx !== -1 && args[qIdx + 1] && !args[qIdx + 1].startsWith('-') ? args[qIdx + 1].trim() : '';
+    const stIdx = args.indexOf('--status');
+    const status = stIdx !== -1 && args[stIdx + 1] && !args[stIdx + 1].startsWith('-') ? args[stIdx + 1].trim() : '';
+    const botIdx = args.indexOf('--bot');
+    const bot = botIdx !== -1 && args[botIdx + 1] && !args[botIdx + 1].startsWith('-') ? args[botIdx + 1].trim() : '';
+    const params = new URLSearchParams({ limit: '1' });
+    if (query) params.set('query', query);
+    if (status) params.set('status', status);
+    if (bot) params.set('bot', bot);
+    const r = await fetch(`${url}/api/harvest?${params.toString()}`);
     const j = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(j.error || `Lỗi khi lấy thống kê tri thức (HTTP ${r.status})`);
-    if (!j.exists || !j.stats || !j.stats.total) {
+    if (!j.exists || !j.stats || (j.stats.total === 0 && !j.stats.filtered)) {
       console.log('Kho tri thức (knowledge/improvements_log.jsonl) chưa có dữ liệu.');
       console.log('Chạy "node src/chat.js --harvest" để gom kết quả từ các phiên swarm.');
       return;
@@ -584,8 +594,19 @@ async function post(url, message) {
     }
     const s = j.stats;
     console.log(`Thống kê kho tri thức (${j.outPath || 'knowledge/improvements_log.jsonl'}):`);
-    console.log(`  Tổng số bản ghi: ${s.total}`);
+    if (s.filtered) {
+      const parts = [];
+      if (query) parts.push(`query="${query}"`);
+      if (status) parts.push(`status=${status}`);
+      if (bot) parts.push(`bot=${bot}`);
+      console.log(`  (Đã lọc: ${s.total}/${s.rawTotal} bản ghi${parts.length ? ` [${parts.join(', ')}]` : ''})`);
+    } else {
+      console.log(`  Tổng số bản ghi: ${s.total}`);
+    }
     console.log(`  Tỷ lệ keep:      ${s.keepRate}% (keep: ${s.keepCount}, discard: ${s.discardCount}, conflict: ${s.conflictCount}, error: ${s.errorCount})`);
+    if (s.bestScore !== null && s.bestScore !== undefined) {
+      console.log(`  Điểm số:         cao nhất = ${s.bestScore}${s.avgScore != null ? `, trung bình = ${s.avgScore}` : ''} (${s.scoreCount || 0} lượt có điểm)`);
+    }
     if (s.byStatus && Object.keys(s.byStatus).length > 0) {
       console.log('  Theo trạng thái:');
       for (const [st, c] of Object.entries(s.byStatus)) {
@@ -594,8 +615,8 @@ async function post(url, message) {
     }
     if (s.byBot && Object.keys(s.byBot).length > 0) {
       console.log('  Theo agent:');
-      for (const [bot, c] of Object.entries(s.byBot)) {
-        console.log(`    - ${bot}: ${c}`);
+      for (const [b, c] of Object.entries(s.byBot)) {
+        console.log(`    - ${b}: ${c}`);
       }
     }
     return;

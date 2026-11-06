@@ -255,8 +255,20 @@ class Coordinator extends EventEmitter {
           return { type, ok: true, text: `Đã gom kết quả (+${r.freshCount} dòng mới, tổng ${r.totalCount} dòng vào knowledge/improvements_log.jsonl)`, data: r };
         }
         case 'stats': {
-          const r = await this.ops.stats();
-          return { type, ok: true, info: true, text: `Thống kê tri thức: ${r.total} dòng, tỷ lệ keep ${r.keepRate}%`, data: r };
+          const filterOpts = {
+            query: typeof a.query === 'string' ? a.query.trim() : (typeof a.q === 'string' ? a.q.trim() : undefined),
+            status: typeof a.status === 'string' ? a.status.trim() : undefined,
+            bot: typeof a.bot === 'string' ? a.bot.trim() : undefined,
+            limit: a.limit ? parseInt(a.limit, 10) : undefined,
+          };
+          const r = await this.ops.stats(filterOpts);
+          const scoreText = (r && r.bestScore != null) ? `, điểm cao nhất ${r.bestScore}${r.avgScore != null ? ` (tb: ${r.avgScore})` : ''}` : '';
+          const filterParts = [];
+          if (filterOpts.query) filterParts.push(`query="${filterOpts.query}"`);
+          if (filterOpts.status) filterParts.push(`status=${filterOpts.status}`);
+          if (filterOpts.bot) filterParts.push(`bot=${filterOpts.bot}`);
+          const filterText = (r && r.filtered) ? ` (lọc: ${r.total}/${r.rawTotal}${filterParts.length ? ` [${filterParts.join(', ')}]` : ''})` : '';
+          return { type, ok: true, info: true, text: `Thống kê tri thức${filterText}: ${r.total} dòng, tỷ lệ keep ${r.keepRate}%${scoreText}`, data: r };
         }
         case 'knowledge': {
           const limit = Math.max(1, Math.min(100, parseInt(a.limit || '10', 10) || 10));
@@ -386,7 +398,7 @@ Actions:
 - {"type":"diff","id":"<run id>","stat":true|false,"commit":"<hash>"} view cumulative git diff or specific commit diff/show
 - {"type":"branch","id":"<run id>"}     view branch name and git checkout command for a run
 - {"type":"harvest"}                    harvest/aggregate all run results and git logs into knowledge/improvements_log.jsonl
-- {"type":"stats"}                      summary statistics of improvements_log.jsonl
+- {"type":"stats","query":"<text>","status":"<st>","bot":"<bot>"} summary statistics of improvements_log.jsonl with optional filters and score metrics
 - {"type":"knowledge","limit":10,"query":"<text>"} view recent knowledge improvements from improvements_log.jsonl (supports optional keyword query)
 - {"type":"export_harvest","format":"csv"|"json"} export knowledge harvest log as CSV text or JSON object
 - {"type":"shutdown"}                   shut down the agent-swarm coordinator server
