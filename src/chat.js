@@ -78,6 +78,7 @@ async function post(url, message) {
   node src/chat.js "lệnh/tin nhắn"    Gửi tin nhắn một lần tới điều phối viên và in phản hồi
   node src/chat.js                   Mở chế độ chat tương tác (Ctrl+C để thoát)
   node src/chat.js --status, -s      Xem trạng thái server và các phiên swarm đang chạy
+  node src/chat.js --catalog, -c     Xem danh mục agent CLI đã cài và lệnh chạy (-c)
   node src/chat.js --runs, -l        Liệt kê tất cả các phiên swarm (cả đang chạy và lịch sử)
   node src/chat.js --run <id>, -i    Xem thông tin chi tiết của một phiên swarm (-i <id>)
   node src/chat.js --log <id> [f], -L Xem log của agent/đánh giá trong phiên swarm (-L <id> [file])
@@ -106,6 +107,31 @@ async function post(url, message) {
         const bestScore = r.best && r.best.score != null ? r.best.score : '—';
         console.log(`  - [${r.id}] ${r.status} | agents: ${r.agents} | giữ: ${r.kept}/${r.total} | best: ${bestScore}`);
         if (r.requirement) console.log(`    Yêu cầu: ${r.requirement}`);
+      }
+    }
+    return;
+  }
+
+  if (args.includes('--catalog') || args.includes('-c')) {
+    const cat = await fetch(`${url}/api/catalog`).then((r) => r.json()).catch(() => null);
+    if (!cat || !cat.agents) {
+      throw new Error('Không thể lấy thông tin danh mục agent từ server.');
+    }
+    console.log(`Hệ điều hành: ${cat.platform || process.platform}`);
+    console.log(`Danh mục Agent CLI (${cat.agents.length} loại):`);
+    for (const a of cat.agents) {
+      const tag = a.found ? '[ĐÃ CÀI]' : '[CHƯA CÀI]';
+      console.log(`  - ${a.id.padEnd(12)} ${tag.padEnd(11)} ${a.name}`);
+      if (a.path) console.log(`      Đường dẫn: ${a.path}`);
+      if (a.template) console.log(`      Lệnh chạy: ${a.template}`);
+    }
+    if (cat.coordinator && cat.coordinator.cli) {
+      console.log(`Điều phối viên: ${cat.coordinator.cli}`);
+    }
+    if (Array.isArray(cat.recentWorkspaces) && cat.recentWorkspaces.length) {
+      console.log('Thư mục làm việc gần đây:');
+      for (const ws of cat.recentWorkspaces) {
+        console.log(`  - ${ws}`);
       }
     }
     return;

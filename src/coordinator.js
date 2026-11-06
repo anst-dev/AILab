@@ -208,6 +208,8 @@ class Coordinator extends EventEmitter {
         }
         case 'list_runs':
           return { type, ok: true, info: true, text: 'danh sách các phiên', data: this.ops.listRuns() };
+        case 'catalog':
+          return { type, ok: true, info: true, text: 'danh mục agent CLI', data: await this.ops.catalog() };
         case 'set_agent_template':
           await this.ops.setTemplate(String(a.cli || ''), String(a.template || ''));
           return { type, ok: true, text: `Lệnh của ${a.cli}: ${a.template}` };
@@ -308,13 +310,14 @@ Actions:
 - {"type":"export_csv","id":"<run id>"} export run results as CSV text
 - {"type":"harvest"}                    harvest/aggregate all run results and git logs into knowledge/improvements_log.jsonl
 - {"type":"list_runs"}                  list recent and active swarm runs
+- {"type":"catalog"}                    list available agent CLIs and detection status
 - {"type":"set_agent_template","cli":"<id>","template":"... {prompt} ..."}   change how an agent CLI is launched
     (e.g. add "--effort low" or a model flag). Agents must run unattended, so keep the permission-skip flag.
 - {"type":"inspect","path":"<absolute dir>"}     list files / git status of a folder
 - {"type":"read_file","path":"<absolute file>"}  read up to 12 KB of a file
 - {"type":"run_detail","id":"<run id>"}         full status of a run
 - {"type":"run_log","id":"<run id>","file":"<relative log file>"}  read agent or evaluation log in a run
-inspect/read_file/run_detail/run_log/list_runs return data to you in a follow-up call (max ${MAX_STEPS} calls per turn);
+inspect/read_file/run_detail/run_log/list_runs/catalog return data to you in a follow-up call (max ${MAX_STEPS} calls per turn);
 use them before starting a run on a project you have not looked at, so the evaluation command is right.
 
 Guidelines:
