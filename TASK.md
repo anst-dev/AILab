@@ -34,6 +34,7 @@ theo thứ tự ưu tiên, sao cho `node evaluate.js` vẫn PASS (app phải ch�
 12. [x] **Xem commit diff trong Kho tri thức trên Web UI** — hỗ trợ bấm vào commit hash trong bảng Kho tri thức (knowledge viewer) để xem chi tiết git show / diff của commit.
 13. [x] **Hỗ trợ commit diff và branch checkout trong coordinator** — thêm hành động diff theo commit và branch/checkout vào coordinator để agent điều phối có thể tra cứu chi tiết commit và lệnh git checkout của phiên.
 14. [x] **Xem commit diff trong CLI chat.js** — thêm tùy chọn --commit cho lệnh --diff trong chat.js để xem chi tiết git show / diff của commit cụ thể.
+15. [x] **Hỗ trợ tra cứu kho tri thức trong coordinator** — thêm hành động knowledge vào coordinator để agent điều phối có thể tra cứu các cải tiến mới nhất từ improvements_log.jsonl.
 
 ## Luật
 

@@ -448,6 +448,21 @@ const coordinator = new Coordinator({
       }
       return items;
     },
+    knowledge: async (limit = 20) => {
+      const harvestPath = path.join(APP_DIR, 'harvest.js');
+      const harvestMod = fs.existsSync(harvestPath) ? require(harvestPath) : null;
+      const logPath = harvestMod && typeof harvestMod.getOutPath === 'function'
+        ? harvestMod.getOutPath()
+        : path.join(APP_DIR, 'knowledge', 'improvements_log.jsonl');
+      if (!fs.existsSync(logPath)) return { exists: false, totalCount: 0, items: [] };
+      const lines = fs.readFileSync(logPath, 'utf8').split('\n').map((l) => l.trim()).filter(Boolean);
+      const items = [];
+      const lim = Math.max(1, Math.min(200, parseInt(limit || '20', 10) || 20));
+      for (const line of lines.slice(-lim)) {
+        try { items.push(JSON.parse(line)); } catch { items.push({ raw: line }); }
+      }
+      return { exists: true, totalCount: lines.length, outPath: logPath, items };
+    },
     shutdown: async () => {
       setTimeout(() => {
         if (shutdownHook) shutdownHook();
