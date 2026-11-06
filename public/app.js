@@ -495,6 +495,7 @@ function renderScoreChart() {
   const empty = $('chartEmpty');
   const detail = $('chartDetail');
   const bestBadge = $('chartBestScore');
+  const statsBadge = $('chartStats');
   const legend = $('chartLegend');
   const s = state.snap;
   if (!svg || !s) return;
@@ -515,6 +516,7 @@ function renderScoreChart() {
     if (empty) empty.hidden = false;
     if (detail) detail.textContent = '';
     if (bestBadge) bestBadge.textContent = '';
+    if (statsBadge) statsBadge.textContent = '';
     return;
   }
   if (empty) empty.hidden = true;
@@ -555,6 +557,14 @@ function renderScoreChart() {
     parts.push(`<text x="${W - padR}" y="${(Number(bY) - 3).toFixed(1)}" class="ct" text-anchor="end" fill="#60a5fa">baseline: ${fmtScore(basePt.score)}</text>`);
   }
 
+  // Average score reference horizontal line
+  const avgScore = pts.reduce((sum, p) => sum + Number(p.score), 0) / pts.length;
+  if (pts.length >= 2) {
+    const aY = y(avgScore).toFixed(1);
+    parts.push(`<line x1="${padL}" y1="${aY}" x2="${W - padR}" y2="${aY}" stroke="#94a3b8" stroke-width="1" stroke-dasharray="2,3" stroke-opacity="0.6"/>`);
+    parts.push(`<text x="${padL + 4}" y="${(Number(aY) - 3).toFixed(1)}" class="ct" text-anchor="start" fill="#94a3b8">TB: ${fmtScore(avgScore)}</text>`);
+  }
+
   // Best badge display in card header
   if (bestBadge) {
     if (s.best && s.best.score != null) {
@@ -564,6 +574,11 @@ function renderScoreChart() {
     } else {
       bestBadge.textContent = '';
     }
+  }
+
+  // Stats badge display
+  if (statsBadge) {
+    statsBadge.textContent = `· TB: ${fmtScore(avgScore)} (${pts.length} điểm)`;
   }
 
   // Best/keep line progression
@@ -619,7 +634,7 @@ function renderScoreChart() {
       parts.push(`<circle cx="${cx}" cy="${cy}" r="7" class="best-ring"><title>Điểm tốt nhất: ${fmtScore(p.score)}</title></circle>`);
     }
     parts.push(
-      `<circle cx="${cx}" cy="${cy}" r="4" fill="${color}" class="cp${dimmedCls}" data-pt-idx="${i}" data-orig-idx="${origIdx}">` +
+      `<circle cx="${cx}" cy="${cy}" r="4" fill="${color}" class="cp${dimmedCls}" data-pt-idx="${i}" data-orig-idx="${origIdx}" tabindex="0" role="button" aria-label="${esc(tip)}">` +
         `<title>${esc(tip)}</title>` +
       `</circle>`
     );
@@ -642,17 +657,7 @@ function renderScoreChart() {
   svg.querySelectorAll('circle[data-pt-idx]').forEach((el) => {
     const idx = Number(el.dataset.ptIdx);
     const p = sortedPts[idx];
-    el.addEventListener('mouseenter', () => {
-      if (detail && !detail.dataset.pinned) detail.textContent = formatDetail(p);
-    });
-    el.addEventListener('mouseleave', () => {
-      if (detail && !detail.dataset.pinned) {
-        const lastPt = sortedPts[sortedPts.length - 1];
-        detail.textContent = lastPt ? formatDetail(lastPt) : '';
-      }
-    });
-    el.addEventListener('click', (e) => {
-      e.stopPropagation();
+    const selectPoint = () => {
       svg.querySelectorAll('circle.active').forEach((c) => c.classList.remove('active'));
       el.classList.add('active');
       if (detail) {
@@ -669,6 +674,34 @@ function renderScoreChart() {
         }
       }
       if (p && p.log) openLog(p.log, `${p.agent || 'baseline'} lượt ${p.iter || 0}`);
+    };
+    el.addEventListener('mouseenter', () => {
+      if (detail && !detail.dataset.pinned) detail.textContent = formatDetail(p);
+    });
+    el.addEventListener('mouseleave', () => {
+      if (detail && !detail.dataset.pinned) {
+        const lastPt = sortedPts[sortedPts.length - 1];
+        detail.textContent = lastPt ? formatDetail(lastPt) : '';
+      }
+    });
+    el.addEventListener('focus', () => {
+      if (detail && !detail.dataset.pinned) detail.textContent = formatDetail(p);
+    });
+    el.addEventListener('blur', () => {
+      if (detail && !detail.dataset.pinned) {
+        const lastPt = sortedPts[sortedPts.length - 1];
+        detail.textContent = lastPt ? formatDetail(lastPt) : '';
+      }
+    });
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        selectPoint();
+      }
+    });
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectPoint();
     });
   });
 }
@@ -1021,10 +1054,17 @@ function init() {
   const chartLegend = $('chartLegend');
   if (chartLegend) {
     chartLegend.querySelectorAll('.legend-item').forEach((item) => {
-      item.addEventListener('click', () => {
+      const toggleFilter = () => {
         const f = item.dataset.filter;
         state.resultFilter = state.resultFilter === f && f !== 'all' ? 'all' : f;
         if (state.snap) renderRun();
+      };
+      item.addEventListener('click', toggleFilter);
+      item.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggleFilter();
+        }
       });
     });
   }
