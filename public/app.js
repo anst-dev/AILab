@@ -1204,6 +1204,30 @@ function init() {
   $('setSave').addEventListener('click', saveSettings);
   $('setClose').addEventListener('click', () => $('setDlg').close());
   $('logClose').addEventListener('click', closeLog);
+  if ($('logCopy')) {
+    $('logCopy').addEventListener('click', async () => {
+      const text = $('logBody') ? $('logBody').textContent : '';
+      if (!text) return;
+      try {
+        await navigator.clipboard.writeText(text);
+        const orig = $('logCopy').textContent;
+        $('logCopy').textContent = 'Đã chép!';
+        setTimeout(() => { if ($('logCopy')) $('logCopy').textContent = orig; }, 1500);
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch { /* ignore */ }
+        document.body.removeChild(ta);
+        const orig = $('logCopy').textContent;
+        $('logCopy').textContent = 'Đã chép!';
+        setTimeout(() => { if ($('logCopy')) $('logCopy').textContent = orig; }, 1500);
+      }
+    });
+  }
   $('logDlg').addEventListener('close', () => {
     clearInterval(logTimer);
     state.log = null;

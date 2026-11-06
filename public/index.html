@@ -215,7 +215,14 @@
 
 <!-- log viewer -->
 <dialog id="logDlg">
-  <div class="dlg-head"><b id="logTitle">Log</b><span class="muted" id="logLive"></span><button class="ghost" id="logClose">✕</button></div>
+  <div class="dlg-head">
+    <b id="logTitle">Log</b>
+    <span class="muted" id="logLive"></span>
+    <div style="display:flex; gap:6px; align-items:center;">
+      <button class="ghost" id="logCopy" title="Sao chép toàn bộ nội dung vào clipboard" style="font-size: 11px; padding: 2px 8px;">Sao chép</button>
+      <button class="ghost" id="logClose">✕</button>
+    </div>
+  </div>
   <pre id="logBody"></pre>
 </dialog>
 
