@@ -439,7 +439,17 @@ function renderRun() {
 // score chart
 // ---------------------------------------------------------------------------
 
-const CHART_COLORS = { keep: '#35e6a3', 'keep-merged': '#35e6a3', discard: '#ff5f56', baseline: '#8a8f98' };
+const CHART_COLORS = {
+  keep: '#35e6a3',
+  'keep-merged': '#35e6a3',
+  discard: '#ff5f56',
+  'no-change': '#ff7875',
+  duplicate: '#ff7875',
+  conflict: '#f5a623',
+  crash: '#ff4d4f',
+  error: '#ff4d4f',
+  baseline: '#60a5fa',
+};
 const fmtScore = (v) => (Math.abs(v) >= 1000 ? String(Math.round(v)) : String(+Number(v).toFixed(4)));
 
 function renderScoreChart() {
@@ -488,6 +498,14 @@ function renderScoreChart() {
     parts.push(`<text x="${x(it).toFixed(1)}" y="${H - 2}" class="ct" text-anchor="middle">${it}</text>`);
   }
 
+  // Baseline reference horizontal line
+  const basePt = pts.find((r) => r.status === 'baseline');
+  if (basePt && basePt.score != null) {
+    const bY = y(basePt.score).toFixed(1);
+    parts.push(`<line x1="${padL}" y1="${bY}" x2="${W - padR}" y2="${bY}" stroke="#60a5fa" stroke-width="1.2" stroke-dasharray="3,3" stroke-opacity="0.8"/>`);
+    parts.push(`<text x="${W - padR}" y="${(Number(bY) - 3).toFixed(1)}" class="ct" text-anchor="end" fill="#60a5fa">baseline: ${fmtScore(basePt.score)}</text>`);
+  }
+
   // Best/keep line progression
   const keeps = pts
     .filter((r) => r.status === 'keep' || r.status === 'baseline')
@@ -506,11 +524,14 @@ function renderScoreChart() {
 
   for (let i = 0; i < sortedPts.length; i++) {
     const p = sortedPts[i];
-    const color = CHART_COLORS[p.status] || '#8a8f98';
+    const color = CHART_COLORS[p.status] || '#ff5f56';
     const who = p.agent || '—';
     const cx = x(p.iter || 0).toFixed(1);
     const cy = y(p.score).toFixed(1);
-    const tip = `#${p.iter || 0} · ${who} · ${p.score} (${p.status})${p.desc ? ' · ' + p.desc : ''}${p.log ? ' (click để xem log)' : ''}`;
+    const deltaStr = basePt && basePt.score != null && p.status !== 'baseline'
+      ? ` · Δ ${p.score - basePt.score > 0 ? '+' : ''}${+(p.score - basePt.score).toFixed(4)}`
+      : '';
+    const tip = `#${p.iter || 0} · ${who} · điểm: ${p.score}${deltaStr} (${p.status})${p.desc ? ' · ' + p.desc : ''}${p.log ? ' (click để xem log)' : ''}`;
     parts.push(
       `<circle cx="${cx}" cy="${cy}" r="4" fill="${color}" class="cp" data-pt-idx="${i}">` +
         `<title>${esc(tip)}</title>` +
