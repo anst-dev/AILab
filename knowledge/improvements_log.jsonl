@@ -1,0 +1,7 @@
+{"ts":"2026-11-06T17:22:28Z","bot":"orchestrator","kind":"baseline","feature":null,"commit":"5a72441","score":null,"status":"baseline","note":"lab-dev snapshot agent-swarm + evaluate pass-gate"}
+{"ts":"2026-11-06T17:24:59Z","bot":"agy-agent-1","kind":"feature","feature":"publishCommand","commit":"86cc541","score":null,"status":"keep","note":"option normalizeOptions + fire-and-forget khi best mới, env SWARM_BEST_SCORE"}
+{"ts":"2026-11-06T17:25:40Z","bot":"agy-agent-2","kind":"feature","feature":"publishCommand","commit":"827e896","score":null,"status":"discard","note":"trùng ý tưởng agent-1 — conflict, cơ chế chống trùng hoạt động"}
+{"ts":"2026-11-07T00:26:00Z","bot":"zcode-zc2","kind":"feature","feature":"export-csv","commit":"843f39d","score":null,"status":"merged","note":"GET /api/runs/:id/export.csv, RFC4180, đọc cả results.tsv phiên cũ; EVAL PASS"}
+{"ts":"2026-11-07T00:26:30Z","bot":"zcode-zc3","kind":"feature","feature":"ui-score-chart","commit":"0f9b9bc","score":null,"status":"merged","note":"SVG inline realtime, keep xanh/discard đỏ, không thư viện ngoài; EVAL PASS"}
+{"ts":"2026-11-07T00:30:00Z","bot":"zcode-zc1","kind":"feature","feature":"rebaseline","commit":"13f71e0","score":null,"status":"merged","note":"POST /api/runs/:id/rebaseline + tách evaluateBaseline(); EVAL PASS"}
+{"ts":"2026-11-07T00:32:00Z","bot":"orchestrator","kind":"run-start","feature":null,"commit":null,"score":null,"status":"running","note":"swarm 20261107-002657 agy×3 — mục 5 envExtra + tự đề xuất"}
