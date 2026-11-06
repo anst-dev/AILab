@@ -440,7 +440,10 @@ async function handle(req, res) {
     if (req.method === 'POST' && action === 'rebaseline') {
       if (!run) return send(res, 400, { error: 'Phiên không còn chạy trong app — dùng git + evaluate.py thủ công.' });
       try {
-        await run.evaluateBaseline();
+        const resBase = await run.evaluateBaseline();
+        if (resBase && !resBase.ok) {
+          return send(res, 400, { error: resBase.reason || 'Không đo được baseline' });
+        }
         return send(res, 200, { ok: true, best: run.best });
       } catch (e) {
         return send(res, 400, { error: e.message });
