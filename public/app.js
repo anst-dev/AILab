@@ -1178,6 +1178,59 @@ function init() {
     clearInterval(logTimer);
     state.log = null;
   });
+  if ($('btnCopyBranch')) {
+    $('btnCopyBranch').addEventListener('click', async () => {
+      const s = state.snap;
+      if (!s || !s.central) return;
+      const cmd = `git checkout ${s.central}`;
+      try {
+        await navigator.clipboard.writeText(cmd);
+        const orig = $('btnCopyBranch').textContent;
+        $('btnCopyBranch').textContent = 'Đã chép!';
+        setTimeout(() => { if ($('btnCopyBranch')) $('btnCopyBranch').textContent = orig; }, 1500);
+      } catch {
+        prompt('Lệnh git checkout:', cmd);
+      }
+    });
+  }
+  if ($('btnRunDiffStat')) {
+    $('btnRunDiffStat').addEventListener('click', async () => {
+      const s = state.snap;
+      if (!s) return;
+      $('logTitle').textContent = `Diff stat — ${s.central}`;
+      $('logLive').textContent = '';
+      $('logBody').textContent = 'Đang tải diff stat...';
+      if (!$('logDlg').open) $('logDlg').showModal();
+      clearInterval(logTimer);
+      state.log = null;
+      try {
+        const repoParam = state.view && state.view.repo ? `&repo=${encodeURIComponent(state.view.repo)}` : '';
+        const txt = await api(`/api/runs/${s.id}/diff?stat=1${repoParam}`);
+        $('logBody').textContent = txt || '(Không có thay đổi so với base commit)';
+      } catch (e) {
+        $('logBody').textContent = 'Lỗi tải diff stat: ' + e.message;
+      }
+    });
+  }
+  if ($('btnRunDiff')) {
+    $('btnRunDiff').addEventListener('click', async () => {
+      const s = state.snap;
+      if (!s) return;
+      $('logTitle').textContent = `Git diff — ${s.central}`;
+      $('logLive').textContent = '';
+      $('logBody').textContent = 'Đang tải git diff...';
+      if (!$('logDlg').open) $('logDlg').showModal();
+      clearInterval(logTimer);
+      state.log = null;
+      try {
+        const repoParam = state.view && state.view.repo ? `?repo=${encodeURIComponent(state.view.repo)}` : '';
+        const txt = await api(`/api/runs/${s.id}/diff${repoParam}`);
+        $('logBody').textContent = txt || '(Không có thay đổi so với base commit)';
+      } catch (e) {
+        $('logBody').textContent = 'Lỗi tải diff: ' + e.message;
+      }
+    });
+  }
   loadCatalog().catch((e) => ($('agentRows').innerHTML = `<tr><td colspan="3" class="error">${esc(e.message)}</td></tr>`));
   refreshRuns();
   connectEvents();
