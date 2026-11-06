@@ -470,20 +470,34 @@ function renderScoreChart() {
     parts.push(`<path d="${pathD}" fill="none" stroke="var(--ok)" stroke-width="2" stroke-opacity="0.6" stroke-dasharray="4,2"/>`);
   }
 
-  for (const p of pts) {
+  // Draw discard points first, keep/baseline points on top so they stay visible
+  const sortedPts = pts.slice().sort((a, b) => {
+    const isKeepA = a.status === 'keep' || a.status === 'keep-merged' || a.status === 'baseline' ? 1 : 0;
+    const isKeepB = b.status === 'keep' || b.status === 'keep-merged' || b.status === 'baseline' ? 1 : 0;
+    return isKeepA - isKeepB;
+  });
+
+  for (let i = 0; i < sortedPts.length; i++) {
+    const p = sortedPts[i];
     const color = CHART_COLORS[p.status] || '#8a8f98';
     const who = p.agent || '—';
     const cx = x(p.iter || 0).toFixed(1);
     const cy = y(p.score).toFixed(1);
-    const tip = `#${p.iter || 0} · ${who} · ${p.score} (${p.status})${p.desc ? ' · ' + p.desc : ''}`;
+    const tip = `#${p.iter || 0} · ${who} · ${p.score} (${p.status})${p.desc ? ' · ' + p.desc : ''}${p.log ? ' (click để xem log)' : ''}`;
     parts.push(
-      `<circle cx="${cx}" cy="${cy}" r="4" fill="${color}" class="cp">` +
+      `<circle cx="${cx}" cy="${cy}" r="4" fill="${color}" class="cp" data-pt-idx="${i}">` +
         `<title>${esc(tip)}</title>` +
       `</circle>`
     );
   }
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
   svg.innerHTML = parts.join('');
+  svg.querySelectorAll('circle[data-pt-idx]').forEach((el) => {
+    el.addEventListener('click', () => {
+      const p = sortedPts[Number(el.dataset.ptIdx)];
+      if (p && p.log) openLog(p.log, `${p.agent || 'baseline'} lượt ${p.iter || 0}`);
+    });
+  });
 }
 
 function renderAgents() {
@@ -541,8 +555,14 @@ async function runAction(act) {
       alert(`Đã merge ${s.central} vào ${s.originalBranch}.`);
     } else if (act === 'rebaseline') {
       if (!confirm('Chấm lại baseline hiện tại? Điểm baseline có thể thay đổi.')) return;
-      const res = await api(`/api/runs/${s.id}/rebaseline`, { method: 'POST', body: {} });
-      alert(`Đã hoàn tất đo lại baseline: ${res && res.best && res.best.score != null ? res.best.score : 'OK'}`);
+      const btn = $('runActions').querySelector('button[data-act="rebaseline"]');
+      if (btn) { btn.disabled = true; btn.textContent = 'Đang đo baseline...'; }
+      try {
+        const res = await api(`/api/runs/${s.id}/rebaseline`, { method: 'POST', body: {} });
+        alert(`Đã hoàn tất đo lại baseline: ${res && res.best && res.best.score != null ? res.best.score : 'OK'}`);
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Đo lại baseline'; }
+      }
     }
   } catch (e) {
     alert(e.message);
