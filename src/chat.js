@@ -84,7 +84,7 @@ async function post(url, message) {
   node src/chat.js --run <id>, -i    Xem thông tin chi tiết của một phiên swarm (-i <id>)
   node src/chat.js --gitlog <id>, -g  Xem lịch sử commit git đã tích lũy trong phiên swarm (-g <id>)
   node src/chat.js --checkout <id>, -C Xem thông tin nhánh và lệnh checkout nhánh của phiên (-C <id>)
-  node src/chat.js --diff <id>, -d   Xem diff các thay đổi mã nguồn đã tích lũy (-d <id> [--stat])
+  node src/chat.js --diff <id>, -d   Xem diff các thay đổi mã nguồn đã tích lũy (-d <id> [--stat] [--commit <hash>])
   node src/chat.js --logs <id>       Liệt kê danh sách các file log trong phiên swarm
   node src/chat.js --log <id> [f], -L Xem log của agent/đánh giá trong phiên swarm (-L <id> [file])
   node src/chat.js --stop <id>, -k   Dừng một phiên swarm đang chạy (--graceful để chờ vòng hiện tại) (-k <id>)
@@ -267,7 +267,7 @@ async function post(url, message) {
   if (diffIdx !== -1) {
     const runId = args[diffIdx + 1];
     if (!runId || runId.startsWith('-')) {
-      throw new Error('Vui lòng chỉ định ID phiên cần xem diff: node src/chat.js --diff <id> (-d <id>) [--stat]');
+      throw new Error('Vui lòng chỉ định ID phiên cần xem diff: node src/chat.js --diff <id> (-d <id>) [--stat] [--commit <hash>]');
     }
     const rRun = await fetch(`${url}/api/runs/${encodeURIComponent(runId)}`);
     if (!rRun.ok) {
@@ -276,15 +276,31 @@ async function post(url, message) {
     }
     const snap = await rRun.json();
     const statParam = args.includes('--stat') ? '&stat=1' : '';
-    const rDiff = await fetch(`${url}/api/runs/${encodeURIComponent(runId)}/diff?repo=${encodeURIComponent(snap.repoRoot || '')}${statParam}`);
+    let commitVal = '';
+    const commitIdx = args.indexOf('--commit');
+    if (commitIdx !== -1 && args[commitIdx + 1] && !args[commitIdx + 1].startsWith('-')) {
+      commitVal = args[commitIdx + 1];
+    } else {
+      const commitArg = args.find(a => a.startsWith('--commit='));
+      if (commitArg) {
+        commitVal = commitArg.slice('--commit='.length);
+      }
+    }
+    const commitParam = commitVal ? `&commit=${encodeURIComponent(commitVal)}` : '';
+    const rDiff = await fetch(`${url}/api/runs/${encodeURIComponent(runId)}/diff?repo=${encodeURIComponent(snap.repoRoot || '')}${statParam}${commitParam}`);
     if (!rDiff.ok) {
       throw new Error(`Lỗi khi lấy diff của phiên ${runId} (HTTP ${rDiff.status})`);
     }
     const diffText = await rDiff.text();
     if (!diffText.trim()) {
-      console.log(`Phiên ${runId} chưa có thay đổi nào so với commit gốc.`);
+      if (commitVal) {
+        console.log(`Commit ${commitVal} không có nội dung thay đổi hoặc không tìm thấy trong phiên ${runId}.`);
+      } else {
+        console.log(`Phiên ${runId} chưa có thay đổi nào so với commit gốc.`);
+      }
     } else {
-      console.log(`Git diff phiên ${runId}${args.includes('--stat') ? ' (--stat)' : ''}:`);
+      const label = commitVal ? `commit ${commitVal} trong phiên ${runId}` : `phiên ${runId}`;
+      console.log(`Git diff ${label}${args.includes('--stat') ? ' (--stat)' : ''}:`);
       console.log(diffText);
     }
     return;
