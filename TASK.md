@@ -19,6 +19,11 @@ theo thứ tự ưu tiên, sao cho `node evaluate.js` vẫn PASS (app phải ch�
    Không thêm thư viện ngoài.
 5. [x] **RENDER_CACHE passthrough** — swarm.js: tùy chọn `envExtra` (object) trong
    normalizeOptions, merge vào env khi chạy agent + evalCommand (dùng chung cho cache render).
+6. [x] **Auto-log keep** — swarm.js: hàm `logImprovement(agent, desc, commit, score)` append 1
+   dòng JSONL vào `knowledge/improvements_log.jsonl` ở repo root sau mỗi KEEP thành công
+   (gọi trong integrate() khi evalMode 'score' cập nhật best, và tại record 'keep' với evalMode
+   khác 'score'). Orchestrator ghi trực tiếp bằng fs nên không bị protectedFiles chặn
+   (cơ chế đó chỉ hoàn tác file trong worktree agent); lỗi ghi bỏ qua im lặng.
 
 ## Luật
 
