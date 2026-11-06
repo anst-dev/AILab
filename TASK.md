@@ -17,7 +17,7 @@ theo thứ tự ưu tiên, sao cho `node evaluate.js` vẫn PASS (app phải ch�
 4. [x] **UI biểu đồ điểm** — public/app.js + index.html: trong tab phiên đang chạy, vẽ biểu đồ
    điểm theo vòng (SVG inline, trục X = iter, Y = score, điểm keep màu xanh, discard đỏ).
    Không thêm thư viện ngoài.
-5. [ ] **RENDER_CACHE passthrough** — swarm.js: tùy chọn `envExtra` (object) trong
+5. [x] **RENDER_CACHE passthrough** — swarm.js: tùy chọn `envExtra` (object) trong
    normalizeOptions, merge vào env khi chạy agent + evalCommand (dùng chung cho cache render).
 
 ## Luật

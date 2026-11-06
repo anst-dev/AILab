@@ -81,6 +81,25 @@ function normalizeOptions(raw, catalog) {
   o.keepWorktrees = !!raw.keepWorktrees;
   o.extraInstructions = String(raw.extraInstructions || '').trim();
   o.publishCommand = String(raw.publishCommand || '').trim();
+
+  // envExtra: object merged into env when running agent + evalCommand (RENDER_CACHE passthrough)
+  o.envExtra = {};
+  let envInput = raw.envExtra;
+  if (typeof envInput === 'string' && envInput.trim().startsWith('{')) {
+    try { envInput = JSON.parse(envInput); } catch {}
+  }
+  if (envInput && typeof envInput === 'object' && !Array.isArray(envInput)) {
+    for (const [k, v] of Object.entries(envInput)) {
+      if (k && v !== undefined && v !== null) {
+        o.envExtra[String(k)] = String(v);
+      }
+    }
+  }
+  if (raw.cacheDir && !o.envExtra.RENDER_CACHE_DIR) {
+    o.envExtra.RENDER_CACHE_DIR = String(raw.cacheDir);
+  } else if (raw.RENDER_CACHE_DIR && !o.envExtra.RENDER_CACHE_DIR) {
+    o.envExtra.RENDER_CACHE_DIR = String(raw.RENDER_CACHE_DIR);
+  }
   return { opts: o, errors };
 }
 
@@ -475,7 +494,7 @@ class SwarmRun extends EventEmitter {
     const handle = runCommand({
       command: cmd,
       cwd: agent.cwd,
-      env: { SWARM_AGENT: agent.name, SWARM_RUN: this.id },
+      env: { SWARM_AGENT: agent.name, SWARM_RUN: this.id, ...(o.envExtra || {}) },
       logFile: agentLog,
       timeoutMs: limitMs,
     });
@@ -623,6 +642,7 @@ class SwarmRun extends EventEmitter {
                 SWARM_AGENT: agent.name,
                 SWARM_RUN: this.id,
                 SWARM_BEST_SCORE: String(score ?? ''),
+                ...(this.opts.envExtra || {}),
               },
               logFile: pubLog,
               timeoutMs: 60000,
@@ -661,7 +681,7 @@ class SwarmRun extends EventEmitter {
       const handle = runCommand({
         command: o.evalCommand,
         cwd: agent.cwd,
-        env: { SWARM_AGENT: agent.name, SWARM_RUN: this.id },
+        env: { SWARM_AGENT: agent.name, SWARM_RUN: this.id, ...(o.envExtra || {}) },
         logFile,
         timeoutMs: o.evalTimeoutMin * 60000,
       });
