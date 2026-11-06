@@ -280,10 +280,22 @@ const coordinator = new Coordinator({
     exportRunCsv: async (id) => {
       const run = runs.get(String(id || ''));
       if (run) return typeof run.exportCsv === 'function' ? run.exportCsv() : resultsCsv(run.results);
-      for (const root of loadConfig().recentWorkspaces || []) {
+      const roots = [...(loadConfig().recentWorkspaces || [])];
+      const found = findSnapshot(String(id || ''), '');
+      if (found && found.snap && found.snap.repoRoot && !roots.includes(found.snap.repoRoot)) {
+        roots.unshift(found.snap.repoRoot);
+      }
+      for (const root of roots) {
         try {
           return tsvTextToCsv(fs.readFileSync(path.join(root, '.swarm', 'runs', String(id || ''), 'results.tsv'), 'utf8'));
-        } catch {}
+        } catch {
+          try {
+            const snap = JSON.parse(fs.readFileSync(path.join(root, '.swarm', 'runs', String(id || ''), 'state.json'), 'utf8'));
+            if (snap && Array.isArray(snap.results) && snap.results.length) {
+              return resultsCsv(snap.results);
+            }
+          } catch {}
+        }
       }
       throw new Error(`Không tìm thấy kết quả của phiên ${id}.`);
     },

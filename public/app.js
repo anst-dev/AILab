@@ -509,19 +509,20 @@ function renderAgents() {
       const working = a.status === 'working' && a.deadline;
       const left = working ? Math.max(0, a.deadline - Date.now()) : 0;
       const pct = working ? Math.min(100, 100 - (left / limit) * 100) : 0;
-      return `<div class="agent" data-i="${i}">
+      const logHint = a.lastLog ? (working ? ' (click xem live log)' : ' (click xem log)') : '';
+      return `<div class="agent${a.lastLog ? ' clickable' : ''}" data-i="${i}" title="${a.lastLog ? esc((working ? 'Xem log đang chạy' : 'Xem log lượt ' + a.iter) + ': ' + a.lastLog) : ''}">
         <div class="h"><span class="n">${esc(a.name)}</span>${badge(AGENT_STATUS, a.status)}</div>
-        <div class="c">${esc(a.cliName)} · lượt ${a.iter}</div>
+        <div class="c">${esc(a.cliName)} · lượt ${a.iter}${logHint}</div>
         <div class="note" title="${esc(a.note)}">${a.note ? esc(a.note) : '<span class="muted">—</span>'}</div>
         <div class="bar"><i style="width:${pct}%"></i></div>
         <div class="f"><span>✔ ${a.kept} · ✖ ${a.discarded} · ⚠ ${a.crashed}</span><span>${working ? `còn ${dur(left)}` : ''}</span></div>
       </div>`;
     })
     .join('');
-  $('agentsGrid').querySelectorAll('.agent').forEach((el) =>
+  $('agentsGrid').querySelectorAll('.agent.clickable').forEach((el) =>
     el.addEventListener('click', () => {
       const a = s.agents[Number(el.dataset.i)];
-      if (a.lastLog) openLog(a.lastLog, `${a.name} lượt ${a.iter}`);
+      if (a && a.lastLog) openLog(a.lastLog, `${a.name} (${a.cliName}) lượt ${a.iter}`);
     })
   );
 }
