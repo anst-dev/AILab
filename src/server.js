@@ -224,6 +224,18 @@ async function gitLog(run, snap) {
   });
 }
 
+async function gitDiff(snap, { from, to, statOnly } = {}) {
+  const root = snap && snap.repoRoot;
+  if (!root || !snap.baseCommit) return '';
+  const refA = from || snap.baseCommit;
+  const refB = to || snap.central || 'HEAD';
+  const args = ['diff'];
+  if (statOnly) args.push('--stat');
+  args.push(`${refA}..${refB}`);
+  const r = await git(args, root, { allowFail: true });
+  return r.code === 0 ? r.stdout : '';
+}
+
 /** Validates options and starts a run. Throws an Error with .status on failure; returns the run id. */
 async function startRun(body) {
   const catalog = await getCatalog(loadConfig());
@@ -349,6 +361,11 @@ const coordinator = new Coordinator({
       const found = findSnapshot(String(id || ''), '');
       if (!found) throw new Error(`Không tìm thấy phiên ${id}.`);
       return gitLog(found.run, found.snap);
+    },
+    gitDiff: async (id, { from, to, statOnly } = {}) => {
+      const found = findSnapshot(String(id || ''), '');
+      if (!found) throw new Error(`Không tìm thấy phiên ${id}.`);
+      return gitDiff(found.snap, { from, to, statOnly });
     },
     inspect,
     harvest: async () => {
@@ -649,6 +666,14 @@ async function handle(req, res) {
     if (req.method === 'GET' && !action) return send(res, 200, snap);
 
     if (req.method === 'GET' && action === 'gitlog') return send(res, 200, await gitLog(run, snap));
+
+    if (req.method === 'GET' && action === 'diff') {
+      const statOnly = url.searchParams.get('stat') === '1' || url.searchParams.get('stat') === 'true';
+      const from = url.searchParams.get('from') || '';
+      const to = url.searchParams.get('to') || '';
+      const diff = await gitDiff(snap, { from, to, statOnly });
+      return send(res, 200, diff, 'text/plain; charset=utf-8');
+    }
 
     if (req.method === 'GET' && action === 'logs') {
       const runDir = path.join(snap.repoRoot || '', '.swarm', 'runs', id);
