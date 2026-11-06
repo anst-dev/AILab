@@ -79,6 +79,7 @@ async function post(url, message) {
   node src/chat.js                   Mở chế độ chat tương tác (Ctrl+C để thoát)
   node src/chat.js --status, -s      Xem trạng thái server và các phiên swarm đang chạy
   node src/chat.js --catalog, -c     Xem danh mục agent CLI đã cài và lệnh chạy (-c)
+  node src/chat.js --inspect <p>, -I Kiểm tra thư mục workspace trước khi chạy swarm (-I <path>)
   node src/chat.js --runs, -l        Liệt kê tất cả các phiên swarm (cả đang chạy và lịch sử)
   node src/chat.js --run <id>, -i    Xem thông tin chi tiết của một phiên swarm (-i <id>)
   node src/chat.js --gitlog <id>, -g  Xem lịch sử commit git đã tích lũy trong phiên swarm (-g <id>)
@@ -136,6 +137,39 @@ async function post(url, message) {
       console.log('Thư mục làm việc gần đây:');
       for (const ws of cat.recentWorkspaces) {
         console.log(`  - ${ws}`);
+      }
+    }
+    return;
+  }
+
+  const inspectIdx = args.indexOf('--inspect') !== -1 ? args.indexOf('--inspect') : args.indexOf('-I');
+  if (inspectIdx !== -1) {
+    const targetPath = args[inspectIdx + 1];
+    if (!targetPath || targetPath.startsWith('-')) {
+      throw new Error('Vui lòng chỉ định đường dẫn workspace cần kiểm tra: node src/chat.js --inspect <path> (-I <path>)');
+    }
+    const resolved = path.resolve(targetPath);
+    const r = await fetch(`${url}/api/inspect?path=${encodeURIComponent(resolved)}`);
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error || `Lỗi khi kiểm tra thư mục (HTTP ${r.status})`);
+    }
+    const info = await r.json();
+    console.log(`Kiểm tra workspace: ${info.path || resolved}`);
+    if (info.error) {
+      console.log(`  ! Lỗi: ${info.error}`);
+    } else {
+      console.log(`  * Tồn tại:      ${info.exists ? 'Có' : 'Không'}`);
+      if (info.isDir) console.log(`  * Loại:         Thư mục`);
+      console.log(`  * Git repo:     ${info.isRepo ? `Có (nhánh: ${info.branch || '—'}, commit HEAD: ${info.head || '—'})` : 'Chưa có'}`);
+      if (info.isRepo && info.dirty != null) {
+        console.log(`  * File sửa đổi: ${info.dirty > 0 ? `${info.dirty} file chưa commit` : 'Sạch (clean)'}`);
+      }
+      if (info.hasProgram) console.log(`  * File cấu hình: Tìm thấy program.md`);
+      if (info.hasTrainPy) console.log(`  * File script:   Tìm thấy train.py`);
+      if (info.note) console.log(`  * Ghi chú:      ${info.note}`);
+      if (Array.isArray(info.files) && info.files.length) {
+        console.log(`  * Danh sách tệp (${info.files.length}): ${info.files.slice(0, 10).join(', ')}${info.files.length > 10 ? '...' : ''}`);
       }
     }
     return;
