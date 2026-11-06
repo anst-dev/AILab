@@ -369,22 +369,34 @@ const coordinator = new Coordinator({
     },
     deleteRun: async (id, repo) => {
       const runId = String(id || '');
-      if (runs.has(runId)) throw new Error('Phiên đang chạy, vui lòng dừng trước khi xóa.');
+      const run = runs.get(runId);
+      if (run && (run.status === 'running' || run.status === 'preparing' || run.status === 'stopping')) {
+        throw new Error('Phiên đang chạy, vui lòng dừng trước khi xóa.');
+      }
       const found = findSnapshot(runId, repo || '');
-      if (!found) throw new Error(`Không tìm thấy phiên ${runId}.`);
+      if (!found && !run) throw new Error(`Không tìm thấy phiên ${runId}.`);
       const roots = [];
       if (repo) roots.push(repo);
-      if (found.snap && found.snap.repoRoot) roots.push(found.snap.repoRoot);
+      if (found && found.snap && found.snap.repoRoot) roots.push(found.snap.repoRoot);
+      if (run && run.repoRoot) roots.push(run.repoRoot);
       roots.push(...(loadConfig().recentWorkspaces || []));
+      let deleted = false;
       for (const root of roots) {
         const runDir = path.join(root, '.swarm', 'runs', runId);
         if (fs.existsSync(runDir)) {
           fs.rmSync(runDir, { recursive: true, force: true });
+          deleted = true;
           git(['branch', '-D', `swarm/${runId}`], root, { allowFail: true }).catch(() => {});
-          return { ok: true, id: runId };
+          break;
         }
       }
-      throw new Error(`Không tìm thấy thư mục lưu trữ của phiên ${runId}.`);
+      if (run) {
+        runs.delete(runId);
+        deleted = true;
+      }
+      if (!deleted) throw new Error(`Không tìm thấy thư mục lưu trữ của phiên ${runId}.`);
+      if (typeof coordinator.runDeleted === 'function') coordinator.runDeleted(runId);
+      return { ok: true, id: runId };
     },
     inspect,
     harvest: async () => {
@@ -744,6 +756,7 @@ async function handle(req, res) {
         deleted = true;
       }
       if (!deleted) return send(res, 404, { error: `Không tìm thấy dữ liệu thư mục của phiên ${id} để xóa.` });
+      if (coordinator && typeof coordinator.runDeleted === 'function') coordinator.runDeleted(id);
       return send(res, 200, { ok: true, id, message: `Đã xóa phiên ${id}` });
     }
 

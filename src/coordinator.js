@@ -120,6 +120,15 @@ class Coordinator extends EventEmitter {
     if (this.autoLeft-- > 0) this.enqueue('run-ended');
   }
 
+  /** Called when a run is deleted to clear ownership tracking. */
+  runDeleted(id) {
+    const runId = String(id || '');
+    if (this.owned.has(runId)) {
+      this.owned.delete(runId);
+      this.save();
+    }
+  }
+
   enqueue(trigger) {
     this.queue.push(trigger);
     this.pump();
@@ -192,8 +201,7 @@ class Coordinator extends EventEmitter {
           return { type, ok: true, text: `Đã gửi lệnh dừng (${a.mode === 'now' ? 'ngay' : 'sau lượt này'}) cho ${a.id}`, runId: a.id };
         case 'delete_run': {
           await this.ops.deleteRun(a.id);
-          this.owned.delete(a.id);
-          this.save();
+          this.runDeleted(a.id);
           return { type, ok: true, text: `Đã xóa dữ liệu phiên ${a.id}`, runId: a.id };
         }
         case 'merge': {
