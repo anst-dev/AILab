@@ -23,16 +23,6 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const HERE = __dirname;
-const OUT = path.join(HERE, 'knowledge', 'improvements_log.jsonl');
-
-// ---------- tiện ích ----------
-function sh(cmd, args) {
-  try {
-    return execFileSync(cmd, args, { cwd: HERE, encoding: 'utf8', windowsHide: true, timeout: 30000 });
-  } catch {
-    return '';
-  }
-}
 
 // Tìm .swarm/runs: đi tối đa 5 cấp từ thư mục chứa script (worktree nằm ở <repo>/.swarm/wt/<ten>).
 function findRunsDir() {
@@ -45,6 +35,28 @@ function findRunsDir() {
     dir = up;
   }
   return path.join(HERE, '.swarm', 'runs');
+}
+
+function findRepoRoot() {
+  const runsDir = findRunsDir();
+  return path.resolve(runsDir, '..', '..');
+}
+
+function getOutPath(repoRoot) {
+  if (process.env.HARVEST_OUT) return path.resolve(process.env.HARVEST_OUT);
+  const root = repoRoot || findRepoRoot();
+  return path.join(root, 'knowledge', 'improvements_log.jsonl');
+}
+
+const OUT = getOutPath();
+
+// ---------- tiện ích ----------
+function sh(cmd, args) {
+  try {
+    return execFileSync(cmd, args, { cwd: HERE, encoding: 'utf8', windowsHide: true, timeout: 30000 });
+  } catch {
+    return '';
+  }
 }
 
 // ---------- 1) các dòng từ results.tsv ----------
@@ -122,9 +134,10 @@ const toLine = (r) => JSON.stringify({
   commit: r.commit, score: r.score, status: r.status, note: r.note,
 });
 
-function runHarvest() {
-  const existing = fs.existsSync(OUT)
-    ? fs.readFileSync(OUT, 'utf8').split('\n').map((l) => l.replace(/\r$/, '').trim()).filter(Boolean)
+function runHarvest(customOut) {
+  const targetOut = customOut || getOutPath();
+  const existing = fs.existsSync(targetOut)
+    ? fs.readFileSync(targetOut, 'utf8').split('\n').map((l) => l.replace(/\r$/, '').trim()).filter(Boolean)
     : [];
   const existingParsed = existing.map((l) => { try { return JSON.parse(l); } catch { return null; } });
   const existingAllCommits = new Set(existingParsed.filter(Boolean).map((o) => o.commit).filter(Boolean));
@@ -163,8 +176,8 @@ function runHarvest() {
   }
   items.sort((a, b) => a.tsMs - b.tsMs);
 
-  fs.mkdirSync(path.dirname(OUT), { recursive: true });
-  fs.writeFileSync(OUT, items.map((i) => i.line).join('\n') + '\n');
+  fs.mkdirSync(path.dirname(targetOut), { recursive: true });
+  fs.writeFileSync(targetOut, items.map((i) => i.line).join('\n') + '\n');
   return {
     runsDir,
     runIds,
@@ -172,7 +185,7 @@ function runHarvest() {
     gitRowCount: grows.length,
     freshCount: fresh.length,
     totalCount: items.length,
-    outPath: OUT,
+    outPath: targetOut,
   };
 }
 
@@ -183,4 +196,4 @@ if (require.main === module) {
   console.log(`harvest: +${res.freshCount} dòng mới, tổng ${res.totalCount} dòng -> knowledge/improvements_log.jsonl`);
 }
 
-module.exports = { runHarvest, tsvRows, gitRows, findRunsDir };
+module.exports = { runHarvest, tsvRows, gitRows, findRunsDir, findRepoRoot, getOutPath, OUT };

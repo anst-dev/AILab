@@ -414,6 +414,35 @@ async function handle(req, res) {
     }
   }
 
+  if (req.method === 'GET' && p === '/api/harvest') {
+    try {
+      const harvestPath = path.join(APP_DIR, 'harvest.js');
+      const harvestMod = fs.existsSync(harvestPath) ? require(harvestPath) : null;
+      const logPath = harvestMod && typeof harvestMod.getOutPath === 'function'
+        ? harvestMod.getOutPath()
+        : path.join(APP_DIR, 'knowledge', 'improvements_log.jsonl');
+      if (!fs.existsSync(logPath)) {
+        return send(res, 200, { ok: true, exists: false, totalCount: 0, items: [] });
+      }
+      const lines = fs.readFileSync(logPath, 'utf8').split('\n').map((l) => l.trim()).filter(Boolean);
+      const items = [];
+      const limit = Math.max(1, Math.min(200, parseInt(url.searchParams.get('limit') || '50', 10) || 50));
+      const tail = lines.slice(-limit);
+      for (const line of tail) {
+        try { items.push(JSON.parse(line)); } catch { items.push({ raw: line }); }
+      }
+      return send(res, 200, {
+        ok: true,
+        exists: true,
+        totalCount: lines.length,
+        outPath: logPath,
+        items,
+      });
+    } catch (e) {
+      return send(res, 500, { error: e.message });
+    }
+  }
+
   if (req.method === 'POST' && p === '/api/config/coordinator') {
     const body = await readBody(req);
     const cfg = loadConfig();
