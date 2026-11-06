@@ -228,6 +228,27 @@ class SwarmRun extends EventEmitter {
     return row;
   }
 
+  /** Append 1 dòng JSONL vào knowledge/improvements_log.jsonl ở repo root sau mỗi KEEP.
+   * Orchestrator ghi trực tiếp bằng fs nên không bị protectedFiles chặn (cơ chế đó chỉ
+   * hoàn tác file trong worktree của agent). Lỗi ghi bị bỏ qua để không ảnh hưởng vòng chạy. */
+  logImprovement(agent, desc, commit, score) {
+    try {
+      if (!this.repoRoot) return;
+      const file = path.join(this.repoRoot, 'knowledge', 'improvements_log.jsonl');
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.appendFileSync(file, JSON.stringify({
+        ts: new Date().toISOString(),
+        bot: agent ? agent.name : 'orchestrator',
+        kind: 'feature',
+        feature: String(desc || '').replace(/\s+/g, ' ').trim().slice(0, 80),
+        commit: String(commit || '').slice(0, 7),
+        score: Number.isFinite(score) ? score : null,
+        status: 'keep',
+        note: 'auto',
+      }) + '\n');
+    } catch {}
+  }
+
   gitEnv(agent) {
     const name = agent ? `${agent.name} (${agent.cli})` : 'agent-swarm';
     return {
@@ -590,6 +611,7 @@ class SwarmRun extends EventEmitter {
       const r = await this.integrate(agent, curBase, score, desc);
       if (r.result === 'keep') {
         this.record(agent, it, { commit: r.commit, score, status: 'keep', desc, log: o.evalMode === 'none' ? agentLogRel : evalLogRel });
+        if (o.evalMode !== 'score') this.logImprovement(agent, desc, r.commit, score); // evalMode 'score' đã log trong integrate()
         this.info(`✔ ${agent.name} được giữ: ${desc}${score !== null ? ` (${score})` : ''}`);
         return;
       }
@@ -640,6 +662,7 @@ class SwarmRun extends EventEmitter {
       }
       if (this.opts.evalMode === 'score') {
         this.best = { score, commit: commit.slice(0, 7), desc, agent: agent.name };
+        this.logImprovement(agent, desc, commit, score);
         if (this.opts.publishCommand) {
           try {
             const pubLog = this.runDir ? path.join(this.runDir, 'publish.log') : path.join(this.repoRoot, 'publish.log');
