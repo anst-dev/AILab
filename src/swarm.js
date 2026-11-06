@@ -621,7 +621,9 @@ class SwarmRun extends EventEmitter {
     const changes = await changedPaths(agent.wt);
     const junk = changes.filter((c) => c.xy === '??' && fs.statSync(path.join(agent.wt, c.file), { throwIfNoEntry: false })?.size === 0);
     if (changes.length === junk.length) {
-      for (const c of junk) fs.rmSync(path.join(agent.wt, c.file), { force: true });
+      for (const c of junk) {
+        try { fs.rmSync(path.join(agent.wt, c.file), { force: true, recursive: true }); } catch {}
+      }
       // Surface why the agent did nothing (auth / permission errors usually show up in the last line).
       const lastLine = tailFile(agentLog, 4000).split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !l.startsWith('[swarm]')).pop();
       const why = lastLine ? ` · agent: ${lastLine.slice(0, 200)}` : '';

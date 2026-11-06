@@ -152,7 +152,9 @@ function historyRuns() {
 }
 
 function summary(s, live) {
-  const count = (st) => s.results.filter((r) => r.status === st).length;
+  const results = Array.isArray(s && s.results) ? s.results : [];
+  const agents = Array.isArray(s && s.agents) ? s.agents : [];
+  const count = (st) => results.filter((r) => r.status === st).length;
   return {
     id: s.id,
     live,
@@ -160,10 +162,10 @@ function summary(s, live) {
     workspace: s.workspace,
     repoRoot: s.repoRoot,
     requirement: (s.opts && s.opts.requirement) || '',
-    agents: s.agents.length,
+    agents: agents.length,
     best: s.best,
     kept: count('keep'),
-    total: s.results.filter((r) => r.agent !== 'orchestrator').length,
+    total: results.filter((r) => r.agent !== 'orchestrator').length,
     startedAt: s.startedAt,
     endedAt: s.endedAt,
   };
