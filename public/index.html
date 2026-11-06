@@ -123,6 +123,10 @@
           </div>
           <label class="field"><span>Chỉ dẫn thêm cho agent (giống program.md)</span>
             <textarea id="extraInstructions" rows="4" placeholder="Quy ước code, công nghệ, những điều cấm..."></textarea></label>
+          <label class="field"><span>Lệnh publish khi có best mới (chạy fire-and-forget, env SWARM_BEST_SCORE)</span>
+            <input id="publishCommand" placeholder="git push origin main   |   node notify.js"></label>
+          <label class="field"><span>Biến môi trường bổ sung (JSON, merge vào agent & eval)</span>
+            <input id="envExtra" placeholder='{"RENDER_CACHE_DIR":"/cache"}'></label>
           <label class="field check"><input id="keepWorktrees" type="checkbox"> <span>Giữ lại worktree của agent sau khi dừng (để xem)</span></label>
         </details>
 

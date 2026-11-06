@@ -74,7 +74,7 @@ const PRESETS = {
   },
 };
 
-const FIELDS = ['workspace', 'requirement', 'timeLimitMin', 'evalCommand', 'metricRegex', 'direction', 'minDelta', 'evalTimeoutMin', 'evalConcurrency', 'protectedFiles', 'maxIterations', 'maxDurationMin', 'staggerSec', 'extraInstructions'];
+const FIELDS = ['workspace', 'requirement', 'timeLimitMin', 'evalCommand', 'metricRegex', 'direction', 'minDelta', 'evalTimeoutMin', 'evalConcurrency', 'protectedFiles', 'maxIterations', 'maxDurationMin', 'staggerSec', 'extraInstructions', 'publishCommand', 'envExtra'];
 const CHECKS = ['baseline', 'keepWorktrees'];
 
 function evalMode() {

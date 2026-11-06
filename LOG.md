@@ -12,7 +12,7 @@
 | 2 | Re-baseline route | ✅ xong | ZCode bot Z1 (nhánh zcode-zc1) |
 | 3 | Export CSV | ✅ xong | ZCode bot Z2 (nhánh zcode-zc2) |
 | 4 | UI biểu đồ điểm | ✅ xong | ZCode bot Z3 (nhánh zcode-zc3) |
-| 5 | envExtra passthrough | ⏳ đang/chờ | agy swarm run 20261107-002657 |
+| 5 | envExtra passthrough | ✅ xong | agy agent-3 (commit eb99c82, keep) |
 
 ## Dòng thời gian
 
