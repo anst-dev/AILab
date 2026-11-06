@@ -12,10 +12,9 @@
 //   - git log     : bot="git", feature=tiêu đề commit, note=tên nhánh, status="committed".
 //
 // Dedupe (chạy lại không bao giờ nhân đôi):
-//   - Trong 1 lần chạy: bỏ dòng trùng theo commit+iter+status.
-//   - So với log đã có: dòng swarm-row cũ không lưu cột iter nên khớp theo commit
-//     (commit đã nằm trong 1 dòng swarm-row rồi thì không log lại); riêng dòng git-log
-//     bị bỏ luôn nếu commit đã xuất hiện ở bất kỳ dòng nào của log.
+//   - Trong 1 lần chạy: bỏ dòng trùng theo commit+status (hoặc runId+iter+ts+bot+status nếu không có commit).
+//   - So với log đã có: dòng có commit khớp theo commit/commit+status; dòng không có commit khớp theo runId+ts+bot+status.
+//     Khử trùng cả các dòng bị lặp đã có sẵn trong log.
 // Stdlib thôi, không phụ thuộc npm.
 'use strict';
 const { execFileSync } = require('node:child_process');
@@ -145,27 +144,48 @@ function runHarvest(customOut, options = {}) {
     dryRun = Boolean(options && options.dryRun);
   }
   targetOut = targetOut || getOutPath();
-  const existing = fs.existsSync(targetOut)
+  const rawExisting = fs.existsSync(targetOut)
     ? fs.readFileSync(targetOut, 'utf8').split('\n').map((l) => l.replace(/\r$/, '').trim()).filter(Boolean)
     : [];
-  const existingParsed = existing.map((l) => { try { return JSON.parse(l); } catch { return null; } });
-  const existingAllCommits = new Set(existingParsed.filter(Boolean).map((o) => o.commit).filter(Boolean));
-  const existingSwarm = existingParsed.filter((o) => o && o.kind === 'swarm-row' && o.commit);
-  const existingSwarmCommits = new Set(existingSwarm.map((o) => o.commit));
-  const existingSwarmCommitStatus = new Set(existingSwarm.map((o) => o.commit + '|' + (o.status || '')));
+  const existingSeenLines = new Set();
+  const existing = [];
+  for (const l of rawExisting) {
+    if (!existingSeenLines.has(l)) {
+      existingSeenLines.add(l);
+      existing.push(l);
+    }
+  }
+  const existingParsed = existing.map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
+  const existingAllCommits = new Set(existingParsed.map((o) => o.commit).filter(Boolean));
+  const existingSwarm = existingParsed.filter((o) => o && o.kind === 'swarm-row');
+  const existingSwarmCommits = new Set(existingSwarm.map((o) => o.commit).filter(Boolean));
+  const existingSwarmCommitStatus = new Set(existingSwarm.filter((o) => o.commit).map((o) => o.commit + '|' + (o.status || '')));
+  const existingNoCommitKeys = new Set(
+    existingSwarm.filter((o) => !o.commit).map((o) => (o.note || '') + '|' + (o.ts || '') + '|' + (o.bot || '') + '|' + (o.status || ''))
+  );
 
   const { rows: trows, runIds, runsDir } = tsvRows();
   const tsvCommits = new Set(trows.map((r) => r.commit).filter(Boolean));
   const grows = gitRows(new Set([...tsvCommits, ...existingAllCommits]));
 
-  const seenKeys = new Set(); // commit|iter|status trong nguồn
+  const seenKeys = new Set(); // commit+status hoặc runId+iter+ts+bot+status
   const fresh = [];
   for (const r of [...trows, ...grows]) {
-    const key = (r.commit || '') + '|' + r._iter + '|' + (r.status || '');
+    const key = r.commit
+      ? 'c|' + r.commit + '|' + (r.status || '')
+      : 'nc|' + (r.note || '') + '|' + r._iter + '|' + (r.ts || '') + '|' + (r.bot || '') + '|' + (r.status || '');
     if (seenKeys.has(key)) continue;
-    if (r.commit && existingSwarmCommits.has(r.commit)) continue; // lần harvest trước đã log commit này
-    if (r.commit && existingSwarmCommitStatus.has(r.commit + '|' + (r.status || ''))) continue;
     seenKeys.add(key);
+
+    if (r.commit) {
+      if (existingSwarmCommits.has(r.commit)) continue; // lần harvest trước đã log commit này
+      if (existingSwarmCommitStatus.has(r.commit + '|' + (r.status || ''))) continue;
+    } else {
+      const ncKey = (r.note || '') + '|' + (r.ts || '') + '|' + (r.bot || '') + '|' + (r.status || '');
+      if (existingNoCommitKeys.has(ncKey)) continue;
+    }
+    const line = toLine(r);
+    if (existingSeenLines.has(line)) continue;
     fresh.push(r);
   }
 
