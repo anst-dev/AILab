@@ -80,6 +80,7 @@ async function post(url, message) {
   node src/chat.js --status, -s      Xem trạng thái server và các phiên swarm đang chạy
   node src/chat.js --stop <id>       Dừng một phiên swarm đang chạy (--graceful để chờ vòng hiện tại)
   node src/chat.js --export <id> [f] Xuất kết quả phiên swarm ra file CSV (hoặc in ra terminal)
+  node src/chat.js --rebaseline <id> Chấm lại baseline cho một phiên đang chạy (-r <id>)
   node src/chat.js --clear           Xóa lịch sử trò chuyện của điều phối viên
   node src/chat.js --help, -h        Hiện hướng dẫn này`);
     return;
@@ -154,6 +155,24 @@ async function post(url, message) {
     } else {
       process.stdout.write(csvData);
     }
+    return;
+  }
+
+  const rebaselineIdx = args.indexOf('--rebaseline') !== -1 ? args.indexOf('--rebaseline') : args.indexOf('-r');
+  if (rebaselineIdx !== -1) {
+    const runId = args[rebaselineIdx + 1];
+    if (!runId || runId.startsWith('-')) {
+      throw new Error('Vui lòng chỉ định ID phiên cần re-baseline: node src/chat.js --rebaseline <id>');
+    }
+    const r = await fetch(`${url}/api/runs/${encodeURIComponent(runId)}/rebaseline`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || `Lỗi khi re-baseline phiên ${runId} (HTTP ${r.status})`);
+    const bestScore = j.best && j.best.score != null ? j.best.score : '—';
+    const bestCommit = j.best && j.best.commit ? ` (${j.best.commit})` : '';
+    console.log(`Đã re-baseline thành công phiên ${runId}. Best: ${bestScore}${bestCommit}.`);
     return;
   }
 
