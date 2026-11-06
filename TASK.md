@@ -9,7 +9,7 @@ theo thứ tự ưu tiên, sao cho `node evaluate.js` vẫn PASS (app phải ch�
    string, rỗng mặc định). Khi 1 agent được KEEP và `this.best` cập nhật (nơi set
    `this.best = { score, ... }` trong `integrate()`), chạy publishCommand 1 lần
    (runCommand fire-and-forget, timeout 60s, env thêm SWARM_BEST_SCORE). Đừng chờ kết quả.
-2. [ ] **Re-baseline** — route POST `/api/runs/:id/rebaseline` trong server.js: gọi
+2. [x] **Re-baseline** — route POST `/api/runs/:id/rebaseline` trong server.js: gọi
    `run.evaluateBaseline()` (tách logic baseline hiện có thành method nếu chưa có) → chấm lại
    best commit hiện tại, cập nhật best mới (điểm có thể khác khi rubric/command đổi).
 3. [ ] **Export CSV** — route GET `/api/runs/:id/export.csv` trả results.tsv dạng CSV

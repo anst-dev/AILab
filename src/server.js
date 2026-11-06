@@ -378,6 +378,16 @@ async function handle(req, res) {
         return send(res, 400, { error: e.message });
       }
     }
+
+    if (req.method === 'POST' && action === 'rebaseline') {
+      if (!run) return send(res, 400, { error: 'Phiên không còn chạy trong app — dùng git + evaluate.py thủ công.' });
+      try {
+        await run.evaluateBaseline();
+        return send(res, 200, { ok: true, best: run.best });
+      } catch (e) {
+        return send(res, 400, { error: e.message });
+      }
+    }
   }
 
   if (req.method === 'GET' && !p.startsWith('/api/')) {
