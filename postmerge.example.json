@@ -1,0 +1,3 @@
+{
+  "publishCommand": "node harvest.js && git add knowledge/improvements_log.jsonl && git commit -m 'auto-log' && git push origin HEAD:autov1-swarm-live"
+}

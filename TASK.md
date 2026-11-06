@@ -19,6 +19,9 @@ theo thứ tự ưu tiên, sao cho `node evaluate.js` vẫn PASS (app phải ch�
    Không thêm thư viện ngoài.
 5. [x] **RENDER_CACHE passthrough** — swarm.js: tùy chọn `envExtra` (object) trong
    normalizeOptions, merge vào env khi chạy agent + evalCommand (dùng chung cho cache render).
+7. [x] **harvest.js gom results.tsv → JSONL** — harvest.js đọc mọi `.swarm/runs/*/results.tsv`
+   + `git log` các nhánh `swarm/*`, gộp vào `knowledge/improvements_log.jsonl`
+   (kind="swarm-row", note=id run; dedupe commit+iter+status — chạy lại không nhân đôi).
 
 ## Luật
 
