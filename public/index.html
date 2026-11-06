@@ -27,6 +27,7 @@
         <a class="button secondary" id="btnHarvestDownload" href="/api/harvest/download" download="improvements_log.jsonl" title="Tải file knowledge/improvements_log.jsonl" style="font-size: 11px; padding: 2px 6px; display: none;">Tải log</a>
       </div>
     </div>
+    <input id="runSearch" type="search" placeholder="Tìm ID, yêu cầu..." style="width: 100%; box-sizing: border-box; font-size: 11px; padding: 3px 6px; margin-bottom: 8px;" title="Lọc danh sách phiên theo ID, yêu cầu hoặc thư mục">
     <div id="runList" class="run-list"><p class="muted">Chưa có phiên nào.</p></div>
   </aside>
 
@@ -178,7 +179,10 @@
       <div class="two-col">
         <div class="card">
           <div class="row between" style="margin-top: 0; margin-bottom: 8px; gap: 8px; flex-wrap: wrap;">
-            <h2 style="margin: 0;">Kết quả các lượt</h2>
+            <div class="row align-center" style="gap: 6px; margin: 0;">
+              <h2 style="margin: 0;">Kết quả các lượt</h2>
+              <span id="resultCount" class="muted" style="font-size: 12px; font-weight: normal;"></span>
+            </div>
             <div style="display: flex; gap: 8px; align-items: center;">
               <input id="resultSearch" type="search" placeholder="Tìm agent, commit, mô tả..." style="font-size: 12px; padding: 2px 8px; width: 170px;">
               <label class="inline" style="font-size: 12px; gap: 6px; margin: 0;">

@@ -15,6 +15,7 @@ const state = {
   log: null, // { file, title }
   resultFilter: 'all',
   resultSearch: '',
+  runSearch: '',
 };
 
 const store = {
@@ -259,7 +260,26 @@ function renderRunList() {
     el.innerHTML = '<p class="muted">Chưa có phiên nào.</p>';
     return;
   }
-  el.innerHTML = state.runs
+  const q = (state.runSearch || '').toLowerCase().trim();
+  const searchInput = $('runSearch');
+  if (searchInput && document.activeElement !== searchInput && searchInput.value !== (state.runSearch || '')) {
+    searchInput.value = state.runSearch || '';
+  }
+  const filtered = q
+    ? state.runs.filter((r) => {
+        const txt = [r.id, r.requirement, r.repoRoot, r.status, r.preset]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return txt.includes(q);
+      })
+    : state.runs;
+
+  if (!filtered.length) {
+    el.innerHTML = '<p class="muted">Không có phiên nào khớp từ khóa.</p>';
+    return;
+  }
+  el.innerHTML = filtered
     .map((r) => {
       const live = state.live.get(r.id);
       const status = live ? live.status : r.status;
@@ -437,6 +457,13 @@ function renderRun() {
           <td class="mono">${r.commit ? `<code class="commit-link" data-hash="${esc(r.commit)}" title="Xem git diff của commit ${esc(r.commit)}" style="cursor:pointer;text-decoration:underline;">${esc(r.commit)}</code>` : ''}</td><td>${esc(r.desc)}</td></tr>`
       )
       .join('') || `<tr><td colspan="7" class="muted">${curFilter === 'all' && !curSearch ? 'Chưa có lượt nào hoàn thành.' : 'Không có lượt nào khớp bộ lọc hoặc từ khóa tìm kiếm.'}</td></tr>`;
+
+  const countEl = $('resultCount');
+  if (countEl) {
+    const total = (s.results || []).length;
+    const shown = filtered.length;
+    countEl.textContent = total > 0 ? (shown === total ? `(${total})` : `(${shown}/${total})`) : '';
+  }
   $('resultRows').querySelectorAll('.commit-link').forEach((link) => {
     link.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -938,6 +965,15 @@ function renderKnowledge() {
     return txt.includes(q);
   });
 
+  const meta = $('knowledgeMeta');
+  if (meta && knowledgeData.length > 0) {
+    if (q || filter !== 'all') {
+      meta.textContent = ` (hiển thị ${filtered.length}/${knowledgeData.length} dòng)`;
+    } else {
+      meta.textContent = ` (${knowledgeData.length} dòng gần nhất)`;
+    }
+  }
+
   if (!filtered.length) {
     rows.innerHTML = `<tr><td colspan="6" class="muted">${knowledgeData.length === 0 ? 'Chưa có dữ liệu tri thức nào. Hãy bấm "Gom log mới" để quét.' : 'Không có dòng nào khớp với từ khoá hoặc bộ lọc.'}</td></tr>`;
     return;
@@ -1130,6 +1166,13 @@ function init() {
     resSearch.addEventListener('input', () => {
       state.resultSearch = resSearch.value;
       if (state.snap) renderRun();
+    });
+  }
+  const runSearch = $('runSearch');
+  if (runSearch) {
+    runSearch.addEventListener('input', () => {
+      state.runSearch = runSearch.value;
+      renderRunList();
     });
   }
   const chartLegend = $('chartLegend');

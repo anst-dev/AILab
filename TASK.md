@@ -39,6 +39,7 @@ theo thứ tự ưu tiên, sao cho `node evaluate.js` vẫn PASS (app phải ch�
 17. [x] **Tìm kiếm kết quả các lượt trên Web UI** — thêm ô tìm kiếm thời gian thực theo từ khóa (agent, commit, mô tả) vào bảng kết quả các lượt của phiên trên Web UI.
 18. [x] **Xuất CSV và JSON từ CLI harvest.js** — thêm tùy chọn --export-csv và --export-json cho CLI harvest.js để xuất tri thức đã gom ra file CSV/JSON độc lập.
 19. [x] **Lọc và xem danh sách tri thức trong CLI harvest.js** — thêm tùy chọn --list, --status, --bot, --query/-q, --limit cho CLI harvest.js và hỗ trợ lọc khi xuất CSV/JSON.
+20. [x] **Tìm kiếm phiên & đếm kết quả trên Web UI** — thêm ô tìm kiếm phiên theo từ khóa ở sidebar, hiển thị số lượng kết quả đã lọc (Hiển thị X/Y) cho bảng các lượt và kho tri thức.
 
 ## Luật
 
