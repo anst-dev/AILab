@@ -202,6 +202,8 @@ class Coordinator extends EventEmitter {
           const csv = await this.ops.exportRunCsv(a.id);
           return { type, ok: true, info: true, text: `xuất CSV ${a.id}`, data: csv };
         }
+        case 'list_runs':
+          return { type, ok: true, info: true, text: 'danh sách các phiên', data: this.ops.listRuns() };
         case 'set_agent_template':
           await this.ops.setTemplate(String(a.cli || ''), String(a.template || ''));
           return { type, ok: true, text: `Lệnh của ${a.cli}: ${a.template}` };
@@ -281,17 +283,20 @@ Actions:
     evalCommand (run in the agent worktree), metricRegex (capture group 1 = number, multiline), direction "min"|"max",
     minDelta, evalTimeoutMin, evalConcurrency (1 if evaluation uses a shared device/GPU),
     protectedFiles (array of paths agents must not change, e.g. the evaluation script),
+    publishCommand (command to run on new best score, env has SWARM_BEST_SCORE),
+    envExtra (key-value object or JSON string for agent and eval envs),
     maxIterations (per agent, 0 = unlimited), maxDurationMin (0 = unlimited), extraInstructions.
 - {"type":"stop","id":"<run id>","mode":"graceful"|"now"}
 - {"type":"merge","id":"<run id>"}      merge the run's central branch into the user's original branch
 - {"type":"rebaseline","id":"<run id>"} re-evaluate baseline/best commit for an active run
 - {"type":"export_csv","id":"<run id>"} export run results as CSV text
+- {"type":"list_runs"}                  list recent and active swarm runs
 - {"type":"set_agent_template","cli":"<id>","template":"... {prompt} ..."}   change how an agent CLI is launched
     (e.g. add "--effort low" or a model flag). Agents must run unattended, so keep the permission-skip flag.
 - {"type":"inspect","path":"<absolute dir>"}     list files / git status of a folder
 - {"type":"read_file","path":"<absolute file>"}  read up to 12 KB of a file
 - {"type":"run_detail","id":"<run id>"}         full status of a run
-inspect/read_file/run_detail return data to you in a follow-up call (max ${MAX_STEPS} calls per turn);
+inspect/read_file/run_detail/list_runs return data to you in a follow-up call (max ${MAX_STEPS} calls per turn);
 use them before starting a run on a project you have not looked at, so the evaluation command is right.
 
 Guidelines:
