@@ -260,9 +260,12 @@ class Coordinator extends EventEmitter {
         }
         case 'knowledge': {
           const limit = Math.max(1, Math.min(100, parseInt(a.limit || '10', 10) || 10));
-          const r = await this.ops.knowledge(limit);
+          const query = typeof a.query === 'string' ? a.query.trim() : (typeof a.q === 'string' ? a.q.trim() : '');
+          const r = await this.ops.knowledge(limit, query);
           const count = r && r.items ? r.items.length : 0;
-          return { type, ok: true, info: true, text: `kho tri thức (${count}/${r && r.totalCount != null ? r.totalCount : count} dòng)`, data: r };
+          const matchText = query ? ` khớp "${query}"` : '';
+          const total = r && (r.matchCount != null ? r.matchCount : r.totalCount) != null ? (r.matchCount != null ? r.matchCount : r.totalCount) : count;
+          return { type, ok: true, info: true, text: `kho tri thức (${count}/${total} dòng${matchText})`, data: r };
         }
         case 'export_harvest': {
           const fmt = String(a.format || 'json').toLowerCase();
@@ -384,7 +387,7 @@ Actions:
 - {"type":"branch","id":"<run id>"}     view branch name and git checkout command for a run
 - {"type":"harvest"}                    harvest/aggregate all run results and git logs into knowledge/improvements_log.jsonl
 - {"type":"stats"}                      summary statistics of improvements_log.jsonl
-- {"type":"knowledge","limit":10}       view recent knowledge improvements from improvements_log.jsonl
+- {"type":"knowledge","limit":10,"query":"<text>"} view recent knowledge improvements from improvements_log.jsonl (supports optional keyword query)
 - {"type":"export_harvest","format":"csv"|"json"} export knowledge harvest log as CSV text or JSON object
 - {"type":"shutdown"}                   shut down the agent-swarm coordinator server
 - {"type":"list_runs"}                  list recent and active swarm runs

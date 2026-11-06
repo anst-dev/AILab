@@ -449,7 +449,7 @@ const coordinator = new Coordinator({
       }
       return items;
     },
-    knowledge: async (limit = 20) => {
+    knowledge: async (limit = 20, query = '') => {
       const harvestPath = path.join(APP_DIR, 'harvest.js');
       const harvestMod = fs.existsSync(harvestPath) ? require(harvestPath) : null;
       const logPath = harvestMod && typeof harvestMod.getOutPath === 'function'
@@ -457,12 +457,17 @@ const coordinator = new Coordinator({
         : path.join(APP_DIR, 'knowledge', 'improvements_log.jsonl');
       if (!fs.existsSync(logPath)) return { exists: false, totalCount: 0, items: [] };
       const lines = fs.readFileSync(logPath, 'utf8').split('\n').map((l) => l.trim()).filter(Boolean);
+      const q = (query || '').toLowerCase().trim();
+      let matchedLines = lines;
+      if (q) {
+        matchedLines = lines.filter((l) => l.toLowerCase().includes(q));
+      }
       const items = [];
       const lim = Math.max(1, Math.min(200, parseInt(limit || '20', 10) || 20));
-      for (const line of lines.slice(-lim)) {
+      for (const line of matchedLines.slice(-lim)) {
         try { items.push(JSON.parse(line)); } catch { items.push({ raw: line }); }
       }
-      return { exists: true, totalCount: lines.length, outPath: logPath, items };
+      return { exists: true, totalCount: lines.length, matchCount: matchedLines.length, outPath: logPath, items };
     },
     shutdown: async () => {
       setTimeout(() => {
@@ -590,9 +595,14 @@ async function handle(req, res) {
         return send(res, 200, { ok: true, exists: false, totalCount: 0, items: [], stats: null });
       }
       const lines = fs.readFileSync(logPath, 'utf8').split('\n').map((l) => l.trim()).filter(Boolean);
+      const query = (url.searchParams.get('query') || url.searchParams.get('q') || '').toLowerCase().trim();
+      let matchedLines = lines;
+      if (query) {
+        matchedLines = lines.filter((l) => l.toLowerCase().includes(query));
+      }
       const items = [];
       const limit = Math.max(1, Math.min(200, parseInt(url.searchParams.get('limit') || '50', 10) || 50));
-      const tail = lines.slice(-limit);
+      const tail = matchedLines.slice(-limit);
       for (const line of tail) {
         try { items.push(JSON.parse(line)); } catch { items.push({ raw: line }); }
       }
@@ -601,6 +611,7 @@ async function handle(req, res) {
         ok: true,
         exists: true,
         totalCount: lines.length,
+        matchCount: matchedLines.length,
         outPath: logPath,
         items,
         stats,

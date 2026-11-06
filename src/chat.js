@@ -95,7 +95,7 @@ async function post(url, message) {
   node src/chat.js --rebaseline <id> Chấm lại baseline cho một phiên đang chạy (-r <id>)
   node src/chat.js --harvest, -H     Gom kết quả các phiên swarm vào knowledge/improvements_log.jsonl
   node src/chat.js --stats, -S       Xem thống kê tổng hợp từ kho tri thức improvements_log.jsonl (-S)
-  node src/chat.js --knowledge [n], -K Xem các dòng tri thức đã gom (mặc định 20 dòng gần nhất) (-K [n])
+  node src/chat.js --knowledge [n] [-q <query>], -K Xem các dòng tri thức đã gom (mặc định 20 dòng gần nhất, lọc -q) (-K [n] [-q <query>])
   node src/chat.js --clear           Xóa lịch sử trò chuyện của điều phối viên
   node src/chat.js --shutdown, -X    Tắt server điều phối agent-swarm (-X)
   node src/chat.js --help, -h        Hiện hướng dẫn này`);
@@ -605,15 +605,23 @@ async function post(url, message) {
   if (knowIdx !== -1) {
     const rawLimit = args[knowIdx + 1];
     const limit = (rawLimit && !rawLimit.startsWith('-') && parseInt(rawLimit, 10)) ? parseInt(rawLimit, 10) : 20;
-    const r = await fetch(`${url}/api/harvest?limit=${limit}`);
+    const qIdx = args.indexOf('--query') !== -1 ? args.indexOf('--query') : args.indexOf('-q');
+    const query = qIdx !== -1 && args[qIdx + 1] && !args[qIdx + 1].startsWith('-') ? args[qIdx + 1].trim() : '';
+    const qParam = query ? `&query=${encodeURIComponent(query)}` : '';
+    const r = await fetch(`${url}/api/harvest?limit=${limit}${qParam}`);
     const j = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(j.error || `Lỗi khi lấy tri thức (HTTP ${r.status})`);
     if (!j.exists || !j.items || !j.items.length) {
-      console.log('Kho tri thức (knowledge/improvements_log.jsonl) chưa có dữ liệu.');
-      console.log('Chạy "node src/chat.js --harvest" để gom kết quả từ các phiên swarm.');
+      if (query) {
+        console.log(`Không tìm thấy dòng tri thức nào khớp với "${query}" (trong tổng số ${j.totalCount || 0} dòng).`);
+      } else {
+        console.log('Kho tri thức (knowledge/improvements_log.jsonl) chưa có dữ liệu.');
+        console.log('Chạy "node src/chat.js --harvest" để gom kết quả từ các phiên swarm.');
+      }
       return;
     }
-    console.log(`Kho tri thức cải tiến (${j.items.length}/${j.totalCount} dòng gần nhất từ ${j.outPath}):`);
+    const matchInfo = query ? ` khớp "${query}"` : '';
+    console.log(`Kho tri thức cải tiến (${j.items.length}/${j.matchCount != null ? j.matchCount : j.totalCount} dòng${matchInfo} từ ${j.outPath}):`);
     for (const item of j.items) {
       const t = item.ts ? item.ts.slice(0, 19).replace('T', ' ') : '—';
       const bot = item.bot || item.agent || '—';
