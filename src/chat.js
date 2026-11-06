@@ -80,6 +80,7 @@ async function post(url, message) {
   node src/chat.js --status, -s      Xem trạng thái server và các phiên swarm đang chạy
   node src/chat.js --runs, -l        Liệt kê tất cả các phiên swarm (cả đang chạy và lịch sử)
   node src/chat.js --run <id>, -i    Xem thông tin chi tiết của một phiên swarm (-i <id>)
+  node src/chat.js --log <id> [f], -L Xem log của agent/đánh giá trong phiên swarm (-L <id> [file])
   node src/chat.js --stop <id>, -k   Dừng một phiên swarm đang chạy (--graceful để chờ vòng hiện tại) (-k <id>)
   node src/chat.js --merge <id>, -m  Merge nhánh của phiên đã dừng vào nhánh gốc của dự án (-m <id>)
   node src/chat.js --export <id> [f] Xuất kết quả phiên swarm ra file CSV (hoặc in ra terminal) (-e <id>)
@@ -162,6 +163,53 @@ async function post(url, message) {
         console.log(`    - vòng ${res.iter} [${res.agent}]: ${res.status} (score: ${res.score != null ? res.score : '—'}) ${res.desc || ''}`);
       }
     }
+    return;
+  }
+
+  const logIdx = args.indexOf('--log') !== -1 ? args.indexOf('--log') : args.indexOf('-L');
+  if (logIdx !== -1) {
+    const runId = args[logIdx + 1];
+    if (!runId || runId.startsWith('-')) {
+      throw new Error('Vui lòng chỉ định ID phiên cần xem log: node src/chat.js --log <id> [file] (-L <id>)');
+    }
+    const rRun = await fetch(`${url}/api/runs/${encodeURIComponent(runId)}`);
+    if (!rRun.ok) {
+      const j = await rRun.json().catch(() => ({}));
+      throw new Error(j.error || `Không tìm thấy hoặc không đọc được phiên ${runId} (HTTP ${rRun.status})`);
+    }
+    const snap = await rRun.json();
+    let file = args[logIdx + 2] && !args[logIdx + 2].startsWith('-') ? args[logIdx + 2] : null;
+    if (file) {
+      if (Array.isArray(snap.agents)) {
+        const ag = snap.agents.find((a) => a.name === file);
+        if (ag && ag.lastLog) file = ag.lastLog;
+      }
+      if (Array.isArray(snap.results) && !file.endsWith('.log')) {
+        const res = snap.results.slice().reverse().find((r) => r.agent === file && r.log);
+        if (res) file = res.log;
+      }
+    } else {
+      const lastRes = Array.isArray(snap.results) ? snap.results.slice().reverse().find((r) => r.log) : null;
+      const lastAg = Array.isArray(snap.agents) ? snap.agents.find((a) => a.lastLog) : null;
+      if (lastRes && lastRes.log) file = lastRes.log;
+      else if (lastAg && lastAg.lastLog) file = lastAg.lastLog;
+    }
+    if (!file) {
+      throw new Error(`Phiên ${runId} chưa có file log nào.`);
+    }
+    const rLog = await fetch(`${url}/api/runs/${encodeURIComponent(runId)}/log?repo=${encodeURIComponent(snap.repoRoot || '')}&file=${encodeURIComponent(file)}`);
+    if (!rLog.ok) {
+      const errText = await rLog.text();
+      let msg = errText;
+      try {
+        const j = JSON.parse(errText);
+        if (j.error) msg = j.error;
+      } catch {}
+      throw new Error(msg || `Lỗi khi lấy log file ${file} (HTTP ${rLog.status})`);
+    }
+    const logText = await rLog.text();
+    console.log(`=== Log: ${file} (phiên ${runId}) ===`);
+    console.log(logText);
     return;
   }
 

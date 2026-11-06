@@ -220,6 +220,18 @@ class Coordinator extends EventEmitter {
         }
         case 'run_detail':
           return { type, ok: true, info: true, text: `chi tiết ${a.id}`, data: this.detail(await this.ops.getRun(a.id)) };
+        case 'run_log': {
+          const snap = await this.ops.getRun(a.id);
+          if (!snap) throw new Error(`Không tìm thấy phiên ${a.id}`);
+          let file = a.file;
+          if (!file) {
+            const last = (snap.results || []).slice().reverse().find((r) => r.log) || (snap.agents || []).find((ag) => ag.lastLog);
+            if (last) file = last.log || last.lastLog;
+          }
+          if (!file) throw new Error(`Phiên ${a.id} chưa có file log.`);
+          const p = path.resolve(snap.repoRoot || '', '.swarm', 'runs', a.id, file);
+          return { type, ok: true, info: true, text: `log ${file} của ${a.id}`, data: tailFile(p, 25000) || '(log trống)' };
+        }
         default:
           throw new Error(`Hành động không hỗ trợ: ${type}`);
       }
@@ -301,7 +313,8 @@ Actions:
 - {"type":"inspect","path":"<absolute dir>"}     list files / git status of a folder
 - {"type":"read_file","path":"<absolute file>"}  read up to 12 KB of a file
 - {"type":"run_detail","id":"<run id>"}         full status of a run
-inspect/read_file/run_detail/list_runs return data to you in a follow-up call (max ${MAX_STEPS} calls per turn);
+- {"type":"run_log","id":"<run id>","file":"<relative log file>"}  read agent or evaluation log in a run
+inspect/read_file/run_detail/run_log/list_runs return data to you in a follow-up call (max ${MAX_STEPS} calls per turn);
 use them before starting a run on a project you have not looked at, so the evaluation command is right.
 
 Guidelines:
