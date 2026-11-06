@@ -1,0 +1,12 @@
+{
+  "name": "agent-swarm",
+  "version": "1.0.0",
+  "description": "Run N agent CLIs that continuously improve a project, autoresearch-style, with git as the source of truth",
+  "private": true,
+  "license": "MIT",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node test/e2e.js && node test/api.js && node test/coordinator.js"
+  }
+}

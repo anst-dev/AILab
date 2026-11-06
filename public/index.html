@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent Swarm</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo">◆</span> Agent Swarm <small>autoresearch cho mọi dự án</small></div>
+  <nav>
+    <button class="ghost" id="navChat">Điều phối</button>
+    <button class="ghost" id="navNew">+ Phiên mới</button>
+    <button class="ghost" id="navSettings">Cấu hình agent</button>
+  </nav>
+</header>
+
+<div class="layout">
+  <aside class="side">
+    <h3>Các phiên</h3>
+    <div id="runList" class="run-list"><p class="muted">Chưa có phiên nào.</p></div>
+  </aside>
+
+  <main>
+    <!-- ================= CHAT ================= -->
+    <section id="viewChat" hidden>
+      <div class="run-head">
+        <div>
+          <h1>Agent điều phối</h1>
+          <p class="muted">Nhắn yêu cầu bằng lời thường: dự án nào, mục tiêu gì, dùng CLI nào, bao nhiêu agent. Agent điều phối tự kiểm tra thư mục, chọn cách đánh giá, khởi động / dừng / merge phiên và báo lại khi phiên kết thúc.</p>
+        </div>
+        <div class="actions">
+          <select id="coordCli" title="CLI làm agent điều phối"></select>
+          <button class="ghost" id="chatClear">Xoá hội thoại</button>
+        </div>
+      </div>
+      <div class="chat" id="chatLog"></div>
+      <form class="chat-input" id="chatForm" autocomplete="off">
+        <textarea id="chatText" rows="2" placeholder="Ví dụ: Tối ưu C:\Projects\adb-shot để ảnh chụp tốn ít token nhất, dùng 3 agent agy effort low, mỗi lượt 4 phút"></textarea>
+        <button class="primary" id="chatSend">Gửi</button>
+      </form>
+      <div class="hint" id="chatBusy" hidden>Agent điều phối đang suy nghĩ…</div>
+    </section>
+
+    <!-- ================= NEW RUN ================= -->
+    <section id="viewNew" hidden>
+      <h1>Phiên cải tiến mới</h1>
+      <p class="muted">N agent làm việc song song, mỗi agent trong một git worktree riêng. Mỗi lượt agent bị kill khi hết thời gian; kết quả đạt mới được merge vào nhánh trung tâm, các agent luôn bắt đầu lại từ bản tốt nhất.</p>
+
+      <form id="newForm" autocomplete="off">
+        <div class="card">
+          <label class="field">
+            <span>Mẫu</span>
+            <select id="preset">
+              <option value="free">Tự do: không đánh giá tự động (merge mọi thay đổi không xung đột)</option>
+              <option value="pass">Kiểm thử: chỉ merge khi lệnh test chạy thành công</option>
+              <option value="score">Điểm số: tối ưu một con số (thấp hơn / cao hơn là tốt)</option>
+              <option value="autoresearch">autoresearch (karpathy): giảm val_bpb của train.py</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Thư mục dự án (đường dẫn tuyệt đối)</span>
+            <div class="row">
+              <input id="workspace" list="recentWs" placeholder="C:\Projects\my-app" required>
+              <datalist id="recentWs"></datalist>
+              <button type="button" class="secondary" id="btnInspect">Kiểm tra</button>
+            </div>
+            <div id="inspectOut" class="hint"></div>
+          </label>
+
+          <label class="field">
+            <span>Yêu cầu</span>
+            <textarea id="requirement" rows="5" placeholder="Mô tả mục tiêu để các agent liên tục cải tiến. Ví dụ: Xây dựng trang todo-list bằng HTML/JS thuần, đẹp, có lọc và lưu localStorage." required></textarea>
+          </label>
+        </div>
+
+        <div class="card">
+          <h2>Agent CLI và số lượng</h2>
+          <table class="agents-table">
+            <thead><tr><th>Agent CLI</th><th>Trạng thái</th><th>Số lượng</th></tr></thead>
+            <tbody id="agentRows"><tr><td colspan="3" class="muted">Đang dò các CLI trên máy...</td></tr></tbody>
+          </table>
+          <div class="row between">
+            <span class="muted">Tổng: <b id="agentTotal">0</b> agent</span>
+            <label class="inline">Thời gian mỗi lượt (phút) <input id="timeLimitMin" type="number" min="0.1" step="0.5" value="5" class="num"></label>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Cách đánh giá kết quả</h2>
+          <div class="seg" id="evalModeSeg">
+            <label><input type="radio" name="evalMode" value="none" checked> Không đánh giá</label>
+            <label><input type="radio" name="evalMode" value="pass"> Pass / Fail</label>
+            <label><input type="radio" name="evalMode" value="score"> Điểm số</label>
+          </div>
+          <div id="evalFields">
+            <label class="field"><span>Lệnh đánh giá (chạy trong thư mục của agent)</span>
+              <input id="evalCommand" placeholder="npm test   |   uv run train.py   |   python eval.py"></label>
+            <div class="grid3 score-only">
+              <label class="field"><span>Regex lấy điểm (nhóm 1)</span><input id="metricRegex" placeholder="^score:\s*([0-9.]+)"></label>
+              <label class="field"><span>Hướng tối ưu</span>
+                <select id="direction"><option value="min">Thấp hơn là tốt</option><option value="max">Cao hơn là tốt</option></select></label>
+              <label class="field"><span>Cải thiện tối thiểu</span><input id="minDelta" type="number" step="any" min="0" value="0"></label>
+            </div>
+            <div class="grid3">
+              <label class="field"><span>Timeout đánh giá (phút)</span><input id="evalTimeoutMin" type="number" min="0.1" step="0.5" value="15"></label>
+              <label class="field"><span>Số đánh giá chạy song song</span><input id="evalConcurrency" type="number" min="1" max="32" value="1"></label>
+              <label class="field check"><input id="baseline" type="checkbox" checked> <span>Đo baseline trước khi bắt đầu</span></label>
+            </div>
+          </div>
+        </div>
+
+        <details class="card">
+          <summary>Nâng cao</summary>
+          <label class="field"><span>File được bảo vệ, agent không được sửa (cách nhau bởi dấu phẩy, tính từ thư mục dự án)</span>
+            <input id="protectedFiles" placeholder="prepare.py, package-lock.json"></label>
+          <div class="grid3">
+            <label class="field"><span>Số lượt tối đa mỗi agent (0 = vô hạn)</span><input id="maxIterations" type="number" min="0" value="0"></label>
+            <label class="field"><span>Tổng thời lượng tối đa (phút, 0 = vô hạn)</span><input id="maxDurationMin" type="number" min="0" value="0"></label>
+            <label class="field"><span>Giãn cách khởi động agent (giây)</span><input id="staggerSec" type="number" min="0" value="3"></label>
+          </div>
+          <label class="field"><span>Chỉ dẫn thêm cho agent (giống program.md)</span>
+            <textarea id="extraInstructions" rows="4" placeholder="Quy ước code, công nghệ, những điều cấm..."></textarea></label>
+          <label class="field check"><input id="keepWorktrees" type="checkbox"> <span>Giữ lại worktree của agent sau khi dừng (để xem)</span></label>
+        </details>
+
+        <div id="formError" class="error" hidden></div>
+        <div class="row end">
+          <button type="submit" class="primary big" id="btnStart">▶ Bắt đầu</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- ================= RUN VIEW ================= -->
+    <section id="viewRun" hidden>
+      <div class="run-head">
+        <div>
+          <h1 id="runTitle">Phiên</h1>
+          <div class="muted" id="runSub"></div>
+        </div>
+        <div class="actions" id="runActions"></div>
+      </div>
+      <div class="req" id="runReq"></div>
+
+      <div class="tiles" id="tiles"></div>
+
+      <h2>Agent</h2>
+      <div class="agents-grid" id="agentsGrid"></div>
+
+      <div class="two-col">
+        <div class="card">
+          <h2>Kết quả các lượt</h2>
+          <div class="table-wrap"><table class="results">
+            <thead><tr><th>Giờ</th><th>Agent</th><th>#</th><th>Kết quả</th><th>Điểm</th><th>Commit</th><th>Mô tả</th></tr></thead>
+            <tbody id="resultRows"></tbody>
+          </table></div>
+        </div>
+        <div class="card">
+          <h2>Nhánh trung tâm <code id="centralName"></code></h2>
+          <ol class="gitlog" id="gitLog"></ol>
+          <h2>Sự kiện</h2>
+          <ol class="events" id="events"></ol>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- log viewer -->
+<dialog id="logDlg">
+  <div class="dlg-head"><b id="logTitle">Log</b><span class="muted" id="logLive"></span><button class="ghost" id="logClose">✕</button></div>
+  <pre id="logBody"></pre>
+</dialog>
+
+<!-- settings -->
+<dialog id="setDlg">
+  <div class="dlg-head"><b>Cấu hình lệnh agent</b><button class="ghost" id="setClose">✕</button></div>
+  <div class="dlg-body">
+    <p class="muted"><code>{prompt}</code> sẽ được thay bằng câu lệnh (đã có dấu ngoặc kép) yêu cầu agent đọc file nhiệm vụ <code>.swarm_task.md</code>. Lệnh phải tự chạy, không hỏi xác nhận.</p>
+    <div id="setRows"></div>
+    <h3>Agent tuỳ chỉnh</h3>
+    <div id="customRows"></div>
+    <button type="button" class="secondary" id="addCustom">+ Thêm agent tuỳ chỉnh</button>
+    <div class="row end"><button class="primary" id="setSave">Lưu</button></div>
+  </div>
+</dialog>
+
+<script src="app.js"></script>
+</body>
+</html>
