@@ -324,6 +324,7 @@ async function handle(req, res) {
   const p = url.pathname;
   const m = p.match(/^\/api\/runs\/([\w-]+)(?:\/(\w+))?$/);
   const mCsv = p.match(/^\/api\/runs\/([\w-]+)\/export\.csv$/);
+  const mJson = p.match(/^\/api\/runs\/([\w-]+)\/export\.json$/);
 
   if (req.method === 'GET' && p === '/api/events') {
     res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' });
@@ -509,6 +510,19 @@ async function handle(req, res) {
     return res.end(csv);
   }
 
+  if (req.method === 'GET' && mJson) {
+    const id = mJson[1];
+    const repo = url.searchParams.get('repo') || '';
+    const found = findSnapshot(id, repo);
+    if (!found) return send(res, 404, { error: `Không export được JSON: không tìm thấy phiên ${id}.` });
+    res.writeHead(200, {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Content-Disposition': `attachment; filename="run-${id}.json"`,
+      'Cache-Control': 'no-store',
+    });
+    return res.end(JSON.stringify(found.snap, null, 2));
+  }
+
   if (m) {
     const [, id, action] = m;
     const repo = url.searchParams.get('repo') || '';
@@ -519,6 +533,26 @@ async function handle(req, res) {
     if (req.method === 'GET' && !action) return send(res, 200, snap);
 
     if (req.method === 'GET' && action === 'gitlog') return send(res, 200, await gitLog(run, snap));
+
+    if (req.method === 'GET' && action === 'logs') {
+      const runDir = path.join(snap.repoRoot || '', '.swarm', 'runs', id);
+      if (!snap.repoRoot || !fs.existsSync(runDir)) return send(res, 200, { files: [] });
+      try {
+        const entries = fs.readdirSync(runDir, { withFileTypes: true });
+        const files = [];
+        for (const ent of entries) {
+          if (ent.isFile()) {
+            try {
+              const st = fs.statSync(path.join(runDir, ent.name));
+              files.push({ name: ent.name, size: st.size, mtime: st.mtimeMs });
+            } catch {}
+          }
+        }
+        return send(res, 200, { files });
+      } catch (e) {
+        return send(res, 500, { error: e.message });
+      }
+    }
 
     if (req.method === 'GET' && action === 'log') {
       const rel = String(url.searchParams.get('file') || '');
