@@ -264,12 +264,64 @@ function computeStats(target) {
   };
 }
 
+function csvField(val) {
+  if (val == null) return '';
+  const s = String(val);
+  if (/[",\r\n]/.test(s)) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+  return s;
+}
+
+function loadLogItems(target) {
+  const items = [];
+  const logPath = typeof target === 'string' ? target : getOutPath();
+  if (fs.existsSync(logPath)) {
+    const lines = fs.readFileSync(logPath, 'utf8').split('\n').map((l) => l.trim()).filter(Boolean);
+    for (const l of lines) {
+      try { items.push(JSON.parse(l)); } catch {
+        items.push({ feature: l });
+      }
+    }
+  }
+  return { items, logPath };
+}
+
+function exportKnowledgeCsv(targetLog, outCsvPath) {
+  const { items, logPath } = loadLogItems(targetLog);
+  const cols = ['ts', 'bot', 'kind', 'feature', 'commit', 'score', 'status', 'note'];
+  const lines = [cols.join(',')];
+  for (const obj of items) {
+    lines.push(cols.map((col) => csvField(obj[col])).join(','));
+  }
+  const csvContent = lines.join('\r\n') + '\r\n';
+  if (outCsvPath) {
+    fs.mkdirSync(path.dirname(path.resolve(outCsvPath)), { recursive: true });
+    fs.writeFileSync(outCsvPath, csvContent, 'utf8');
+    return { ok: true, count: items.length, outPath: path.resolve(outCsvPath), logPath };
+  }
+  return { ok: true, count: items.length, csv: csvContent, logPath };
+}
+
+function exportKnowledgeJson(targetLog, outJsonPath) {
+  const { items, logPath } = loadLogItems(targetLog);
+  const jsonContent = JSON.stringify(items, null, 2) + '\n';
+  if (outJsonPath) {
+    fs.mkdirSync(path.dirname(path.resolve(outJsonPath)), { recursive: true });
+    fs.writeFileSync(outJsonPath, jsonContent, 'utf8');
+    return { ok: true, count: items.length, outPath: path.resolve(outJsonPath), logPath };
+  }
+  return { ok: true, count: items.length, json: jsonContent, logPath };
+}
+
 if (require.main === module) {
   const args = process.argv.slice(2);
   if (args.includes('--help') || args.includes('-h')) {
     console.log(`Sử dụng:
   node harvest.js              Gom kết quả các phiên swarm vào knowledge/improvements_log.jsonl
   node harvest.js --stats, -s  Xem thống kê chi tiết các lượt và tỷ lệ keep trong knowledge log
+  node harvest.js --export-csv [f], --csv [f]  Xuất dữ liệu tri thức ra file CSV (mặc định improvements_log.csv)
+  node harvest.js --export-json [f]            Xuất dữ liệu tri thức ra file JSON (mặc định improvements_log.json)
   node harvest.js --dry-run, -n Xem trước số dòng sẽ được gom mà không ghi file
   node harvest.js --json       In kết quả gom hoặc thống kê dạng JSON ra stdout
   node harvest.js --help, -h   Hiện hướng dẫn này`);
@@ -297,6 +349,32 @@ if (require.main === module) {
     process.exit(0);
   }
 
+  const exportCsvIdx = args.findIndex((a) => a === '--export-csv' || a === '--csv');
+  if (exportCsvIdx !== -1) {
+    const val = args[exportCsvIdx + 1];
+    const outPath = (val && !val.startsWith('-')) ? val : path.join(path.dirname(getOutPath()), 'improvements_log.csv');
+    const res = exportKnowledgeCsv(null, outPath);
+    if (isJson) {
+      console.log(JSON.stringify(res, null, 2));
+    } else {
+      console.log(`Đã xuất ${res.count} dòng tri thức sang file CSV: ${res.outPath}`);
+    }
+    process.exit(0);
+  }
+
+  const exportJsonIdx = args.findIndex((a) => a === '--export-json');
+  if (exportJsonIdx !== -1) {
+    const val = args[exportJsonIdx + 1];
+    const outPath = (val && !val.startsWith('-')) ? val : path.join(path.dirname(getOutPath()), 'improvements_log.json');
+    const res = exportKnowledgeJson(null, outPath);
+    if (isJson) {
+      console.log(JSON.stringify(res, null, 2));
+    } else {
+      console.log(`Đã xuất ${res.count} dòng tri thức sang file JSON: ${res.outPath}`);
+    }
+    process.exit(0);
+  }
+
   const dryRun = args.includes('--dry-run') || args.includes('-n');
   const res = runHarvest({ dryRun });
   if (isJson) {
@@ -308,4 +386,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { runHarvest, computeStats, tsvRows, gitRows, findRunsDir, findRepoRoot, getOutPath, OUT };
+module.exports = { runHarvest, computeStats, exportKnowledgeCsv, exportKnowledgeJson, tsvRows, gitRows, findRunsDir, findRepoRoot, getOutPath, OUT };
