@@ -356,6 +356,9 @@ function renderRun() {
   if (s.opts && s.opts.publishCommand) {
     acts.push('<button class="secondary" data-act="publish-log" title="Xem log thực thi publishCommand">Log publish</button>');
   }
+  if (!live || s.status === 'stopped') {
+    acts.push('<button class="danger" data-act="delete-run" title="Xóa dữ liệu phiên này và nhánh git swarm">Xóa phiên</button>');
+  }
   const repoParam = state.view && state.view.repo ? `?repo=${encodeURIComponent(state.view.repo)}` : '';
   acts.push(`<a class="button secondary" href="/api/runs/${esc(s.id)}/export.csv${repoParam}" download="results-${esc(s.id)}.csv" title="Tải kết quả phiên dưới dạng file CSV">Xuất CSV</a>`);
   acts.push(`<a class="button secondary" href="/api/runs/${esc(s.id)}/export.json${repoParam}" download="run-${esc(s.id)}.json" title="Tải toàn bộ trạng thái phiên dưới dạng file JSON">Xuất JSON</a>`);
@@ -772,6 +775,13 @@ async function runAction(act) {
       }
     } else if (act === 'publish-log') {
       openLog('publish.log', `Publish log (${s.id})`);
+    } else if (act === 'delete-run') {
+      if (!confirm(`Xóa vĩnh viễn dữ liệu phiên ${s.id} và nhánh swarm tương ứng? Thao tác này không thể hoàn tác.`)) return;
+      const repoParam = state.view && state.view.repo ? `?repo=${encodeURIComponent(state.view.repo)}` : '';
+      await api(`/api/runs/${s.id}${repoParam}`, { method: 'DELETE' });
+      alert(`Đã xóa phiên ${s.id}.`);
+      showNew();
+      await refreshRuns();
     }
   } catch (e) {
     alert(e.message);

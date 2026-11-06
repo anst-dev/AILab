@@ -27,6 +27,7 @@ theo thứ tự ưu tiên, sao cho `node evaluate.js` vẫn PASS (app phải ch�
 7. [x] **harvest.js gom results.tsv → JSONL** — harvest.js đọc mọi `.swarm/runs/*/results.tsv`
    + `git log` các nhánh `swarm/*`, gộp vào `knowledge/improvements_log.jsonl`
    (kind="swarm-row", note=id run; dedupe commit+iter+status — chạy lại không nhân đôi).
+8. [x] **Xóa phiên trên Web UI** — nút "Xóa phiên" trong chi tiết phiên đã dừng/lịch sử, xác nhận trước khi gọi DELETE /api/runs/:id và làm mới danh sách.
 
 ## Luật
 
