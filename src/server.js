@@ -270,6 +270,23 @@ const coordinator = new Coordinator({
       if (!run) throw new Error(`Chỉ merge được phiên chạy trong lần mở app này.`);
       return run.mergeBack();
     },
+    rebaselineRun: async (id) => {
+      const run = runs.get(String(id || ''));
+      if (!run) throw new Error(`Phiên ${id} không còn chạy trong app.`);
+      const resBase = await run.evaluateBaseline();
+      if (resBase && !resBase.ok) throw new Error(resBase.reason || 'Không đo được baseline');
+      return { ok: true, best: run.best };
+    },
+    exportRunCsv: async (id) => {
+      const run = runs.get(String(id || ''));
+      if (run) return typeof run.exportCsv === 'function' ? run.exportCsv() : resultsCsv(run.results);
+      for (const root of loadConfig().recentWorkspaces || []) {
+        try {
+          return tsvTextToCsv(fs.readFileSync(path.join(root, '.swarm', 'runs', String(id || ''), 'results.tsv'), 'utf8'));
+        } catch {}
+      }
+      throw new Error(`Không tìm thấy kết quả của phiên ${id}.`);
+    },
     inspect,
   },
 });

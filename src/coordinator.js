@@ -194,6 +194,14 @@ class Coordinator extends EventEmitter {
           const r = await this.ops.mergeRun(a.id);
           return { type, ok: true, text: `Đã merge ${a.id}: ${JSON.stringify(r)}`, runId: a.id };
         }
+        case 'rebaseline': {
+          const r = await this.ops.rebaselineRun(a.id);
+          return { type, ok: true, text: `Đã đo lại baseline ${a.id}: ${r && r.best && r.best.score != null ? `best = ${r.best.score}` : 'thành công'}`, runId: a.id };
+        }
+        case 'export_csv': {
+          const csv = await this.ops.exportRunCsv(a.id);
+          return { type, ok: true, info: true, text: `xuất CSV ${a.id}`, data: csv };
+        }
         case 'set_agent_template':
           await this.ops.setTemplate(String(a.cli || ''), String(a.template || ''));
           return { type, ok: true, text: `Lệnh của ${a.cli}: ${a.template}` };
@@ -276,6 +284,8 @@ Actions:
     maxIterations (per agent, 0 = unlimited), maxDurationMin (0 = unlimited), extraInstructions.
 - {"type":"stop","id":"<run id>","mode":"graceful"|"now"}
 - {"type":"merge","id":"<run id>"}      merge the run's central branch into the user's original branch
+- {"type":"rebaseline","id":"<run id>"} re-evaluate baseline/best commit for an active run
+- {"type":"export_csv","id":"<run id>"} export run results as CSV text
 - {"type":"set_agent_template","cli":"<id>","template":"... {prompt} ..."}   change how an agent CLI is launched
     (e.g. add "--effort low" or a model flag). Agents must run unattended, so keep the permission-skip flag.
 - {"type":"inspect","path":"<absolute dir>"}     list files / git status of a folder
