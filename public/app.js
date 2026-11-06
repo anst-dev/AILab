@@ -353,6 +353,9 @@ function renderRun() {
   if (live && (s.status === 'running' || s.status === 'preparing') && s.opts && s.opts.evalMode !== 'none') {
     acts.push('<button class="secondary" data-act="rebaseline" title="Chấm lại baseline với rubric/command hiện tại">Đo lại baseline</button>');
   }
+  if (s.opts && s.opts.publishCommand) {
+    acts.push('<button class="secondary" data-act="publish-log" title="Xem log thực thi publishCommand">Log publish</button>');
+  }
   const repoParam = state.view && state.view.repo ? `?repo=${encodeURIComponent(state.view.repo)}` : '';
   acts.push(`<a class="button secondary" href="/api/runs/${esc(s.id)}/export.csv${repoParam}" download="results-${esc(s.id)}.csv" title="Tải kết quả phiên dưới dạng file CSV">Xuất CSV</a>`);
   if (s.mergedBack) acts.push(`<span class="badge b-ok">Đã merge vào ${esc(s.mergedBack.branch)}</span>`);
@@ -587,6 +590,8 @@ async function runAction(act) {
       } finally {
         if (btn) { btn.disabled = false; btn.textContent = 'Đo lại baseline'; }
       }
+    } else if (act === 'publish-log') {
+      openLog('publish.log', `Publish log (${s.id})`);
     }
   } catch (e) {
     alert(e.message);
@@ -852,6 +857,7 @@ function init() {
     });
   }
   const btnHarvest = $('btnHarvest');
+  const btnHarvestView = $('btnHarvestView');
   const btnHarvestDownload = $('btnHarvestDownload');
   if (btnHarvest) {
     const refreshHarvestBadge = async () => {
@@ -863,9 +869,11 @@ function init() {
           if (count > 0) {
             btnHarvest.textContent = `Gom log (${count})`;
             if (btnHarvestDownload) btnHarvestDownload.style.display = 'inline-flex';
+            if (btnHarvestView) btnHarvestView.style.display = 'inline-flex';
           } else {
             btnHarvest.textContent = 'Gom log';
             if (btnHarvestDownload) btnHarvestDownload.style.display = 'none';
+            if (btnHarvestView) btnHarvestView.style.display = 'none';
           }
         }
       } catch {}
@@ -885,6 +893,27 @@ function init() {
         btnHarvest.disabled = false;
       }
     });
+    if (btnHarvestView) {
+      btnHarvestView.addEventListener('click', async () => {
+        $('logTitle').textContent = 'Knowledge: improvements_log.jsonl';
+        $('logLive').textContent = '';
+        $('logBody').textContent = 'Đang tải dữ liệu knowledge...';
+        if (!$('logDlg').open) $('logDlg').showModal();
+        clearInterval(logTimer);
+        state.log = null;
+        try {
+          const info = await api('/api/harvest?limit=200');
+          if (!info || !info.ok || !info.items || !info.items.length) {
+            $('logBody').textContent = '(Chưa có dòng dữ liệu nào trong improvements_log.jsonl)';
+          } else {
+            $('logBody').textContent = info.items.map((it) => JSON.stringify(it, null, 2)).join('\n---\n');
+            $('logBody').scrollTop = $('logBody').scrollHeight;
+          }
+        } catch (e) {
+          $('logBody').textContent = 'Lỗi tải log: ' + e.message;
+        }
+      });
+    }
   }
   if ($('navKnowledge')) $('navKnowledge').addEventListener('click', openKnowledge);
   if ($('knowledgeClose')) $('knowledgeClose').addEventListener('click', () => $('knowledgeDlg').close());
