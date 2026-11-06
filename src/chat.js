@@ -95,6 +95,7 @@ async function post(url, message) {
   node src/chat.js --stats, -S       Xem thống kê tổng hợp từ kho tri thức improvements_log.jsonl (-S)
   node src/chat.js --knowledge [n], -K Xem các dòng tri thức đã gom (mặc định 20 dòng gần nhất) (-K [n])
   node src/chat.js --clear           Xóa lịch sử trò chuyện của điều phối viên
+  node src/chat.js --shutdown, -X    Tắt server điều phối agent-swarm (-X)
   node src/chat.js --help, -h        Hiện hướng dẫn này`);
     return;
   }
@@ -368,6 +369,16 @@ async function post(url, message) {
     const r = await fetch(`${url}/api/chat/clear`, { method: 'POST' });
     if (!r.ok) throw new Error('Không thể xóa lịch sử chat.');
     console.log('Đã xóa toàn bộ lịch sử trò chuyện.');
+    return;
+  }
+
+  if (args.includes('--shutdown') || args.includes('-X')) {
+    try {
+      const res = await fetch(`${url}/api/shutdown`, { method: 'POST' }).then((r) => r.json());
+      console.log(res.message || 'Đã gửi yêu cầu tắt server.');
+    } catch (e) {
+      console.log(`Lỗi khi tắt server: ${e.message}`);
+    }
     return;
   }
 

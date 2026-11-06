@@ -409,6 +409,13 @@ const coordinator = new Coordinator({
       }
       return items;
     },
+    shutdown: async () => {
+      setTimeout(() => {
+        if (shutdownHook) shutdownHook();
+        else process.exit(0);
+      }, 200);
+      return { ok: true, message: 'Server đang tắt...' };
+    },
   },
 });
 coordinator.on('message', (m) => sse('chat', m));

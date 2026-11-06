@@ -232,6 +232,10 @@ class Coordinator extends EventEmitter {
           const r = isCsv ? await this.ops.exportHarvestCsv() : await this.ops.exportHarvestJson();
           return { type, ok: true, info: true, text: `xuất tri thức ${fmt.toUpperCase()}`, data: r };
         }
+        case 'shutdown': {
+          if (this.ops.shutdown) await this.ops.shutdown();
+          return { type, ok: true, text: 'Đang tắt server điều phối agent-swarm...' };
+        }
         case 'list_runs':
           return { type, ok: true, info: true, text: 'danh sách các phiên', data: this.ops.listRuns() };
         case 'catalog':
@@ -341,6 +345,7 @@ Actions:
 - {"type":"harvest"}                    harvest/aggregate all run results and git logs into knowledge/improvements_log.jsonl
 - {"type":"stats"}                      summary statistics of improvements_log.jsonl
 - {"type":"export_harvest","format":"csv"|"json"} export knowledge harvest log as CSV text or JSON object
+- {"type":"shutdown"}                   shut down the agent-swarm coordinator server
 - {"type":"list_runs"}                  list recent and active swarm runs
 - {"type":"catalog"}                    list available agent CLIs and detection status
 - {"type":"set_agent_template","cli":"<id>","template":"... {prompt} ..."}   change how an agent CLI is launched
