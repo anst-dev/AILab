@@ -78,6 +78,8 @@ async function post(url, message) {
   node src/chat.js "lệnh/tin nhắn"    Gửi tin nhắn một lần tới điều phối viên và in phản hồi
   node src/chat.js                   Mở chế độ chat tương tác (Ctrl+C để thoát)
   node src/chat.js --status, -s      Xem trạng thái server và các phiên swarm đang chạy
+  node src/chat.js --runs, -l        Liệt kê tất cả các phiên swarm (cả đang chạy và lịch sử)
+  node src/chat.js --run <id>        Xem thông tin chi tiết của một phiên swarm
   node src/chat.js --stop <id>       Dừng một phiên swarm đang chạy (--graceful để chờ vòng hiện tại)
   node src/chat.js --merge <id>      Merge nhánh của phiên đã dừng vào nhánh gốc của dự án (-m <id>)
   node src/chat.js --export <id> [f] Xuất kết quả phiên swarm ra file CSV (hoặc in ra terminal)
@@ -102,6 +104,61 @@ async function post(url, message) {
         const bestScore = r.best && r.best.score != null ? r.best.score : '—';
         console.log(`  - [${r.id}] ${r.status} | agents: ${r.agents} | giữ: ${r.kept}/${r.total} | best: ${bestScore}`);
         if (r.requirement) console.log(`    Yêu cầu: ${r.requirement}`);
+      }
+    }
+    return;
+  }
+
+  if (args.includes('--runs') || args.includes('-l')) {
+    const runsList = await fetch(`${url}/api/runs`).then((r) => r.json()).catch(() => []);
+    if (!runsList.length) {
+      console.log('Chưa có phiên swarm nào được ghi nhận.');
+      return;
+    }
+    console.log(`Danh sách phiên swarm (${runsList.length} phiên):`);
+    for (const r of runsList) {
+      const bestScore = r.best && r.best.score != null ? r.best.score : '—';
+      const liveTag = r.live ? ' (đang chạy)' : '';
+      console.log(`  - [${r.id}] ${r.status}${liveTag} | agents: ${r.agents} | giữ: ${r.kept}/${r.total} | best: ${bestScore}`);
+      if (r.workspace) console.log(`    Thư mục: ${r.workspace}`);
+      if (r.requirement) console.log(`    Yêu cầu: ${r.requirement.length > 100 ? r.requirement.slice(0, 100) + '...' : r.requirement}`);
+    }
+    return;
+  }
+
+  const runIdx = args.indexOf('--run');
+  if (runIdx !== -1) {
+    const runId = args[runIdx + 1];
+    if (!runId || runId.startsWith('-')) {
+      throw new Error('Vui lòng chỉ định ID phiên: node src/chat.js --run <id>');
+    }
+    const r = await fetch(`${url}/api/runs/${encodeURIComponent(runId)}`);
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error || `Không tìm thấy hoặc không đọc được phiên ${runId} (HTTP ${r.status})`);
+    }
+    const snap = await r.json();
+    console.log(`Phiên swarm: [${snap.id}]`);
+    console.log(`  Trạng thái:    ${snap.status} (pha: ${snap.phase || '—'})`);
+    console.log(`  Thư mục:       ${snap.workspace || snap.repoRoot || '—'}`);
+    console.log(`  Nhánh gốc:     ${snap.central || '—'}`);
+    if (snap.best) {
+      console.log(`  Điểm cao nhất: ${snap.best.score != null ? snap.best.score : '—'} (commit: ${snap.best.commit || '—'})`);
+    }
+    if (snap.opts && snap.opts.requirement) {
+      console.log(`  Yêu cầu:       ${snap.opts.requirement}`);
+    }
+    if (Array.isArray(snap.agents) && snap.agents.length) {
+      console.log(`  Agents (${snap.agents.length}):`);
+      for (const a of snap.agents) {
+        console.log(`    - ${a.name} (${a.cli || 'cli'}): vòng ${a.iter || 0} [${a.status}]${a.note ? ` — ${a.note}` : ''}`);
+      }
+    }
+    if (Array.isArray(snap.results) && snap.results.length) {
+      const recent = snap.results.slice(-10);
+      console.log(`  Kết quả gần nhất (${recent.length}/${snap.results.length}):`);
+      for (const res of recent) {
+        console.log(`    - vòng ${res.iter} [${res.agent}]: ${res.status} (score: ${res.score != null ? res.score : '—'}) ${res.desc || ''}`);
       }
     }
     return;
