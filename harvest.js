@@ -287,8 +287,44 @@ function loadLogItems(target) {
   return { items, logPath };
 }
 
-function exportKnowledgeCsv(targetLog, outCsvPath) {
+function filterKnowledge(items, filter = {}) {
+  let list = Array.isArray(items) ? [...items] : [];
+  if (filter.status) {
+    const s = String(filter.status).trim().toLowerCase();
+    list = list.filter((it) => String(it.status || '').toLowerCase() === s);
+  }
+  if (filter.bot) {
+    const b = String(filter.bot).trim().toLowerCase();
+    list = list.filter((it) => String(it.bot || '').toLowerCase().includes(b));
+  }
+  if (filter.query) {
+    const q = String(filter.query).trim().toLowerCase();
+    list = list.filter((it) => {
+      const matchFeat = String(it.feature || '').toLowerCase().includes(q);
+      const matchCommit = String(it.commit || '').toLowerCase().includes(q);
+      const matchBot = String(it.bot || '').toLowerCase().includes(q);
+      const matchNote = String(it.note || '').toLowerCase().includes(q);
+      const matchStatus = String(it.status || '').toLowerCase().includes(q);
+      return matchFeat || matchCommit || matchBot || matchNote || matchStatus;
+    });
+  }
+  if (typeof filter.limit === 'number' && filter.limit > 0) {
+    list = list.slice(0, filter.limit);
+  }
+  return list;
+}
+
+function listKnowledge(targetLog, filter) {
   const { items, logPath } = loadLogItems(targetLog);
+  const filtered = filter ? filterKnowledge(items, filter) : items;
+  return { items: filtered, totalCount: items.length, matchCount: filtered.length, logPath };
+}
+
+function exportKnowledgeCsv(targetLog, outCsvPath, filter) {
+  let { items, logPath } = loadLogItems(targetLog);
+  if (filter) {
+    items = filterKnowledge(items, filter);
+  }
   const cols = ['ts', 'bot', 'kind', 'feature', 'commit', 'score', 'status', 'note'];
   const lines = [cols.join(',')];
   for (const obj of items) {
@@ -303,8 +339,11 @@ function exportKnowledgeCsv(targetLog, outCsvPath) {
   return { ok: true, count: items.length, csv: csvContent, logPath };
 }
 
-function exportKnowledgeJson(targetLog, outJsonPath) {
-  const { items, logPath } = loadLogItems(targetLog);
+function exportKnowledgeJson(targetLog, outJsonPath, filter) {
+  let { items, logPath } = loadLogItems(targetLog);
+  if (filter) {
+    items = filterKnowledge(items, filter);
+  }
   const jsonContent = JSON.stringify(items, null, 2) + '\n';
   if (outJsonPath) {
     fs.mkdirSync(path.dirname(path.resolve(outJsonPath)), { recursive: true });
@@ -319,14 +358,40 @@ if (require.main === module) {
   if (args.includes('--help') || args.includes('-h')) {
     console.log(`Sử dụng:
   node harvest.js              Gom kết quả các phiên swarm vào knowledge/improvements_log.jsonl
+  node harvest.js --list       Xem danh sách các dòng tri thức trong terminal
   node harvest.js --stats, -s  Xem thống kê chi tiết các lượt và tỷ lệ keep trong knowledge log
+  node harvest.js --query, -q <keyword>  Lọc theo từ khóa (feature, commit, bot, status, note)
+  node harvest.js --status <st> Lọc theo trạng thái (keep, discard, conflict, error, committed)
+  node harvest.js --bot <name> Lọc theo tên bot/agent
+  node harvest.js --limit <n>  Giới hạn số dòng hiển thị hoặc xuất
   node harvest.js --export-csv [f], --csv [f]  Xuất dữ liệu tri thức ra file CSV (mặc định improvements_log.csv)
   node harvest.js --export-json [f]            Xuất dữ liệu tri thức ra file JSON (mặc định improvements_log.json)
   node harvest.js --dry-run, -n Xem trước số dòng sẽ được gom mà không ghi file
-  node harvest.js --json       In kết quả gom hoặc thống kê dạng JSON ra stdout
+  node harvest.js --json       In kết quả gom, danh sách hoặc thống kê dạng JSON ra stdout
   node harvest.js --help, -h   Hiện hướng dẫn này`);
     process.exit(0);
   }
+
+  // Parse common filter options
+  const getOpt = (flag, shortFlag) => {
+    const idx = args.findIndex((a) => a === flag || (shortFlag && a === shortFlag));
+    if (idx !== -1 && idx + 1 < args.length && !args[idx + 1].startsWith('-')) {
+      return args[idx + 1];
+    }
+    return null;
+  };
+
+  const queryOpt = getOpt('--query', '-q');
+  const statusOpt = getOpt('--status');
+  const botOpt = getOpt('--bot');
+  const limitRaw = getOpt('--limit');
+  const limitOpt = limitRaw ? parseInt(limitRaw, 10) : null;
+  const filterOpts = {
+    query: queryOpt,
+    status: statusOpt,
+    bot: botOpt,
+    limit: limitOpt && Number.isFinite(limitOpt) && limitOpt > 0 ? limitOpt : undefined,
+  };
 
   const isJson = args.includes('--json');
   if (args.includes('--stats') || args.includes('-s')) {
@@ -349,11 +414,30 @@ if (require.main === module) {
     process.exit(0);
   }
 
+  if (args.includes('--list')) {
+    const res = listKnowledge(null, filterOpts);
+    if (isJson) {
+      console.log(JSON.stringify(res, null, 2));
+    } else {
+      console.log(`Kho tri thức (${res.matchCount}/${res.totalCount} dòng${queryOpt ? ` khớp "${queryOpt}"` : ''}${statusOpt ? ` status=${statusOpt}` : ''}):`);
+      for (const it of res.items) {
+        const time = it.ts ? new Date(it.ts).toLocaleTimeString('vi-VN') : '—';
+        const st = (it.status || '—').padEnd(9);
+        const bot = (it.bot || '—').padEnd(8);
+        const hash = (it.commit ? it.commit.slice(0, 7) : '—').padEnd(8);
+        const score = it.score != null ? String(it.score).padStart(5) : '    —';
+        const desc = it.feature || '(không có mô tả)';
+        console.log(`  ${time} [${st}] ${bot} ${hash} ${score}  ${desc}`);
+      }
+    }
+    process.exit(0);
+  }
+
   const exportCsvIdx = args.findIndex((a) => a === '--export-csv' || a === '--csv');
   if (exportCsvIdx !== -1) {
     const val = args[exportCsvIdx + 1];
     const outPath = (val && !val.startsWith('-')) ? val : path.join(path.dirname(getOutPath()), 'improvements_log.csv');
-    const res = exportKnowledgeCsv(null, outPath);
+    const res = exportKnowledgeCsv(null, outPath, filterOpts);
     if (isJson) {
       console.log(JSON.stringify(res, null, 2));
     } else {
@@ -366,7 +450,7 @@ if (require.main === module) {
   if (exportJsonIdx !== -1) {
     const val = args[exportJsonIdx + 1];
     const outPath = (val && !val.startsWith('-')) ? val : path.join(path.dirname(getOutPath()), 'improvements_log.json');
-    const res = exportKnowledgeJson(null, outPath);
+    const res = exportKnowledgeJson(null, outPath, filterOpts);
     if (isJson) {
       console.log(JSON.stringify(res, null, 2));
     } else {
@@ -386,4 +470,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { runHarvest, computeStats, exportKnowledgeCsv, exportKnowledgeJson, tsvRows, gitRows, findRunsDir, findRepoRoot, getOutPath, OUT };
+module.exports = { runHarvest, computeStats, filterKnowledge, listKnowledge, exportKnowledgeCsv, exportKnowledgeJson, tsvRows, gitRows, findRunsDir, findRepoRoot, getOutPath, OUT };
