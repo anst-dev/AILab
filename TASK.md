@@ -5,7 +5,7 @@ theo thứ tự ưu tiên, sao cho `node evaluate.js` vẫn PASS (app phải ch�
 
 ## Backlog (làm lần lượt, đánh dấu [x] vào file này khi xong — commit kèm)
 
-1. [ ] **publishCommand** — tùy chọn mới trong swarm.js normalizeOptions (`raw.publishCommand`,
+1. [x] **publishCommand** — tùy chọn mới trong swarm.js normalizeOptions (`raw.publishCommand`,
    string, rỗng mặc định). Khi 1 agent được KEEP và `this.best` cập nhật (nơi set
    `this.best = { score, ... }` trong `integrate()`), chạy publishCommand 1 lần
    (runCommand fire-and-forget, timeout 60s, env thêm SWARM_BEST_SCORE). Đừng chờ kết quả.

@@ -80,6 +80,7 @@ function normalizeOptions(raw, catalog) {
   o.staggerSec = num(raw.staggerSec, 3, 0, 600);
   o.keepWorktrees = !!raw.keepWorktrees;
   o.extraInstructions = String(raw.extraInstructions || '').trim();
+  o.publishCommand = String(raw.publishCommand || '').trim();
   return { opts: o, errors };
 }
 
@@ -610,7 +611,29 @@ class SwarmRun extends EventEmitter {
         this.info(`Không cập nhật được nhánh trung tâm (${e.message}). Đã lưu vào nhánh ${rescue}`, 'error');
         return { result: 'failed', reason: `không merge được, lưu ở ${rescue}` };
       }
-      if (this.opts.evalMode === 'score') this.best = { score, commit: commit.slice(0, 7), desc, agent: agent.name };
+      if (this.opts.evalMode === 'score') {
+        this.best = { score, commit: commit.slice(0, 7), desc, agent: agent.name };
+        if (this.opts.publishCommand) {
+          try {
+            const pubLog = this.runDir ? path.join(this.runDir, 'publish.log') : path.join(this.repoRoot, 'publish.log');
+            const pubHandle = runCommand({
+              command: this.opts.publishCommand,
+              cwd: this.opts.workspace || this.repoRoot,
+              env: {
+                SWARM_AGENT: agent.name,
+                SWARM_RUN: this.id,
+                SWARM_BEST_SCORE: String(score ?? ''),
+              },
+              logFile: pubLog,
+              timeoutMs: 60000,
+            });
+            this.handles.add(pubHandle);
+            pubHandle.promise.finally(() => this.handles.delete(pubHandle));
+          } catch (e) {
+            this.info(`publishCommand error: ${e.message}`, 'warn');
+          }
+        }
+      }
       return { result: 'keep', commit };
     });
   }
