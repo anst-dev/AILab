@@ -32,6 +32,7 @@ theo thứ tự ưu tiên, sao cho `node evaluate.js` vẫn PASS (app phải ch�
 10. [x] **Xem commit diff trên Web UI** — hỗ trợ xem git show / diff của commit cụ thể khi bấm vào commit hash trong Git log hoặc bảng kết quả.
 11. [x] **Nút sao chép Log & Diff trên Web UI** — thêm nút "Sao chép" vào modal `logDlg` để sao chép nhanh toàn bộ nội dung log hoặc git diff vào clipboard kèm thông báo trực quan.
 12. [x] **Xem commit diff trong Kho tri thức trên Web UI** — hỗ trợ bấm vào commit hash trong bảng Kho tri thức (knowledge viewer) để xem chi tiết git show / diff của commit.
+13. [x] **Hỗ trợ commit diff và branch checkout trong coordinator** — thêm hành động diff theo commit và branch/checkout vào coordinator để agent điều phối có thể tra cứu chi tiết commit và lệnh git checkout của phiên.
 
 ## Luật
 

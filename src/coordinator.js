@@ -229,8 +229,26 @@ class Coordinator extends EventEmitter {
           return { type, ok: true, info: true, text: `git log ${a.id} (${(commits || []).length} commit)`, data: commits };
         }
         case 'diff': {
-          const diff = await this.ops.gitDiff(a.id, { statOnly: !!a.stat, from: a.from, to: a.to });
-          return { type, ok: true, info: true, text: `git diff ${a.id}${a.stat ? ' (--stat)' : ''}`, data: diff };
+          const diff = await this.ops.gitDiff(a.id, { statOnly: !!a.stat, from: a.from, to: a.to, commit: a.commit });
+          const label = a.commit ? `commit ${a.commit} (${a.id})` : `${a.id}${a.stat ? ' (--stat)' : ''}`;
+          return { type, ok: true, info: true, text: `git diff ${label}`, data: diff };
+        }
+        case 'branch':
+        case 'checkout': {
+          const snap = await this.ops.getRun(a.id);
+          const branch = snap.central || `swarm/${snap.id}`;
+          return {
+            type: 'branch',
+            ok: true,
+            info: true,
+            text: `git checkout ${branch}`,
+            data: {
+              branch,
+              originalBranch: snap.originalBranch || 'main',
+              baseCommit: snap.baseCommit || '',
+              command: `git checkout ${branch}`,
+            },
+          };
         }
         case 'harvest': {
           const r = await this.ops.harvest();
@@ -356,7 +374,8 @@ Actions:
 - {"type":"export_json","id":"<run id>"} export run snapshot as JSON object
 - {"type":"list_logs","id":"<run id>"}   list all log files in a run
 - {"type":"gitlog","id":"<run id>"}      list commits accumulated in the run's central branch
-- {"type":"diff","id":"<run id>","stat":true|false} view cumulative git diff of changes made in the run
+- {"type":"diff","id":"<run id>","stat":true|false,"commit":"<hash>"} view cumulative git diff or specific commit diff/show
+- {"type":"branch","id":"<run id>"}     view branch name and git checkout command for a run
 - {"type":"harvest"}                    harvest/aggregate all run results and git logs into knowledge/improvements_log.jsonl
 - {"type":"stats"}                      summary statistics of improvements_log.jsonl
 - {"type":"export_harvest","format":"csv"|"json"} export knowledge harvest log as CSV text or JSON object
