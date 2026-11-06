@@ -83,6 +83,35 @@ function broadcast(run) {
   for (const res of sseClients) res.write(payload);
 }
 
+// ---------------------------------------------------------------------------
+// export csv
+// ---------------------------------------------------------------------------
+
+/** Value → CSV field: chứa dấu phẩy, dấu " hoặc xuống dòng → bọc " và escape " thành "". */
+function csvField(v) {
+  const s = v === null || v === undefined ? '' : String(v);
+  return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+/** results (mảng row trong bộ nhớ) → CSV, cột time,agent,iter,commit,score,status,description. */
+function resultsCsv(rows) {
+  const lines = ['time,agent,iter,commit,score,status,description'];
+  for (const r of rows || []) {
+    lines.push(
+      [new Date(r.t).toISOString(), r.agent, r.iter, r.commit, r.score === null || r.score === undefined ? '' : r.score, r.status, r.desc]
+        .map(csvField)
+        .join(',')
+    );
+  }
+  return lines.join('\r\n') + '\r\n';
+}
+
+/** Nội dung results.tsv → CSV (giữ nguyên thứ tự cột, mỗi cột escape theo CSV). */
+function tsvTextToCsv(txt) {
+  const lines = txt.split(/\r?\n/).filter((l) => l.length);
+  return lines.map((l) => l.split('\t').map(csvField).join(',')).join('\r\n') + '\r\n';
+}
+
 /** Runs recorded on disk under <repo>/.swarm/runs of recently used workspaces. */
 function historyRuns() {
   const out = [];
@@ -258,6 +287,7 @@ async function handle(req, res) {
   const url = new URL(req.url, 'http://localhost');
   const p = url.pathname;
   const m = p.match(/^\/api\/runs\/([\w-]+)(?:\/(\w+))?$/);
+  const mCsv = p.match(/^\/api\/runs\/([\w-]+)\/export\.csv$/);
 
   if (req.method === 'GET' && p === '/api/events') {
     res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' });
@@ -342,6 +372,34 @@ async function handle(req, res) {
     cfg.coordinator = { cli: String(body.cli || ''), template: String(body.template || '').trim() };
     saveConfig(cfg);
     return send(res, 200, cfg.coordinator);
+  }
+
+  if (req.method === 'GET' && mCsv) {
+    const id = mCsv[1];
+    const run = runs.get(id);
+    let csv = null;
+    if (run) {
+      csv = resultsCsv(run.results);
+    } else {
+      // phiên cũ không còn trong bộ nhớ: đọc lại results.tsv trên đĩa nếu có
+      const roots = [];
+      const repo = url.searchParams.get('repo');
+      if (repo) roots.push(repo);
+      roots.push(...(loadConfig().recentWorkspaces || []));
+      for (const root of roots) {
+        try {
+          csv = tsvTextToCsv(fs.readFileSync(path.join(root, '.swarm', 'runs', id, 'results.tsv'), 'utf8'));
+          break;
+        } catch {}
+      }
+    }
+    if (csv === null) return send(res, 400, { error: `Không export được CSV: không tìm thấy phiên ${id} hoặc file results.tsv của phiên.` });
+    res.writeHead(200, {
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="results-${id}.csv"`,
+      'Cache-Control': 'no-store',
+    });
+    return res.end(csv);
   }
 
   if (m) {
