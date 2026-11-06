@@ -415,15 +415,38 @@ function renderRun() {
           <td class="mono">${esc(r.commit)}</td><td>${esc(r.desc)}</td></tr>`
       )
       .join('') || `<tr><td colspan="7" class="muted">${curFilter === 'all' ? 'Chưa có lượt nào hoàn thành.' : 'Không có lượt nào khớp bộ lọc.'}</td></tr>`;
-  $('resultRows').querySelectorAll('tr[data-i]').forEach((tr) =>
+  $('resultRows').querySelectorAll('tr[data-i]').forEach((tr) => {
+    tr.addEventListener('mouseenter', () => {
+      const origIdx = Number(tr.dataset.i);
+      const svg = $('scoreChart');
+      if (svg) {
+        const c = svg.querySelector(`circle[data-orig-idx="${origIdx}"]`);
+        if (c && !c.classList.contains('active')) c.classList.add('hovered');
+      }
+    });
+    tr.addEventListener('mouseleave', () => {
+      const origIdx = Number(tr.dataset.i);
+      const svg = $('scoreChart');
+      if (svg) {
+        const c = svg.querySelector(`circle[data-orig-idx="${origIdx}"]`);
+        if (c) c.classList.remove('hovered');
+      }
+    });
     tr.addEventListener('click', () => {
       const origIdx = Number(tr.dataset.i);
       const r = s.results[origIdx];
       if (!r) return;
       document.querySelectorAll('#resultRows tr.highlight-row').forEach((row) => row.classList.remove('highlight-row'));
       tr.classList.add('highlight-row');
+      const svg = $('scoreChart');
+      if (svg) {
+        svg.querySelectorAll('circle.active').forEach((c) => c.classList.remove('active'));
+        const circle = svg.querySelector(`circle[data-orig-idx="${origIdx}"]`);
+        if (circle) circle.classList.add('active');
+      }
       const detail = $('chartDetail');
       if (detail && r.score != null) {
+        detail.dataset.pinned = 'true';
         const basePt = (s.results || []).find((b) => b.status === 'baseline');
         const deltaStr = basePt && basePt.score != null && r.status !== 'baseline'
           ? ` · Δ ${r.score - basePt.score > 0 ? '+' : ''}${+(r.score - basePt.score).toFixed(4)}`
@@ -433,8 +456,8 @@ function renderRun() {
         detail.textContent = `Lượt #${r.iter || 0} · ${r.agent || '—'} · điểm: ${r.score}${deltaStr} (${r.status})${commitStr}${descStr}`;
       }
       if (r.log) openLog(r.log, `${r.agent} lượt ${r.iter}`);
-    })
-  );
+    });
+  });
 
   $('events').innerHTML = s.events
     .slice()
@@ -471,17 +494,27 @@ function renderScoreChart() {
   const svg = $('scoreChart');
   const empty = $('chartEmpty');
   const detail = $('chartDetail');
+  const bestBadge = $('chartBestScore');
+  const legend = $('chartLegend');
   const s = state.snap;
   if (!svg || !s) return;
   if (card) {
     card.hidden = s.opts && s.opts.evalMode !== 'score';
     if (card.hidden) return;
   }
+  const curFilter = state.resultFilter || 'all';
+  if (legend) {
+    legend.querySelectorAll('.legend-item').forEach((item) => {
+      const fk = item.dataset.filter;
+      item.classList.toggle('active', curFilter === fk && fk !== 'all');
+    });
+  }
   const pts = (s.results || []).filter((r) => r.score != null && r.score !== '' && Number.isFinite(Number(r.score)));
   if (!pts.length) {
     svg.innerHTML = '';
     if (empty) empty.hidden = false;
     if (detail) detail.textContent = '';
+    if (bestBadge) bestBadge.textContent = '';
     return;
   }
   if (empty) empty.hidden = true;
@@ -522,6 +555,17 @@ function renderScoreChart() {
     parts.push(`<text x="${W - padR}" y="${(Number(bY) - 3).toFixed(1)}" class="ct" text-anchor="end" fill="#60a5fa">baseline: ${fmtScore(basePt.score)}</text>`);
   }
 
+  // Best badge display in card header
+  if (bestBadge) {
+    if (s.best && s.best.score != null) {
+      const delta = basePt && basePt.score != null ? s.best.score - basePt.score : null;
+      const deltaStr = delta !== null ? ` (Δ ${delta > 0 ? '+' : ''}${+delta.toFixed(4)})` : '';
+      bestBadge.textContent = `· tốt nhất: ${fmtScore(s.best.score)}${deltaStr}`;
+    } else {
+      bestBadge.textContent = '';
+    }
+  }
+
   // Best/keep line progression
   const keeps = pts
     .filter((r) => r.status === 'keep' || r.status === 'baseline')
@@ -554,20 +598,47 @@ function renderScoreChart() {
     detail.textContent = lastPt ? formatDetail(lastPt) : '';
   }
 
+  const bestScoreVal = s.best && s.best.score != null ? Number(s.best.score) : null;
+
   for (let i = 0; i < sortedPts.length; i++) {
     const p = sortedPts[i];
+    const origIdx = (s.results || []).indexOf(p);
     const color = CHART_COLORS[p.status] || '#ff5f56';
     const cx = x(p.iter || 0).toFixed(1);
     const cy = y(p.score).toFixed(1);
     const tip = formatDetail(p) + (p.log ? ' (click để xem log)' : '');
+    let isMatch = true;
+    if (curFilter === 'keep') isMatch = (p.status === 'keep' || p.status === 'keep-merged');
+    else if (curFilter === 'discard') isMatch = (p.status === 'discard' || p.status === 'no-change' || p.status === 'duplicate');
+    else if (curFilter === 'conflict') isMatch = (p.status === 'conflict');
+    else if (curFilter === 'crash') isMatch = (p.status === 'crash' || p.status === 'error');
+    else if (curFilter !== 'all') isMatch = (p.status === curFilter);
+    const dimmedCls = isMatch ? '' : ' dimmed';
+    const isBest = bestScoreVal !== null && (p.status === 'keep' || p.status === 'baseline') && Number(p.score) === bestScoreVal;
+    if (isBest) {
+      parts.push(`<circle cx="${cx}" cy="${cy}" r="7" class="best-ring"><title>Điểm tốt nhất: ${fmtScore(p.score)}</title></circle>`);
+    }
     parts.push(
-      `<circle cx="${cx}" cy="${cy}" r="4" fill="${color}" class="cp" data-pt-idx="${i}">` +
+      `<circle cx="${cx}" cy="${cy}" r="4" fill="${color}" class="cp${dimmedCls}" data-pt-idx="${i}" data-orig-idx="${origIdx}">` +
         `<title>${esc(tip)}</title>` +
       `</circle>`
     );
   }
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
   svg.innerHTML = parts.join('');
+
+  svg.onclick = (e) => {
+    if (e.target.tagName.toLowerCase() !== 'circle') {
+      svg.querySelectorAll('circle.active').forEach((c) => c.classList.remove('active'));
+      document.querySelectorAll('#resultRows tr.highlight-row').forEach((row) => row.classList.remove('highlight-row'));
+      if (detail) {
+        detail.dataset.pinned = '';
+        const lastPt = sortedPts[sortedPts.length - 1];
+        detail.textContent = lastPt ? formatDetail(lastPt) : '';
+      }
+    }
+  };
+
   svg.querySelectorAll('circle[data-pt-idx]').forEach((el) => {
     const idx = Number(el.dataset.ptIdx);
     const p = sortedPts[idx];
@@ -580,7 +651,8 @@ function renderScoreChart() {
         detail.textContent = lastPt ? formatDetail(lastPt) : '';
       }
     });
-    el.addEventListener('click', () => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
       svg.querySelectorAll('circle.active').forEach((c) => c.classList.remove('active'));
       el.classList.add('active');
       if (detail) {
@@ -944,6 +1016,16 @@ function init() {
     resFilter.addEventListener('change', () => {
       state.resultFilter = resFilter.value;
       if (state.snap) renderRun();
+    });
+  }
+  const chartLegend = $('chartLegend');
+  if (chartLegend) {
+    chartLegend.querySelectorAll('.legend-item').forEach((item) => {
+      item.addEventListener('click', () => {
+        const f = item.dataset.filter;
+        state.resultFilter = state.resultFilter === f && f !== 'all' ? 'all' : f;
+        if (state.snap) renderRun();
+      });
     });
   }
   const btnHarvest = $('btnHarvest');
