@@ -79,6 +79,7 @@ async function post(url, message) {
   node src/chat.js                   Mở chế độ chat tương tác (Ctrl+C để thoát)
   node src/chat.js --status, -s      Xem trạng thái server và các phiên swarm đang chạy
   node src/chat.js --stop <id>       Dừng một phiên swarm đang chạy (--graceful để chờ vòng hiện tại)
+  node src/chat.js --merge <id>      Merge nhánh của phiên đã dừng vào nhánh gốc của dự án (-m <id>)
   node src/chat.js --export <id> [f] Xuất kết quả phiên swarm ra file CSV (hoặc in ra terminal)
   node src/chat.js --rebaseline <id> Chấm lại baseline cho một phiên đang chạy (-r <id>)
   node src/chat.js --clear           Xóa lịch sử trò chuyện của điều phối viên
@@ -128,6 +129,22 @@ async function post(url, message) {
     const j = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(j.error || `Lỗi khi dừng phiên ${runId} (HTTP ${r.status})`);
     console.log(`Đã gửi yêu cầu dừng phiên ${runId} (chế độ: ${mode}). Trạng thái hiện tại: ${j.status || 'stopping'}.`);
+    return;
+  }
+
+  const mergeIdx = args.indexOf('--merge') !== -1 ? args.indexOf('--merge') : args.indexOf('-m');
+  if (mergeIdx !== -1) {
+    const runId = args[mergeIdx + 1];
+    if (!runId || runId.startsWith('-')) {
+      throw new Error('Vui lòng chỉ định ID phiên cần merge: node src/chat.js --merge <id>');
+    }
+    const r = await fetch(`${url}/api/runs/${encodeURIComponent(runId)}/merge`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || `Lỗi khi merge phiên ${runId} (HTTP ${r.status})`);
+    console.log(`Đã merge thành công phiên ${runId} vào nhánh ${j.branch || 'gốc'}.`);
     return;
   }
 
