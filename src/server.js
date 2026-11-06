@@ -288,6 +288,13 @@ const coordinator = new Coordinator({
       throw new Error(`Không tìm thấy kết quả của phiên ${id}.`);
     },
     inspect,
+    harvest: async () => {
+      const harvestPath = path.join(APP_DIR, 'harvest.js');
+      if (!fs.existsSync(harvestPath)) throw new Error('Không tìm thấy file harvest.js.');
+      const harvestMod = require(harvestPath);
+      if (typeof harvestMod.runHarvest !== 'function') throw new Error('harvest.js không có hàm runHarvest.');
+      return harvestMod.runHarvest();
+    },
   },
 });
 coordinator.on('message', (m) => sse('chat', m));
@@ -381,6 +388,18 @@ async function handle(req, res) {
   if (req.method === 'POST' && p === '/api/chat/clear') {
     coordinator.clear();
     return send(res, 200, { ok: true });
+  }
+
+  if (req.method === 'POST' && p === '/api/harvest') {
+    try {
+      const harvestPath = path.join(APP_DIR, 'harvest.js');
+      if (!fs.existsSync(harvestPath)) return send(res, 404, { error: 'Không tìm thấy file harvest.js.' });
+      const harvestMod = require(harvestPath);
+      if (typeof harvestMod.runHarvest !== 'function') return send(res, 500, { error: 'harvest.js không có hàm runHarvest.' });
+      return send(res, 200, { ok: true, ...harvestMod.runHarvest() });
+    } catch (e) {
+      return send(res, 500, { error: e.message });
+    }
   }
 
   if (req.method === 'POST' && p === '/api/config/coordinator') {

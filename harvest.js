@@ -122,48 +122,65 @@ const toLine = (r) => JSON.stringify({
   commit: r.commit, score: r.score, status: r.status, note: r.note,
 });
 
-const existing = fs.existsSync(OUT)
-  ? fs.readFileSync(OUT, 'utf8').split('\n').map((l) => l.replace(/\r$/, '').trim()).filter(Boolean)
-  : [];
-const existingParsed = existing.map((l) => { try { return JSON.parse(l); } catch { return null; } });
-const existingAllCommits = new Set(existingParsed.filter(Boolean).map((o) => o.commit).filter(Boolean));
-const existingSwarm = existingParsed.filter((o) => o && o.kind === 'swarm-row' && o.commit);
-const existingSwarmCommits = new Set(existingSwarm.map((o) => o.commit));
-const existingSwarmCommitStatus = new Set(existingSwarm.map((o) => o.commit + '|' + (o.status || '')));
+function runHarvest() {
+  const existing = fs.existsSync(OUT)
+    ? fs.readFileSync(OUT, 'utf8').split('\n').map((l) => l.replace(/\r$/, '').trim()).filter(Boolean)
+    : [];
+  const existingParsed = existing.map((l) => { try { return JSON.parse(l); } catch { return null; } });
+  const existingAllCommits = new Set(existingParsed.filter(Boolean).map((o) => o.commit).filter(Boolean));
+  const existingSwarm = existingParsed.filter((o) => o && o.kind === 'swarm-row' && o.commit);
+  const existingSwarmCommits = new Set(existingSwarm.map((o) => o.commit));
+  const existingSwarmCommitStatus = new Set(existingSwarm.map((o) => o.commit + '|' + (o.status || '')));
 
-const { rows: trows, runIds, runsDir } = tsvRows();
-const tsvCommits = new Set(trows.map((r) => r.commit).filter(Boolean));
-const grows = gitRows(new Set([...tsvCommits, ...existingAllCommits]));
+  const { rows: trows, runIds, runsDir } = tsvRows();
+  const tsvCommits = new Set(trows.map((r) => r.commit).filter(Boolean));
+  const grows = gitRows(new Set([...tsvCommits, ...existingAllCommits]));
 
-const seenKeys = new Set(); // commit|iter|status trong nguồn
-const fresh = [];
-for (const r of [...trows, ...grows]) {
-  const key = (r.commit || '') + '|' + r._iter + '|' + (r.status || '');
-  if (seenKeys.has(key)) continue;
-  if (r.commit && existingSwarmCommits.has(r.commit)) continue; // lần harvest trước đã log commit này
-  if (r.commit && existingSwarmCommitStatus.has(r.commit + '|' + (r.status || ''))) continue;
-  seenKeys.add(key);
-  fresh.push(r);
+  const seenKeys = new Set(); // commit|iter|status trong nguồn
+  const fresh = [];
+  for (const r of [...trows, ...grows]) {
+    const key = (r.commit || '') + '|' + r._iter + '|' + (r.status || '');
+    if (seenKeys.has(key)) continue;
+    if (r.commit && existingSwarmCommits.has(r.commit)) continue; // lần harvest trước đã log commit này
+    if (r.commit && existingSwarmCommitStatus.has(r.commit + '|' + (r.status || ''))) continue;
+    seenKeys.add(key);
+    fresh.push(r);
+  }
+
+  // Sắp theo thời gian (ổn định, giữ thứ tự gốc khi bằng thời điểm).
+  const items = [];
+  for (const l of existing) {
+    let tsMs = Infinity;
+    try {
+      const t = Date.parse(JSON.parse(l).ts);
+      if (!Number.isNaN(t)) tsMs = t;
+    } catch { /* dòng lạ → đẩy xuống cuối */ }
+    items.push({ line: l, tsMs });
+  }
+  for (const r of fresh) {
+    const t = r.ts ? Date.parse(r.ts) : NaN;
+    items.push({ line: toLine(r), tsMs: Number.isNaN(t) ? Infinity : t });
+  }
+  items.sort((a, b) => a.tsMs - b.tsMs);
+
+  fs.mkdirSync(path.dirname(OUT), { recursive: true });
+  fs.writeFileSync(OUT, items.map((i) => i.line).join('\n') + '\n');
+  return {
+    runsDir,
+    runIds,
+    tsvRowCount: trows.length,
+    gitRowCount: grows.length,
+    freshCount: fresh.length,
+    totalCount: items.length,
+    outPath: OUT,
+  };
 }
 
-// Sắp theo thời gian (ổn định, giữ thứ tự gốc khi bằng thời điểm).
-const items = [];
-for (const l of existing) {
-  let tsMs = Infinity;
-  try {
-    const t = Date.parse(JSON.parse(l).ts);
-    if (!Number.isNaN(t)) tsMs = t;
-  } catch { /* dòng lạ → đẩy xuống cuối */ }
-  items.push({ line: l, tsMs });
+if (require.main === module) {
+  const res = runHarvest();
+  console.log(`harvest: runs dir = ${res.runsDir}`);
+  console.log(`harvest: ${res.runIds.length} run results.tsv (${res.runIds.join(', ') || 'không có'}), ${res.tsvRowCount} dòng tsv, ${res.gitRowCount} commit swarm/*`);
+  console.log(`harvest: +${res.freshCount} dòng mới, tổng ${res.totalCount} dòng -> knowledge/improvements_log.jsonl`);
 }
-for (const r of fresh) {
-  const t = r.ts ? Date.parse(r.ts) : NaN;
-  items.push({ line: toLine(r), tsMs: Number.isNaN(t) ? Infinity : t });
-}
-items.sort((a, b) => a.tsMs - b.tsMs);
 
-fs.mkdirSync(path.dirname(OUT), { recursive: true });
-fs.writeFileSync(OUT, items.map((i) => i.line).join('\n') + '\n');
-console.log(`harvest: runs dir = ${runsDir}`);
-console.log(`harvest: ${runIds.length} run results.tsv (${runIds.join(', ') || 'không có'}), ${trows.length} dòng tsv, ${grows.length} commit swarm/*`);
-console.log(`harvest: +${fresh.length} dòng mới, tổng ${items.length} dòng -> knowledge/improvements_log.jsonl`);
+module.exports = { runHarvest, tsvRows, gitRows, findRunsDir };

@@ -202,6 +202,10 @@ class Coordinator extends EventEmitter {
           const csv = await this.ops.exportRunCsv(a.id);
           return { type, ok: true, info: true, text: `xuất CSV ${a.id}`, data: csv };
         }
+        case 'harvest': {
+          const r = await this.ops.harvest();
+          return { type, ok: true, text: `Đã gom kết quả (+${r.freshCount} dòng mới, tổng ${r.totalCount} dòng vào knowledge/improvements_log.jsonl)`, data: r };
+        }
         case 'list_runs':
           return { type, ok: true, info: true, text: 'danh sách các phiên', data: this.ops.listRuns() };
         case 'set_agent_template':
@@ -290,6 +294,7 @@ Actions:
 - {"type":"merge","id":"<run id>"}      merge the run's central branch into the user's original branch
 - {"type":"rebaseline","id":"<run id>"} re-evaluate baseline/best commit for an active run
 - {"type":"export_csv","id":"<run id>"} export run results as CSV text
+- {"type":"harvest"}                    harvest/aggregate all run results and git logs into knowledge/improvements_log.jsonl
 - {"type":"list_runs"}                  list recent and active swarm runs
 - {"type":"set_agent_template","cli":"<id>","template":"... {prompt} ..."}   change how an agent CLI is launched
     (e.g. add "--effort low" or a model flag). Agents must run unattended, so keep the permission-skip flag.
