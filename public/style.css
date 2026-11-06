@@ -193,6 +193,8 @@ table.results tr.clickable:hover td { background: var(--panel-2); }
 .gitlog, .events { list-style: none; margin: 0 0 14px; padding: 0; max-height: 260px; overflow: auto; font-size: 12px; }
 .gitlog li, .events li { padding: 4px 0; border-top: 1px solid var(--border); }
 .gitlog code { margin-right: 6px; }
+.gitlog code.clickable { cursor: pointer; text-decoration: underline dotted; }
+.gitlog code.clickable:hover { color: var(--accent); text-decoration: underline; }
 .events li.error { color: var(--bad); }
 .events li.warn { color: var(--warn); }
 

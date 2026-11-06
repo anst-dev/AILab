@@ -196,7 +196,13 @@
           </table></div>
         </div>
         <div class="card">
-          <h2>Nhánh trung tâm <code id="centralName"></code></h2>
+          <div class="row between align-center" style="margin-top: 0; margin-bottom: 8px;">
+            <h2 style="margin: 0;">Nhánh trung tâm <code id="centralName"></code></h2>
+            <div class="row" style="gap: 4px; margin: 0;">
+              <button class="ghost" id="btnRunDiffStat" title="Xem thống kê thay đổi (--stat)" style="font-size: 11px; padding: 2px 6px;">Diff stat</button>
+              <button class="ghost" id="btnRunDiff" title="Xem git diff chi tiết các thay đổi đã merge" style="font-size: 11px; padding: 2px 6px;">Xem diff</button>
+            </div>
+          </div>
           <ol class="gitlog" id="gitLog"></ol>
           <h2>Sự kiện</h2>
           <ol class="events" id="events"></ol>
