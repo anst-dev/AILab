@@ -539,6 +539,19 @@ if (require.main === module) {
     process.exit(0);
   }
 
+  const exportJsonlIdx = args.findIndex((a) => a === '--export-jsonl');
+  if (exportJsonlIdx !== -1) {
+    const val = args[exportJsonlIdx + 1];
+    const outPath = (val && !val.startsWith('-')) ? val : path.join(path.dirname(getOutPath()), 'improvements_log.filtered.jsonl');
+    const res = exportKnowledgeJsonl(null, outPath, filterOpts);
+    if (isJson) {
+      console.log(JSON.stringify(res, null, 2));
+    } else {
+      console.log(`Đã xuất ${res.count} dòng tri thức sang file JSONL: ${res.outPath}`);
+    }
+    process.exit(0);
+  }
+
   const dryRun = args.includes('--dry-run') || args.includes('-n');
   const res = runHarvest({ dryRun });
   if (isJson) {
@@ -550,4 +563,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { runHarvest, computeStats, filterKnowledge, listKnowledge, exportKnowledgeCsv, exportKnowledgeJson, tsvRows, gitRows, findRunsDir, findRepoRoot, getOutPath, OUT };
+module.exports = { runHarvest, computeStats, filterKnowledge, listKnowledge, exportKnowledgeCsv, exportKnowledgeJson, exportKnowledgeJsonl, tsvRows, gitRows, findRunsDir, findRepoRoot, getOutPath, OUT };
