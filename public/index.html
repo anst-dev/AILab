@@ -177,18 +177,21 @@
 
       <div class="two-col">
         <div class="card">
-          <div class="row between" style="margin-top: 0; margin-bottom: 8px;">
+          <div class="row between" style="margin-top: 0; margin-bottom: 8px; gap: 8px; flex-wrap: wrap;">
             <h2 style="margin: 0;">Kết quả các lượt</h2>
-            <label class="inline" style="font-size: 12px; gap: 6px;">
-              <span class="muted">Lọc:</span>
-              <select id="resultFilter" style="font-size: 12px; padding: 2px 6px;">
-                <option value="all">Tất cả trạng thái</option>
-                <option value="keep">Chỉ giữ (keep)</option>
-                <option value="discard">Bị loại / không đổi</option>
-                <option value="conflict">Xung đột (conflict)</option>
-                <option value="crash">Lỗi / crash</option>
-              </select>
-            </label>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <input id="resultSearch" type="search" placeholder="Tìm agent, commit, mô tả..." style="font-size: 12px; padding: 2px 8px; width: 170px;">
+              <label class="inline" style="font-size: 12px; gap: 6px; margin: 0;">
+                <span class="muted">Lọc:</span>
+                <select id="resultFilter" style="font-size: 12px; padding: 2px 6px;">
+                  <option value="all">Tất cả trạng thái</option>
+                  <option value="keep">Chỉ giữ (keep)</option>
+                  <option value="discard">Bị loại / không đổi</option>
+                  <option value="conflict">Xung đột (conflict)</option>
+                  <option value="crash">Lỗi / crash</option>
+                </select>
+              </label>
+            </div>
           </div>
           <div class="table-wrap"><table class="results">
             <thead><tr><th>Giờ</th><th>Agent</th><th>#</th><th>Kết quả</th><th>Điểm</th><th>Commit</th><th>Mô tả</th></tr></thead>

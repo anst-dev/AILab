@@ -14,6 +14,7 @@ const state = {
   gitKey: '',
   log: null, // { file, title }
   resultFilter: 'all',
+  resultSearch: '',
 };
 
 const store = {
@@ -395,16 +396,34 @@ function renderRun() {
   renderAgents();
 
   if ($('resultFilter')) $('resultFilter').value = curFilter;
+  const curSearch = (state.resultSearch || '').toLowerCase().trim();
+  const searchInput = $('resultSearch');
+  if (searchInput && document.activeElement !== searchInput && searchInput.value !== (state.resultSearch || '')) {
+    searchInput.value = state.resultSearch || '';
+  }
 
   const filtered = s.results
     .map((r, i) => ({ r, i }))
     .filter(({ r }) => {
-      if (curFilter === 'all') return true;
-      if (curFilter === 'keep') return r.status === 'keep' || r.status === 'keep-merged';
-      if (curFilter === 'discard') return r.status === 'discard' || r.status === 'no-change' || r.status === 'duplicate';
-      if (curFilter === 'conflict') return r.status === 'conflict';
-      if (curFilter === 'crash') return r.status === 'crash' || r.status === 'error';
-      return r.status === curFilter;
+      if (curFilter === 'keep') {
+        if (r.status !== 'keep' && r.status !== 'keep-merged') return false;
+      } else if (curFilter === 'discard') {
+        if (r.status !== 'discard' && r.status !== 'no-change' && r.status !== 'duplicate') return false;
+      } else if (curFilter === 'conflict') {
+        if (r.status !== 'conflict') return false;
+      } else if (curFilter === 'crash') {
+        if (r.status !== 'crash' && r.status !== 'error') return false;
+      } else if (curFilter !== 'all' && r.status !== curFilter) {
+        return false;
+      }
+      if (curSearch) {
+        const txt = [r.agent, r.iter, r.status, r.score, r.commit, r.desc]
+          .filter((v) => v != null)
+          .join(' ')
+          .toLowerCase();
+        if (!txt.includes(curSearch)) return false;
+      }
+      return true;
     });
 
   $('resultRows').innerHTML =
@@ -417,7 +436,7 @@ function renderRun() {
           <td>${badge(RESULT_STATUS, r.status)}</td><td class="mono">${r.score == null ? '' : esc(r.score)}</td>
           <td class="mono">${r.commit ? `<code class="commit-link" data-hash="${esc(r.commit)}" title="Xem git diff của commit ${esc(r.commit)}" style="cursor:pointer;text-decoration:underline;">${esc(r.commit)}</code>` : ''}</td><td>${esc(r.desc)}</td></tr>`
       )
-      .join('') || `<tr><td colspan="7" class="muted">${curFilter === 'all' ? 'Chưa có lượt nào hoàn thành.' : 'Không có lượt nào khớp bộ lọc.'}</td></tr>`;
+      .join('') || `<tr><td colspan="7" class="muted">${curFilter === 'all' && !curSearch ? 'Chưa có lượt nào hoàn thành.' : 'Không có lượt nào khớp bộ lọc hoặc từ khóa tìm kiếm.'}</td></tr>`;
   $('resultRows').querySelectorAll('.commit-link').forEach((link) => {
     link.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -1103,6 +1122,13 @@ function init() {
   if (resFilter) {
     resFilter.addEventListener('change', () => {
       state.resultFilter = resFilter.value;
+      if (state.snap) renderRun();
+    });
+  }
+  const resSearch = $('resultSearch');
+  if (resSearch) {
+    resSearch.addEventListener('input', () => {
+      state.resultSearch = resSearch.value;
       if (state.snap) renderRun();
     });
   }

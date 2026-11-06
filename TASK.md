@@ -36,6 +36,7 @@ theo thứ tự ưu tiên, sao cho `node evaluate.js` vẫn PASS (app phải ch�
 14. [x] **Xem commit diff trong CLI chat.js** — thêm tùy chọn --commit cho lệnh --diff trong chat.js để xem chi tiết git show / diff của commit cụ thể.
 15. [x] **Hỗ trợ tra cứu kho tri thức trong coordinator** — thêm hành động knowledge vào coordinator để agent điều phối có thể tra cứu các cải tiến mới nhất từ improvements_log.jsonl.
 16. [x] **Tìm kiếm kho tri thức theo từ khóa** — hỗ trợ tham số query/filter cho kho tri thức trong API server, coordinator và CLI chat.js (--knowledge -q <từ khóa>).
+17. [x] **Tìm kiếm kết quả các lượt trên Web UI** — thêm ô tìm kiếm thời gian thực theo từ khóa (agent, commit, mô tả) vào bảng kết quả các lượt của phiên trên Web UI.
 
 ## Luật
 
