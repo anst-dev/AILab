@@ -778,18 +778,37 @@ function init() {
     });
   }
   const btnHarvest = $('btnHarvest');
+  const btnHarvestDownload = $('btnHarvestDownload');
   if (btnHarvest) {
+    const refreshHarvestBadge = async () => {
+      try {
+        const info = await api('/api/harvest?limit=1');
+        if (info && info.ok) {
+          const count = info.totalCount || 0;
+          btnHarvest.title = `Gom kết quả các phiên vào knowledge/improvements_log.jsonl (hiện có ${count} dòng)`;
+          if (count > 0) {
+            btnHarvest.textContent = `Gom log (${count})`;
+            if (btnHarvestDownload) btnHarvestDownload.style.display = 'inline-flex';
+          } else {
+            btnHarvest.textContent = 'Gom log';
+            if (btnHarvestDownload) btnHarvestDownload.style.display = 'none';
+          }
+        }
+      } catch {}
+    };
+    refreshHarvestBadge();
     btnHarvest.addEventListener('click', async () => {
       btnHarvest.disabled = true;
       btnHarvest.textContent = 'Đang gom...';
       try {
         const res = await api('/api/harvest', { method: 'POST', body: {} });
         alert(`Đã gom kết quả swarm thành công: +${res.freshCount || 0} dòng mới (tổng ${res.totalCount || 0} dòng trong ${res.outPath || 'knowledge/improvements_log.jsonl'}).`);
+        await refreshHarvestBadge();
       } catch (e) {
         alert('Lỗi gom log: ' + e.message);
+        btnHarvest.textContent = 'Gom log';
       } finally {
         btnHarvest.disabled = false;
-        btnHarvest.textContent = 'Gom log';
       }
     });
   }

@@ -443,6 +443,28 @@ async function handle(req, res) {
     }
   }
 
+  if (req.method === 'GET' && p === '/api/harvest/download') {
+    try {
+      const harvestPath = path.join(APP_DIR, 'harvest.js');
+      const harvestMod = fs.existsSync(harvestPath) ? require(harvestPath) : null;
+      const logPath = harvestMod && typeof harvestMod.getOutPath === 'function'
+        ? harvestMod.getOutPath()
+        : path.join(APP_DIR, 'knowledge', 'improvements_log.jsonl');
+      if (!fs.existsSync(logPath)) {
+        return send(res, 404, { error: 'Chưa có file improvements_log.jsonl. Hãy bấm gom log trước.' });
+      }
+      res.writeHead(200, {
+        'Content-Type': 'application/x-ndjson; charset=utf-8',
+        'Content-Disposition': 'attachment; filename="improvements_log.jsonl"',
+        'Cache-Control': 'no-store',
+      });
+      fs.createReadStream(logPath).pipe(res);
+      return;
+    } catch (e) {
+      return send(res, 500, { error: e.message });
+    }
+  }
+
   if (req.method === 'POST' && p === '/api/config/coordinator') {
     const body = await readBody(req);
     const cfg = loadConfig();
