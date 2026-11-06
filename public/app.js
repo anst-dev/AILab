@@ -369,6 +369,7 @@ function renderRun() {
   tiles.push(['Thời gian', dur(end - s.startedAt), `${rows.length} lượt`]);
   $('tiles').innerHTML = tiles.map(([k, v, d]) => `<div class="tile"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div><div class="d" title="${esc(d)}">${esc(d)}</div></div>`).join('');
 
+  renderScoreChart();
   renderAgents();
   renderScoreChart();
 
@@ -401,6 +402,61 @@ function renderRun() {
     state.gitKey = key;
     loadGitLog();
   }
+}
+
+// ---------------------------------------------------------------------------
+// score chart
+// ---------------------------------------------------------------------------
+
+const CHART_COLORS = { keep: '#35e6a3', 'keep-merged': '#35e6a3', discard: '#ff5f56', baseline: '#8a8f98' };
+const fmtScore = (v) => (Math.abs(v) >= 1000 ? String(Math.round(v)) : String(+Number(v).toFixed(4)));
+
+function renderScoreChart() {
+  const svg = $('scoreChart');
+  const empty = $('chartEmpty');
+  const s = state.snap;
+  if (!svg || !s) return;
+  const pts = s.results.filter((r) => r.score != null && Number.isFinite(r.score));
+  if (!pts.length) {
+    svg.innerHTML = '';
+    empty.hidden = false;
+    return;
+  }
+  empty.hidden = true;
+  const W = svg.clientWidth || 600;
+  const H = 120;
+  const padL = 42, padR = 10, padT = 10, padB = 14;
+  const innerW = Math.max(10, W - padL - padR);
+  const innerH = H - padT - padB;
+  const maxIter = Math.max(0, ...pts.map((p) => p.iter || 0));
+  let lo = Math.min(...pts.map((p) => p.score));
+  let hi = Math.max(...pts.map((p) => p.score));
+  if (lo === hi) { lo -= 1; hi += 1; }
+  const x = (it) => padL + (maxIter ? (it / maxIter) * innerW : 0);
+  const y = (v) => padT + innerH - ((v - lo) / (hi - lo)) * innerH;
+
+  const parts = [];
+  for (const v of [hi, lo]) {
+    parts.push(`<line x1="${padL}" y1="${y(v).toFixed(1)}" x2="${W - padR}" y2="${y(v).toFixed(1)}" class="cg"/>`);
+    parts.push(`<text x="${padL - 5}" y="${(y(v) + 3).toFixed(1)}" class="ct" text-anchor="end">${fmtScore(v)}</text>`);
+  }
+  const step = Math.max(1, Math.ceil(maxIter / Math.max(1, Math.floor(innerW / 34))));
+  for (let it = 0; it <= maxIter; it += step) {
+    parts.push(`<text x="${x(it).toFixed(1)}" y="${H - 2}" class="ct" text-anchor="middle">${it}</text>`);
+  }
+  for (const p of pts) {
+    const color = CHART_COLORS[p.status] || '#8a8f98';
+    const who = p.agent || '—';
+    const cx = x(p.iter || 0).toFixed(1);
+    const cy = y(p.score).toFixed(1);
+    parts.push(
+      `<circle cx="${cx}" cy="${cy}" r="3.5" fill="${color}" class="cp">` +
+        `<title>#${p.iter || 0} · ${esc(who)} · ${esc(p.score)} · ${esc(p.status)}</title>` +
+      `</circle>`
+    );
+  }
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML = parts.join('');
 }
 
 function renderAgents() {
@@ -786,6 +842,7 @@ function init() {
     if (state.snap && state.snap.agents.some((a) => a.status === 'working')) renderAgents();
   }, 1000);
   setInterval(refreshRuns, 15000);
+  window.addEventListener('resize', () => { if (state.snap && !$('viewRun').hidden) renderScoreChart(); });
   if ($('workspace').value) inspectWorkspace();
 }
 
