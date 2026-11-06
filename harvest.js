@@ -330,6 +330,30 @@ function filterKnowledge(items, filter = {}) {
       return matchFeat || matchCommit || matchBot || matchNote || matchStatus;
     });
   }
+  if (filter.sort) {
+    const f = String(filter.sort).trim();
+    const rev = !!filter.reverse || String(filter.order || '').toLowerCase() === 'desc';
+    list.sort((a, b) => {
+      let cmp = 0;
+      if (f === 'score') {
+        const sa = a.score != null && Number.isFinite(Number(a.score)) ? Number(a.score) : null;
+        const sb = b.score != null && Number.isFinite(Number(b.score)) ? Number(b.score) : null;
+        if (sa === null && sb === null) cmp = 0;
+        else if (sa === null) cmp = -1;
+        else if (sb === null) cmp = 1;
+        else cmp = sa - sb;
+      } else if (f === 'ts' || f === 'time') {
+        const ta = a.ts ? new Date(a.ts).getTime() : 0;
+        const tb = b.ts ? new Date(b.ts).getTime() : 0;
+        cmp = (Number.isFinite(ta) ? ta : 0) - (Number.isFinite(tb) ? tb : 0);
+      } else {
+        cmp = String(a[f] || '').localeCompare(String(b[f] || ''));
+      }
+      return rev ? -cmp : cmp;
+    });
+  } else if (filter.reverse || String(filter.order || '').toLowerCase() === 'desc') {
+    list.reverse();
+  }
   if (typeof filter.limit === 'number' && filter.limit > 0) {
     list = list.slice(0, filter.limit);
   }
@@ -375,6 +399,20 @@ function exportKnowledgeJson(targetLog, outJsonPath, filter) {
   return { ok: true, count: items.length, json: jsonContent, logPath };
 }
 
+function exportKnowledgeJsonl(targetLog, outJsonlPath, filter) {
+  let { items, logPath } = loadLogItems(targetLog);
+  if (filter) {
+    items = filterKnowledge(items, filter);
+  }
+  const jsonlContent = items.map((it) => JSON.stringify(it)).join('\n') + (items.length ? '\n' : '');
+  if (outJsonlPath) {
+    fs.mkdirSync(path.dirname(path.resolve(outJsonlPath)), { recursive: true });
+    fs.writeFileSync(outJsonlPath, jsonlContent, 'utf8');
+    return { ok: true, count: items.length, outPath: path.resolve(outJsonlPath), logPath };
+  }
+  return { ok: true, count: items.length, jsonl: jsonlContent, logPath };
+}
+
 if (require.main === module) {
   const args = process.argv.slice(2);
   if (args.includes('--help') || args.includes('-h')) {
@@ -385,9 +423,13 @@ if (require.main === module) {
   node harvest.js --query, -q <keyword>  Lọc theo từ khóa (feature, commit, bot, status, note)
   node harvest.js --status <st> Lọc theo trạng thái (keep, discard, conflict, error, committed)
   node harvest.js --bot <name> Lọc theo tên bot/agent
+  node harvest.js --sort <field> Sắp xếp danh sách/xuất (score, ts, bot, status, commit)
+  node harvest.js --reverse, --desc Đảo ngược thứ tự sắp xếp
+  node harvest.js --asc        Sắp xếp theo thứ tự tăng dần
   node harvest.js --limit <n>  Giới hạn số dòng hiển thị hoặc xuất
   node harvest.js --export-csv [f], --csv [f]  Xuất dữ liệu tri thức ra file CSV (mặc định improvements_log.csv)
   node harvest.js --export-json [f]            Xuất dữ liệu tri thức ra file JSON (mặc định improvements_log.json)
+  node harvest.js --export-jsonl [f]           Xuất dữ liệu tri thức ra file JSONL (mặc định improvements_log.filtered.jsonl)
   node harvest.js --dry-run, -n Xem trước số dòng sẽ được gom mà không ghi file
   node harvest.js --json       In kết quả gom, danh sách hoặc thống kê dạng JSON ra stdout
   node harvest.js --help, -h   Hiện hướng dẫn này`);
@@ -406,12 +448,18 @@ if (require.main === module) {
   const queryOpt = getOpt('--query', '-q');
   const statusOpt = getOpt('--status');
   const botOpt = getOpt('--bot');
+  const sortOpt = getOpt('--sort');
+  const reverseOpt = args.includes('--reverse') || args.includes('--desc');
+  const orderOpt = getOpt('--order') || (args.includes('--asc') ? 'asc' : (reverseOpt ? 'desc' : null));
   const limitRaw = getOpt('--limit');
   const limitOpt = limitRaw ? parseInt(limitRaw, 10) : null;
   const filterOpts = {
     query: queryOpt,
     status: statusOpt,
     bot: botOpt,
+    sort: sortOpt,
+    reverse: reverseOpt,
+    order: orderOpt,
     limit: limitOpt && Number.isFinite(limitOpt) && limitOpt > 0 ? limitOpt : undefined,
   };
 
