@@ -12,6 +12,7 @@
   <nav>
     <button class="ghost" id="navChat">Điều phối</button>
     <button class="ghost" id="navNew">+ Phiên mới</button>
+    <button class="ghost" id="navKnowledge">Tri thức</button>
     <button class="ghost" id="navSettings">Cấu hình agent</button>
   </nav>
 </header>
@@ -203,6 +204,23 @@
 <dialog id="logDlg">
   <div class="dlg-head"><b id="logTitle">Log</b><span class="muted" id="logLive"></span><button class="ghost" id="logClose">✕</button></div>
   <pre id="logBody"></pre>
+</dialog>
+
+<!-- knowledge viewer -->
+<dialog id="knowledgeDlg">
+  <div class="dlg-head"><b>Kho tri thức cải tiến</b><span class="muted" id="knowledgeMeta"></span><button class="ghost" id="knowledgeClose">✕</button></div>
+  <div class="dlg-body">
+    <div class="row between" style="margin-bottom: 12px; gap: 8px;">
+      <input id="knowledgeSearch" type="search" placeholder="Lọc theo commit, agent, điểm, ghi chú..." style="flex: 1;">
+      <button class="secondary" id="btnHarvestDlg">Gom log mới</button>
+    </div>
+    <div class="table-wrap" style="max-height: 55vh; overflow-y: auto;">
+      <table class="results">
+        <thead><tr><th>Thời gian</th><th>Agent</th><th>Commit</th><th>Điểm</th><th>Trạng thái</th><th>Ghi chú</th></tr></thead>
+        <tbody id="knowledgeRows"><tr><td colspan="6" class="muted">Đang tải...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
 </dialog>
 
 <!-- settings -->

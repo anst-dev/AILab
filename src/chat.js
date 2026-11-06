@@ -87,6 +87,7 @@ async function post(url, message) {
   node src/chat.js --export <id> [f] Xuất kết quả phiên swarm ra file CSV (hoặc in ra terminal) (-e <id>)
   node src/chat.js --rebaseline <id> Chấm lại baseline cho một phiên đang chạy (-r <id>)
   node src/chat.js --harvest, -H     Gom kết quả các phiên swarm vào knowledge/improvements_log.jsonl
+  node src/chat.js --knowledge [n], -K Xem các dòng tri thức đã gom (mặc định 20 dòng gần nhất) (-K [n])
   node src/chat.js --clear           Xóa lịch sử trò chuyện của điều phối viên
   node src/chat.js --help, -h        Hiện hướng dẫn này`);
     return;
@@ -333,6 +334,32 @@ async function post(url, message) {
     console.log(`  Thư mục:  ${j.runsDir || '—'}`);
     console.log(`  Số phiên: ${(j.runIds || []).length} (${(j.runIds || []).join(', ') || 'không có'})`);
     console.log(`  Kết quả:  +${j.freshCount || 0} dòng mới (tổng ${j.totalCount || 0} dòng trong ${j.outPath || 'knowledge/improvements_log.jsonl'})`);
+    return;
+  }
+
+  const knowIdx = args.indexOf('--knowledge') !== -1 ? args.indexOf('--knowledge') : args.indexOf('-K');
+  if (knowIdx !== -1) {
+    const rawLimit = args[knowIdx + 1];
+    const limit = (rawLimit && !rawLimit.startsWith('-') && parseInt(rawLimit, 10)) ? parseInt(rawLimit, 10) : 20;
+    const r = await fetch(`${url}/api/harvest?limit=${limit}`);
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || `Lỗi khi lấy tri thức (HTTP ${r.status})`);
+    if (!j.exists || !j.items || !j.items.length) {
+      console.log('Kho tri thức (knowledge/improvements_log.jsonl) chưa có dữ liệu.');
+      console.log('Chạy "node src/chat.js --harvest" để gom kết quả từ các phiên swarm.');
+      return;
+    }
+    console.log(`Kho tri thức cải tiến (${j.items.length}/${j.totalCount} dòng gần nhất từ ${j.outPath}):`);
+    for (const item of j.items) {
+      const t = item.ts ? item.ts.slice(0, 19).replace('T', ' ') : '—';
+      const bot = item.bot || item.agent || '—';
+      const c = item.commit ? item.commit.slice(0, 7) : '—';
+      const score = item.score != null ? item.score : '—';
+      const st = item.status || '—';
+      const desc = [item.feature, item.note].filter(Boolean).join(' — ') || item.desc || item.raw || '';
+      console.log(`  [${t}] ${c} | ${bot} | ${st} | điểm: ${score}`);
+      if (desc) console.log(`    ${desc}`);
+    }
     return;
   }
 

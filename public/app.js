@@ -634,6 +634,80 @@ function closeLog() {
 }
 
 // ---------------------------------------------------------------------------
+// knowledge viewer
+// ---------------------------------------------------------------------------
+
+let knowledgeData = [];
+
+async function loadKnowledge() {
+  const meta = $('knowledgeMeta');
+  const rows = $('knowledgeRows');
+  if (meta) meta.textContent = ' (đang tải...)';
+  if (rows) rows.innerHTML = '<tr><td colspan="6" class="muted">Đang tải dữ liệu tri thức...</td></tr>';
+  try {
+    const res = await api('/api/harvest?limit=150');
+    knowledgeData = Array.isArray(res.items) ? res.items : [];
+    if (meta) {
+      meta.textContent = res.exists
+        ? ` (${knowledgeData.length}/${res.totalCount} dòng gần nhất)`
+        : ' (chưa có file)';
+    }
+    renderKnowledge();
+  } catch (e) {
+    if (meta) meta.textContent = ' (lỗi)';
+    if (rows) rows.innerHTML = `<tr><td colspan="6" class="error">${esc(e.message)}</td></tr>`;
+  }
+}
+
+function renderKnowledge() {
+  const q = ($('knowledgeSearch') ? $('knowledgeSearch').value : '').toLowerCase().trim();
+  const rows = $('knowledgeRows');
+  if (!rows) return;
+  const filtered = knowledgeData.filter((r) => {
+    if (!q) return true;
+    const txt = [r.ts, r.bot, r.agent, r.commit, r.score, r.status, r.feature, r.desc, r.note, r.raw]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    return txt.includes(q);
+  });
+
+  if (!filtered.length) {
+    rows.innerHTML = `<tr><td colspan="6" class="muted">${knowledgeData.length === 0 ? 'Chưa có dữ liệu tri thức nào. Hãy bấm "Gom log mới" để quét.' : 'Không có dòng nào khớp với từ khoá tìm kiếm.'}</td></tr>`;
+    return;
+  }
+
+  rows.innerHTML = filtered
+    .slice()
+    .reverse()
+    .map((r) => {
+      const t = r.ts ? (time(r.ts) || r.ts.slice(0, 19).replace('T', ' ')) : '—';
+      const bot = r.bot || r.agent || '—';
+      const c = r.commit ? esc(String(r.commit).slice(0, 7)) : '—';
+      const score = r.score != null ? esc(String(r.score)) : '—';
+      const st = r.status || '';
+      const b = RESULT_STATUS[st] ? badge(RESULT_STATUS, st) : `<span class="badge b-mute">${esc(st || '—')}</span>`;
+      const desc = esc([r.feature, r.note].filter(Boolean).join(' — ') || r.desc || r.raw || '—');
+      return `<tr>
+        <td class="mono">${t}</td>
+        <td>${esc(bot)}</td>
+        <td class="mono">${c}</td>
+        <td class="mono">${score}</td>
+        <td>${b}</td>
+        <td>${desc}</td>
+      </tr>`;
+    })
+    .join('');
+}
+
+function openKnowledge() {
+  const dlg = $('knowledgeDlg');
+  if (!dlg) return;
+  if (!dlg.open) dlg.showModal();
+  loadKnowledge();
+}
+
+// ---------------------------------------------------------------------------
 // settings
 // ---------------------------------------------------------------------------
 
@@ -809,6 +883,26 @@ function init() {
         btnHarvest.textContent = 'Gom log';
       } finally {
         btnHarvest.disabled = false;
+      }
+    });
+  }
+  if ($('navKnowledge')) $('navKnowledge').addEventListener('click', openKnowledge);
+  if ($('knowledgeClose')) $('knowledgeClose').addEventListener('click', () => $('knowledgeDlg').close());
+  if ($('knowledgeSearch')) $('knowledgeSearch').addEventListener('input', renderKnowledge);
+  if ($('btnHarvestDlg')) {
+    $('btnHarvestDlg').addEventListener('click', async () => {
+      const btn = $('btnHarvestDlg');
+      btn.disabled = true;
+      btn.textContent = 'Đang gom...';
+      try {
+        const res = await api('/api/harvest', { method: 'POST', body: {} });
+        await loadKnowledge();
+        alert(`Đã gom kết quả swarm thành công: +${res.freshCount || 0} dòng mới (tổng ${res.totalCount || 0} dòng).`);
+      } catch (e) {
+        alert('Lỗi gom log: ' + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Gom log mới';
       }
     });
   }
