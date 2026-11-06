@@ -777,6 +777,22 @@ function init() {
       if (state.snap) renderRun();
     });
   }
+  const btnHarvest = $('btnHarvest');
+  if (btnHarvest) {
+    btnHarvest.addEventListener('click', async () => {
+      btnHarvest.disabled = true;
+      btnHarvest.textContent = 'Đang gom...';
+      try {
+        const res = await api('/api/harvest', { method: 'POST', body: {} });
+        alert(`Đã gom kết quả swarm thành công: +${res.freshCount || 0} dòng mới (tổng ${res.totalCount || 0} dòng trong ${res.outPath || 'knowledge/improvements_log.jsonl'}).`);
+      } catch (e) {
+        alert('Lỗi gom log: ' + e.message);
+      } finally {
+        btnHarvest.disabled = false;
+        btnHarvest.textContent = 'Gom log';
+      }
+    });
+  }
   $('navNew').addEventListener('click', showNew);
   $('navChat').addEventListener('click', showChat);
   $('chatForm').addEventListener('submit', sendChat);

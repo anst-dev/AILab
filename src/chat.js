@@ -79,12 +79,12 @@ async function post(url, message) {
   node src/chat.js                   Mở chế độ chat tương tác (Ctrl+C để thoát)
   node src/chat.js --status, -s      Xem trạng thái server và các phiên swarm đang chạy
   node src/chat.js --runs, -l        Liệt kê tất cả các phiên swarm (cả đang chạy và lịch sử)
-  node src/chat.js --run <id>        Xem thông tin chi tiết của một phiên swarm
-  node src/chat.js --stop <id>       Dừng một phiên swarm đang chạy (--graceful để chờ vòng hiện tại)
-  node src/chat.js --merge <id>      Merge nhánh của phiên đã dừng vào nhánh gốc của dự án (-m <id>)
+  node src/chat.js --run <id>, -i    Xem thông tin chi tiết của một phiên swarm (-i <id>)
+  node src/chat.js --stop <id>, -k   Dừng một phiên swarm đang chạy (--graceful để chờ vòng hiện tại) (-k <id>)
+  node src/chat.js --merge <id>, -m  Merge nhánh của phiên đã dừng vào nhánh gốc của dự án (-m <id>)
   node src/chat.js --export <id> [f] Xuất kết quả phiên swarm ra file CSV (hoặc in ra terminal) (-e <id>)
   node src/chat.js --rebaseline <id> Chấm lại baseline cho một phiên đang chạy (-r <id>)
-  node src/chat.js --harvest         Gom kết quả các phiên swarm vào knowledge/improvements_log.jsonl
+  node src/chat.js --harvest, -H     Gom kết quả các phiên swarm vào knowledge/improvements_log.jsonl
   node src/chat.js --clear           Xóa lịch sử trò chuyện của điều phối viên
   node src/chat.js --help, -h        Hiện hướng dẫn này`);
     return;
@@ -127,7 +127,7 @@ async function post(url, message) {
     return;
   }
 
-  const runIdx = args.indexOf('--run');
+  const runIdx = args.indexOf('--run') !== -1 ? args.indexOf('--run') : args.indexOf('-i');
   if (runIdx !== -1) {
     const runId = args[runIdx + 1];
     if (!runId || runId.startsWith('-')) {
@@ -172,7 +172,7 @@ async function post(url, message) {
     return;
   }
 
-  const stopIdx = args.indexOf('--stop');
+  const stopIdx = args.indexOf('--stop') !== -1 ? args.indexOf('--stop') : args.indexOf('-k');
   if (stopIdx !== -1) {
     const runId = args[stopIdx + 1];
     if (!runId || runId.startsWith('-')) {
@@ -251,7 +251,7 @@ async function post(url, message) {
     return;
   }
 
-  if (args.includes('--harvest')) {
+  if (args.includes('--harvest') || args.includes('-H')) {
     const r = await fetch(`${url}/api/harvest`, { method: 'POST' });
     const j = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(j.error || `Lỗi khi harvest (HTTP ${r.status})`);
