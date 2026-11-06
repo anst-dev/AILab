@@ -202,6 +202,14 @@ class Coordinator extends EventEmitter {
           const csv = await this.ops.exportRunCsv(a.id);
           return { type, ok: true, info: true, text: `xuất CSV ${a.id}`, data: csv };
         }
+        case 'export_json': {
+          const json = await this.ops.exportRunJson(a.id);
+          return { type, ok: true, info: true, text: `xuất JSON ${a.id}`, data: json };
+        }
+        case 'list_logs': {
+          const files = await this.ops.listRunLogs(a.id);
+          return { type, ok: true, info: true, text: `danh sách log ${a.id}`, data: files };
+        }
         case 'harvest': {
           const r = await this.ops.harvest();
           return { type, ok: true, text: `Đã gom kết quả (+${r.freshCount} dòng mới, tổng ${r.totalCount} dòng vào knowledge/improvements_log.jsonl)`, data: r };
@@ -308,6 +316,8 @@ Actions:
 - {"type":"merge","id":"<run id>"}      merge the run's central branch into the user's original branch
 - {"type":"rebaseline","id":"<run id>"} re-evaluate baseline/best commit for an active run
 - {"type":"export_csv","id":"<run id>"} export run results as CSV text
+- {"type":"export_json","id":"<run id>"} export run snapshot as JSON object
+- {"type":"list_logs","id":"<run id>"}   list all log files in a run
 - {"type":"harvest"}                    harvest/aggregate all run results and git logs into knowledge/improvements_log.jsonl
 - {"type":"list_runs"}                  list recent and active swarm runs
 - {"type":"catalog"}                    list available agent CLIs and detection status

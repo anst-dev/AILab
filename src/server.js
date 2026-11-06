@@ -318,6 +318,33 @@ const coordinator = new Coordinator({
       }
       throw new Error(`Không tìm thấy kết quả của phiên ${id}.`);
     },
+    exportRunJson: async (id) => {
+      const found = findSnapshot(String(id || ''), '');
+      if (!found) throw new Error(`Không tìm thấy phiên ${id}.`);
+      return found.snap;
+    },
+    listRunLogs: async (id) => {
+      const found = findSnapshot(String(id || ''), '');
+      if (!found) throw new Error(`Không tìm thấy phiên ${id}.`);
+      const snap = found.snap;
+      const runDir = path.join(snap.repoRoot || '', '.swarm', 'runs', String(id || ''));
+      if (!snap.repoRoot || !fs.existsSync(runDir)) return [];
+      try {
+        const entries = fs.readdirSync(runDir, { withFileTypes: true });
+        const files = [];
+        for (const ent of entries) {
+          if (ent.isFile()) {
+            try {
+              const st = fs.statSync(path.join(runDir, ent.name));
+              files.push({ name: ent.name, size: st.size, mtime: st.mtimeMs });
+            } catch {}
+          }
+        }
+        return files;
+      } catch (e) {
+        return [];
+      }
+    },
     inspect,
     harvest: async () => {
       const harvestPath = path.join(APP_DIR, 'harvest.js');

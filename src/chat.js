@@ -81,10 +81,11 @@ async function post(url, message) {
   node src/chat.js --catalog, -c     Xem danh mục agent CLI đã cài và lệnh chạy (-c)
   node src/chat.js --runs, -l        Liệt kê tất cả các phiên swarm (cả đang chạy và lịch sử)
   node src/chat.js --run <id>, -i    Xem thông tin chi tiết của một phiên swarm (-i <id>)
+  node src/chat.js --logs <id>       Liệt kê danh sách các file log trong phiên swarm
   node src/chat.js --log <id> [f], -L Xem log của agent/đánh giá trong phiên swarm (-L <id> [file])
   node src/chat.js --stop <id>, -k   Dừng một phiên swarm đang chạy (--graceful để chờ vòng hiện tại) (-k <id>)
   node src/chat.js --merge <id>, -m  Merge nhánh của phiên đã dừng vào nhánh gốc của dự án (-m <id>)
-  node src/chat.js --export <id> [f] Xuất kết quả phiên swarm ra file CSV (hoặc in ra terminal) (-e <id>)
+  node src/chat.js --export <id> [f] Xuất kết quả phiên swarm ra file CSV/JSON (hoặc in ra terminal) (-e <id>)
   node src/chat.js --rebaseline <id> Chấm lại baseline cho một phiên đang chạy (-r <id>)
   node src/chat.js --harvest, -H     Gom kết quả các phiên swarm vào knowledge/improvements_log.jsonl
   node src/chat.js --knowledge [n], -K Xem các dòng tri thức đã gom (mặc định 20 dòng gần nhất) (-K [n])
@@ -193,6 +194,36 @@ async function post(url, message) {
     return;
   }
 
+  const logsIdx = args.indexOf('--logs');
+  if (logsIdx !== -1) {
+    const runId = args[logsIdx + 1];
+    if (!runId || runId.startsWith('-')) {
+      throw new Error('Vui lòng chỉ định ID phiên cần xem danh sách log: node src/chat.js --logs <id>');
+    }
+    const rRun = await fetch(`${url}/api/runs/${encodeURIComponent(runId)}`);
+    if (!rRun.ok) {
+      const j = await rRun.json().catch(() => ({}));
+      throw new Error(j.error || `Không tìm thấy phiên ${runId} (HTTP ${rRun.status})`);
+    }
+    const snap = await rRun.json();
+    const rLogs = await fetch(`${url}/api/runs/${encodeURIComponent(runId)}/logs?repo=${encodeURIComponent(snap.repoRoot || '')}`);
+    if (!rLogs.ok) {
+      throw new Error(`Lỗi khi lấy danh sách log của phiên ${runId} (HTTP ${rLogs.status})`);
+    }
+    const { files = [] } = await rLogs.json();
+    if (!files.length) {
+      console.log(`Phiên ${runId} chưa có file log nào.`);
+    } else {
+      console.log(`Danh sách file log của phiên ${runId} (${files.length} file):`);
+      for (const f of files) {
+        const sz = f.size != null ? `${(f.size / 1024).toFixed(1)} KB` : '—';
+        console.log(`  - ${f.name.padEnd(35)} (${sz})`);
+      }
+      console.log(`\nXem nội dung log: node src/chat.js --log ${runId} <tên_file>`);
+    }
+    return;
+  }
+
   const logIdx = args.indexOf('--log') !== -1 ? args.indexOf('--log') : args.indexOf('-L');
   if (logIdx !== -1) {
     const runId = args[logIdx + 1];
@@ -285,10 +316,12 @@ async function post(url, message) {
   if (exportIdx !== -1) {
     const runId = args[exportIdx + 1];
     if (!runId || runId.startsWith('-')) {
-      throw new Error('Vui lòng chỉ định ID phiên cần export: node src/chat.js --export <id> [file.csv]');
+      throw new Error('Vui lòng chỉ định ID phiên cần export: node src/chat.js --export <id> [file.csv|file.json]');
     }
     const outFile = args[exportIdx + 2] && !args[exportIdx + 2].startsWith('-') ? args[exportIdx + 2] : null;
-    const r = await fetch(`${url}/api/runs/${encodeURIComponent(runId)}/export.csv`);
+    const isJson = (outFile && outFile.endsWith('.json')) || args.includes('--json');
+    const endpoint = isJson ? 'export.json' : 'export.csv';
+    const r = await fetch(`${url}/api/runs/${encodeURIComponent(runId)}/${endpoint}`);
     if (!r.ok) {
       const errText = await r.text();
       let msg = errText;
@@ -296,14 +329,14 @@ async function post(url, message) {
         const j = JSON.parse(errText);
         if (j.error) msg = j.error;
       } catch {}
-      throw new Error(msg || `Lỗi khi export CSV phiên ${runId} (HTTP ${r.status})`);
+      throw new Error(msg || `Lỗi khi export ${isJson ? 'JSON' : 'CSV'} phiên ${runId} (HTTP ${r.status})`);
     }
-    const csvData = await r.text();
+    const outData = await r.text();
     if (outFile) {
-      fs.writeFileSync(outFile, csvData, 'utf8');
+      fs.writeFileSync(outFile, outData, 'utf8');
       console.log(`Đã lưu kết quả phiên ${runId} ra file: ${outFile}`);
     } else {
-      process.stdout.write(csvData);
+      process.stdout.write(outData);
     }
     return;
   }

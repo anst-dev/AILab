@@ -358,6 +358,7 @@ function renderRun() {
   }
   const repoParam = state.view && state.view.repo ? `?repo=${encodeURIComponent(state.view.repo)}` : '';
   acts.push(`<a class="button secondary" href="/api/runs/${esc(s.id)}/export.csv${repoParam}" download="results-${esc(s.id)}.csv" title="Tải kết quả phiên dưới dạng file CSV">Xuất CSV</a>`);
+  acts.push(`<a class="button secondary" href="/api/runs/${esc(s.id)}/export.json${repoParam}" download="run-${esc(s.id)}.json" title="Tải toàn bộ trạng thái phiên dưới dạng file JSON">Xuất JSON</a>`);
   if (s.mergedBack) acts.push(`<span class="badge b-ok">Đã merge vào ${esc(s.mergedBack.branch)}</span>`);
   $('runActions').innerHTML = acts.join('');
   $('runActions').querySelectorAll('button[data-act]').forEach((b) => b.addEventListener('click', () => runAction(b.dataset.act)));
