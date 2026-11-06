@@ -457,6 +457,10 @@ class SwarmRun extends EventEmitter {
     if (o.evalMode === 'none' || !this.baseCommit || !this.agents.length) {
       return { ok: false, score: null, reason: 'phiên không đo được baseline (không dùng chế độ đánh giá hoặc chưa sẵn sàng)' };
     }
+    if (this._measuringBaseline) {
+      return { ok: false, score: null, reason: 'đang trong quá trình đo baseline, vui lòng chờ' };
+    }
+    this._measuringBaseline = true;
     const prevPhase = this.phase;
     this.phase = 'Đo baseline';
     this.changed();
@@ -473,18 +477,20 @@ class SwarmRun extends EventEmitter {
       await this.syncWorktree(a0);
       const currentCommit = (await revParse(this.central, this.repoRoot)) || this.baseCommit;
       const isInitial = !this.results.some((r) => r.status === 'baseline');
+      const currentIter = isInitial ? 0 : Math.max(0, ...this.agents.map((a) => a.iter || 0));
       const logRel = isInitial ? path.join('logs', 'baseline.eval.log') : path.join('logs', `rebaseline-${Date.now()}.eval.log`);
       const res = await this.evaluate(a0, path.join(this.runDir, logRel));
       if (res.ok) {
         if (o.evalMode === 'score') this.best = { score: res.score, commit: currentCommit.slice(0, 7), desc: isInitial ? 'baseline' : 'rebaseline', agent: null };
-        this.record(null, 0, { commit: currentCommit, score: res.score, status: 'baseline', desc: isInitial ? 'baseline (code ban đầu)' : 'baseline (chấm lại)', log: logRel });
+        this.record(null, currentIter, { commit: currentCommit, score: res.score, status: 'baseline', desc: isInitial ? 'baseline (code ban đầu)' : 'baseline (chấm lại)', log: logRel });
         this.info(o.evalMode === 'score' ? `Baseline: ${res.score}` : 'Baseline: PASS');
       } else {
-        this.record(null, 0, { commit: currentCommit, status: 'crash', desc: `baseline lỗi: ${res.reason}`, log: logRel });
+        this.record(null, currentIter, { commit: currentCommit, status: 'crash', desc: `baseline lỗi: ${res.reason}`, log: logRel });
         this.info(`Baseline lỗi (${res.reason}). Kết quả đạt đầu tiên sẽ được giữ.`, 'warn');
       }
       return res;
     } finally {
+      this._measuringBaseline = false;
       if (prevPhase) this.phase = prevPhase;
       this.changed();
     }
