@@ -666,9 +666,17 @@ async function loadKnowledge() {
 
 function renderKnowledge() {
   const q = ($('knowledgeSearch') ? $('knowledgeSearch').value : '').toLowerCase().trim();
+  const filter = ($('knowledgeFilter') ? $('knowledgeFilter').value : 'all');
   const rows = $('knowledgeRows');
   if (!rows) return;
   const filtered = knowledgeData.filter((r) => {
+    if (filter === 'keep') {
+      if (r.status !== 'keep' && r.status !== 'keep-merged') return false;
+    } else if (filter === 'committed') {
+      if (r.status !== 'committed') return false;
+    } else if (filter === 'discard') {
+      if (r.status === 'keep' || r.status === 'keep-merged' || r.status === 'committed') return false;
+    }
     if (!q) return true;
     const txt = [r.ts, r.bot, r.agent, r.commit, r.score, r.status, r.feature, r.desc, r.note, r.raw]
       .filter(Boolean)
@@ -678,7 +686,7 @@ function renderKnowledge() {
   });
 
   if (!filtered.length) {
-    rows.innerHTML = `<tr><td colspan="6" class="muted">${knowledgeData.length === 0 ? 'Chưa có dữ liệu tri thức nào. Hãy bấm "Gom log mới" để quét.' : 'Không có dòng nào khớp với từ khoá tìm kiếm.'}</td></tr>`;
+    rows.innerHTML = `<tr><td colspan="6" class="muted">${knowledgeData.length === 0 ? 'Chưa có dữ liệu tri thức nào. Hãy bấm "Gom log mới" để quét.' : 'Không có dòng nào khớp với từ khoá hoặc bộ lọc.'}</td></tr>`;
     return;
   }
 
@@ -918,6 +926,7 @@ function init() {
   if ($('navKnowledge')) $('navKnowledge').addEventListener('click', openKnowledge);
   if ($('knowledgeClose')) $('knowledgeClose').addEventListener('click', () => $('knowledgeDlg').close());
   if ($('knowledgeSearch')) $('knowledgeSearch').addEventListener('input', renderKnowledge);
+  if ($('knowledgeFilter')) $('knowledgeFilter').addEventListener('change', renderKnowledge);
   if ($('btnHarvestDlg')) {
     $('btnHarvestDlg').addEventListener('click', async () => {
       const btn = $('btnHarvestDlg');

@@ -112,6 +112,23 @@ function tsvTextToCsv(txt) {
   return lines.map((l) => l.split('\t').map(csvField).join(',')).join('\r\n') + '\r\n';
 }
 
+/** Dòng JSONL trong improvements_log.jsonl → CSV (cột ts,bot,kind,feature,commit,score,status,note). */
+function knowledgeCsv(lines) {
+  const cols = ['ts', 'bot', 'kind', 'feature', 'commit', 'score', 'status', 'note'];
+  const out = [cols.join(',')];
+  for (const line of lines || []) {
+    const trimmed = (line || '').replace(/\r$/, '').trim();
+    if (!trimmed) continue;
+    try {
+      const obj = JSON.parse(trimmed);
+      out.push(cols.map((col) => csvField(obj[col])).join(','));
+    } catch {
+      out.push(cols.map((col) => (col === 'feature' ? csvField(trimmed) : '')).join(','));
+    }
+  }
+  return out.join('\r\n') + '\r\n';
+}
+
 /** Runs recorded on disk under <repo>/.swarm/runs of recently used workspaces. */
 function historyRuns() {
   const out = [];
@@ -439,6 +456,29 @@ async function handle(req, res) {
         outPath: logPath,
         items,
       });
+    } catch (e) {
+      return send(res, 500, { error: e.message });
+    }
+  }
+
+  if (req.method === 'GET' && (p === '/api/harvest/export.csv' || (p === '/api/harvest/download' && url.searchParams.get('format') === 'csv'))) {
+    try {
+      const harvestPath = path.join(APP_DIR, 'harvest.js');
+      const harvestMod = fs.existsSync(harvestPath) ? require(harvestPath) : null;
+      const logPath = harvestMod && typeof harvestMod.getOutPath === 'function'
+        ? harvestMod.getOutPath()
+        : path.join(APP_DIR, 'knowledge', 'improvements_log.jsonl');
+      if (!fs.existsSync(logPath)) {
+        return send(res, 404, { error: 'Chưa có file improvements_log.jsonl. Hãy bấm gom log trước.' });
+      }
+      const raw = fs.readFileSync(logPath, 'utf8').split('\n');
+      const csv = knowledgeCsv(raw);
+      res.writeHead(200, {
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': 'attachment; filename="improvements_log.csv"',
+        'Cache-Control': 'no-store',
+      });
+      return res.end(csv);
     } catch (e) {
       return send(res, 500, { error: e.message });
     }
