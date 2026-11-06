@@ -841,17 +841,23 @@ function closeLog() {
   $('logDlg').close();
 }
 
-async function viewCommitDiff(hash) {
-  const s = state.snap;
-  if (!s || !hash) return;
+async function viewCommitDiff(hash, runId) {
+  const s = (runId && (state.runs || []).find((x) => x.id === runId)) || state.snap || (state.runs && state.runs[0]);
+  if (!hash) return;
   $('logTitle').textContent = `Commit diff — ${hash}`;
   $('logLive').textContent = '';
   $('logBody').textContent = `Đang tải chi tiết commit ${hash}...`;
   if (!$('logDlg').open) $('logDlg').showModal();
   clearInterval(logTimer);
   state.log = null;
+  if (!s) {
+    $('logBody').textContent = 'Không tìm thấy thông tin phiên nào để truy xuất diff git.';
+    return;
+  }
   try {
-    const repoParam = state.view && state.view.repo ? `&repo=${encodeURIComponent(state.view.repo)}` : '';
+    const repoParam = (state.view && state.view.repo)
+      ? `&repo=${encodeURIComponent(state.view.repo)}`
+      : (s.repoRoot ? `&repo=${encodeURIComponent(s.repoRoot)}` : '');
     const txt = await api(`/api/runs/${s.id}/diff?commit=${encodeURIComponent(hash)}${repoParam}`);
     $('logBody').textContent = txt || '(Commit không có nội dung diff)';
   } catch (e) {
@@ -924,7 +930,9 @@ function renderKnowledge() {
     .map((r) => {
       const t = r.ts ? (time(r.ts) || r.ts.slice(0, 19).replace('T', ' ')) : '—';
       const bot = r.bot || r.agent || '—';
-      const c = r.commit ? esc(String(r.commit).slice(0, 7)) : '—';
+      const c = r.commit
+        ? `<code class="commit-link" data-hash="${esc(r.commit)}" data-run="${esc(r.note || r.runId || '')}" title="Xem git show của commit ${esc(r.commit)}" style="cursor:pointer;text-decoration:underline;">${esc(String(r.commit).slice(0, 7))}</code>`
+        : '—';
       const score = r.score != null ? esc(String(r.score)) : '—';
       const st = r.status || '';
       const b = RESULT_STATUS[st] ? badge(RESULT_STATUS, st) : `<span class="badge b-mute">${esc(st || '—')}</span>`;
@@ -939,6 +947,12 @@ function renderKnowledge() {
       </tr>`;
     })
     .join('');
+  rows.querySelectorAll('.commit-link').forEach((link) => {
+    link.addEventListener('click', (e) => {
+      e.stopPropagation();
+      viewCommitDiff(link.dataset.hash, link.dataset.run);
+    });
+  });
 }
 
 function openKnowledge() {
