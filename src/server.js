@@ -379,7 +379,7 @@ async function handle(req, res) {
     const run = runs.get(id);
     let csv = null;
     if (run) {
-      csv = resultsCsv(run.results);
+      csv = typeof run.exportCsv === 'function' ? run.exportCsv() : resultsCsv(run.results);
     } else {
       // phiên cũ không còn trong bộ nhớ: đọc lại results.tsv trên đĩa nếu có
       const roots = [];
@@ -568,15 +568,17 @@ async function main() {
   const url = `http://127.0.0.1:${port}`;
   console.log(`Agent Swarm đang chạy tại ${url}  (Ctrl+C để thoát)`);
   if (!args.includes('--no-open')) openBrowser(url);
-  try {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-    fs.writeFileSync(SERVER_FILE, JSON.stringify({ pid: process.pid, port, url, startedAt: Date.now() }));
-  } catch {}
-  process.on('exit', () => {
+  if (!process.env.PORT) {
     try {
-      if (JSON.parse(fs.readFileSync(SERVER_FILE, 'utf8')).pid === process.pid) fs.unlinkSync(SERVER_FILE);
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+      fs.writeFileSync(SERVER_FILE, JSON.stringify({ pid: process.pid, port, url, startedAt: Date.now() }));
     } catch {}
-  });
+    process.on('exit', () => {
+      try {
+        if (JSON.parse(fs.readFileSync(SERVER_FILE, 'utf8')).pid === process.pid) fs.unlinkSync(SERVER_FILE);
+      } catch {}
+    });
+  }
 
   let shuttingDown = false;
   shutdownHook = () => shutdown();
