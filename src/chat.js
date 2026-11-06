@@ -83,6 +83,7 @@ async function post(url, message) {
   node src/chat.js --runs, -l        Liệt kê tất cả các phiên swarm (cả đang chạy và lịch sử)
   node src/chat.js --run <id>, -i    Xem thông tin chi tiết của một phiên swarm (-i <id>)
   node src/chat.js --gitlog <id>, -g  Xem lịch sử commit git đã tích lũy trong phiên swarm (-g <id>)
+  node src/chat.js --checkout <id>, -C Xem thông tin nhánh và lệnh checkout nhánh của phiên (-C <id>)
   node src/chat.js --diff <id>, -d   Xem diff các thay đổi mã nguồn đã tích lũy (-d <id> [--stat])
   node src/chat.js --logs <id>       Liệt kê danh sách các file log trong phiên swarm
   node src/chat.js --log <id> [f], -L Xem log của agent/đánh giá trong phiên swarm (-L <id> [file])
@@ -286,6 +287,31 @@ async function post(url, message) {
       console.log(`Git diff phiên ${runId}${args.includes('--stat') ? ' (--stat)' : ''}:`);
       console.log(diffText);
     }
+    return;
+  }
+
+  const checkoutIdx = args.indexOf('--checkout') !== -1 ? args.indexOf('--checkout') : (args.indexOf('--branch') !== -1 ? args.indexOf('--branch') : args.indexOf('-C'));
+  if (checkoutIdx !== -1) {
+    const runId = args[checkoutIdx + 1];
+    if (!runId || runId.startsWith('-')) {
+      throw new Error('Vui lòng chỉ định ID phiên: node src/chat.js --checkout <id> (-C <id>)');
+    }
+    const rRun = await fetch(`${url}/api/runs/${encodeURIComponent(runId)}`);
+    if (!rRun.ok) {
+      const j = await rRun.json().catch(() => ({}));
+      throw new Error(j.error || `Không tìm thấy phiên ${runId} (HTTP ${rRun.status})`);
+    }
+    const snap = await rRun.json();
+    const branch = snap.central || `swarm/${snap.id}`;
+    if (args.includes('--raw')) {
+      console.log(`git checkout ${branch}`);
+      return;
+    }
+    console.log(`Thông tin nhánh git của phiên [${snap.id}]:`);
+    console.log(`  - Nhánh trung tâm: ${branch}`);
+    if (snap.originalBranch) console.log(`  - Nhánh gốc:       ${snap.originalBranch}`);
+    if (snap.baseCommit) console.log(`  - Base commit:     ${snap.baseCommit}`);
+    console.log(`  - Lệnh checkout:   git checkout ${branch}`);
     return;
   }
 
