@@ -423,23 +423,31 @@ const coordinator = new Coordinator({
       const logPath = typeof harvestMod.getOutPath === 'function' ? harvestMod.getOutPath() : path.join(APP_DIR, 'knowledge', 'improvements_log.jsonl');
       return harvestMod.computeStats(logPath);
     },
-    exportHarvestCsv: async () => {
+    exportHarvestCsv: async (filterOpts = {}) => {
       const harvestPath = path.join(APP_DIR, 'harvest.js');
       const harvestMod = fs.existsSync(harvestPath) ? require(harvestPath) : null;
       const logPath = harvestMod && typeof harvestMod.getOutPath === 'function'
         ? harvestMod.getOutPath()
         : path.join(APP_DIR, 'knowledge', 'improvements_log.jsonl');
       if (!fs.existsSync(logPath)) throw new Error('Chưa có file improvements_log.jsonl. Hãy bấm gom log trước.');
+      if (harvestMod && typeof harvestMod.exportKnowledgeCsv === 'function') {
+        const r = harvestMod.exportKnowledgeCsv(logPath, null, filterOpts);
+        return r.csv;
+      }
       const raw = fs.readFileSync(logPath, 'utf8').split('\n');
       return knowledgeCsv(raw);
     },
-    exportHarvestJson: async () => {
+    exportHarvestJson: async (filterOpts = {}) => {
       const harvestPath = path.join(APP_DIR, 'harvest.js');
       const harvestMod = fs.existsSync(harvestPath) ? require(harvestPath) : null;
       const logPath = harvestMod && typeof harvestMod.getOutPath === 'function'
         ? harvestMod.getOutPath()
         : path.join(APP_DIR, 'knowledge', 'improvements_log.jsonl');
       if (!fs.existsSync(logPath)) throw new Error('Chưa có file improvements_log.jsonl. Hãy bấm gom log trước.');
+      if (harvestMod && typeof harvestMod.exportKnowledgeJson === 'function') {
+        const r = harvestMod.exportKnowledgeJson(logPath, null, filterOpts);
+        return JSON.parse(r.json);
+      }
       const raw = fs.readFileSync(logPath, 'utf8').split('\n');
       const items = [];
       for (const line of raw) {
@@ -631,8 +639,21 @@ async function handle(req, res) {
       if (!fs.existsSync(logPath)) {
         return send(res, 404, { error: 'Chưa có file improvements_log.jsonl. Hãy bấm gom log trước.' });
       }
-      const raw = fs.readFileSync(logPath, 'utf8').split('\n');
-      const csv = knowledgeCsv(raw);
+      const query = url.searchParams.get('query') || url.searchParams.get('q') || '';
+      const status = url.searchParams.get('status') || '';
+      const bot = url.searchParams.get('bot') || '';
+      const limitRaw = url.searchParams.get('limit');
+      const limit = limitRaw ? parseInt(limitRaw, 10) : undefined;
+      const filterOpts = { query, status, bot, limit: Number.isFinite(limit) && limit > 0 ? limit : undefined };
+
+      let csv;
+      if (harvestMod && typeof harvestMod.exportKnowledgeCsv === 'function') {
+        const r = harvestMod.exportKnowledgeCsv(logPath, null, filterOpts);
+        csv = r.csv;
+      } else {
+        const raw = fs.readFileSync(logPath, 'utf8').split('\n');
+        csv = knowledgeCsv(raw);
+      }
       res.writeHead(200, {
         'Content-Type': 'text/csv; charset=utf-8',
         'Content-Disposition': 'attachment; filename="improvements_log.csv"',
@@ -654,23 +675,37 @@ async function handle(req, res) {
       if (!fs.existsSync(logPath)) {
         return send(res, 404, { error: 'Chưa có file improvements_log.jsonl. Hãy bấm gom log trước.' });
       }
-      const raw = fs.readFileSync(logPath, 'utf8').split('\n');
-      const items = [];
-      for (const line of raw) {
-        const trimmed = (line || '').replace(/\r$/, '').trim();
-        if (!trimmed) continue;
-        try {
-          items.push(JSON.parse(trimmed));
-        } catch {
-          items.push({ raw: trimmed });
+      const query = url.searchParams.get('query') || url.searchParams.get('q') || '';
+      const status = url.searchParams.get('status') || '';
+      const bot = url.searchParams.get('bot') || '';
+      const limitRaw = url.searchParams.get('limit');
+      const limit = limitRaw ? parseInt(limitRaw, 10) : undefined;
+      const filterOpts = { query, status, bot, limit: Number.isFinite(limit) && limit > 0 ? limit : undefined };
+
+      let jsonStr;
+      if (harvestMod && typeof harvestMod.exportKnowledgeJson === 'function') {
+        const r = harvestMod.exportKnowledgeJson(logPath, null, filterOpts);
+        jsonStr = r.json;
+      } else {
+        const raw = fs.readFileSync(logPath, 'utf8').split('\n');
+        const items = [];
+        for (const line of raw) {
+          const trimmed = (line || '').replace(/\r$/, '').trim();
+          if (!trimmed) continue;
+          try {
+            items.push(JSON.parse(trimmed));
+          } catch {
+            items.push({ raw: trimmed });
+          }
         }
+        jsonStr = JSON.stringify(items, null, 2);
       }
       res.writeHead(200, {
         'Content-Type': 'application/json; charset=utf-8',
         'Content-Disposition': 'attachment; filename="improvements_log.json"',
         'Cache-Control': 'no-store',
       });
-      return res.end(JSON.stringify(items, null, 2));
+      return res.end(jsonStr);
     } catch (e) {
       return send(res, 500, { error: e.message });
     }
@@ -686,11 +721,26 @@ async function handle(req, res) {
       if (!fs.existsSync(logPath)) {
         return send(res, 404, { error: 'Chưa có file improvements_log.jsonl. Hãy bấm gom log trước.' });
       }
+      const query = url.searchParams.get('query') || url.searchParams.get('q') || '';
+      const status = url.searchParams.get('status') || '';
+      const bot = url.searchParams.get('bot') || '';
+      const limitRaw = url.searchParams.get('limit');
+      const limit = limitRaw ? parseInt(limitRaw, 10) : undefined;
+      const filterOpts = { query, status, bot, limit: Number.isFinite(limit) && limit > 0 ? limit : undefined };
+
       res.writeHead(200, {
         'Content-Type': 'application/x-ndjson; charset=utf-8',
         'Content-Disposition': 'attachment; filename="improvements_log.jsonl"',
         'Cache-Control': 'no-store',
       });
+
+      if (query || status || bot || (limit && limit > 0)) {
+        if (harvestMod && typeof harvestMod.listKnowledge === 'function') {
+          const resList = harvestMod.listKnowledge(logPath, filterOpts);
+          const lines = (resList.items || []).map((it) => JSON.stringify(it)).join('\n') + (resList.items.length ? '\n' : '');
+          return res.end(lines);
+        }
+      }
       fs.createReadStream(logPath).pipe(res);
       return;
     } catch (e) {

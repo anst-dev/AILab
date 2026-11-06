@@ -308,7 +308,12 @@ function filterKnowledge(items, filter = {}) {
   let list = Array.isArray(items) ? [...items] : [];
   if (filter.status) {
     const s = String(filter.status).trim().toLowerCase();
-    list = list.filter((it) => String(it.status || '').toLowerCase() === s);
+    list = list.filter((it) => {
+      const st = String(it.status || '').toLowerCase();
+      if (s === 'keep') return st === 'keep' || st === 'keep-merged';
+      if (s === 'discard') return st !== 'keep' && st !== 'keep-merged' && st !== 'committed';
+      return st === s;
+    });
   }
   if (filter.bot) {
     const b = String(filter.bot).trim().toLowerCase();

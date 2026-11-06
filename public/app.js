@@ -974,6 +974,26 @@ function renderKnowledge() {
     }
   }
 
+  const csvBtn = $('btnKnowledgeCsv');
+  const jsonBtn = $('btnKnowledgeJson');
+  const jsonlBtn = $('btnKnowledgeJsonl');
+  const params = new URLSearchParams();
+  if (q) params.set('q', q);
+  if (filter && filter !== 'all') params.set('status', filter);
+  const qs = params.toString() ? `?${params.toString()}` : '';
+  if (csvBtn) {
+    csvBtn.href = `/api/harvest/export.csv${qs}`;
+    csvBtn.title = qs ? `Xuất ${filtered.length} dòng tri thức đã lọc dạng CSV` : 'Xuất toàn bộ tri thức dạng CSV';
+  }
+  if (jsonBtn) {
+    jsonBtn.href = `/api/harvest/export.json${qs}`;
+    jsonBtn.title = qs ? `Xuất ${filtered.length} dòng tri thức đã lọc dạng JSON` : 'Xuất toàn bộ tri thức dạng JSON';
+  }
+  if (jsonlBtn) {
+    jsonlBtn.href = `/api/harvest/download${qs}`;
+    jsonlBtn.title = qs ? `Tải ${filtered.length} dòng tri thức đã lọc (JSONL)` : 'Tải toàn bộ file JSONL';
+  }
+
   if (!filtered.length) {
     rows.innerHTML = `<tr><td colspan="6" class="muted">${knowledgeData.length === 0 ? 'Chưa có dữ liệu tri thức nào. Hãy bấm "Gom log mới" để quét.' : 'Không có dòng nào khớp với từ khoá hoặc bộ lọc.'}</td></tr>`;
     return;
