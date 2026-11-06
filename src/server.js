@@ -353,6 +353,14 @@ const coordinator = new Coordinator({
       if (typeof harvestMod.runHarvest !== 'function') throw new Error('harvest.js không có hàm runHarvest.');
       return harvestMod.runHarvest();
     },
+    stats: async () => {
+      const harvestPath = path.join(APP_DIR, 'harvest.js');
+      if (!fs.existsSync(harvestPath)) throw new Error('Không tìm thấy file harvest.js.');
+      const harvestMod = require(harvestPath);
+      if (typeof harvestMod.computeStats !== 'function') throw new Error('harvest.js không có hàm computeStats.');
+      const logPath = typeof harvestMod.getOutPath === 'function' ? harvestMod.getOutPath() : path.join(APP_DIR, 'knowledge', 'improvements_log.jsonl');
+      return harvestMod.computeStats(logPath);
+    },
   },
 });
 coordinator.on('message', (m) => sse('chat', m));

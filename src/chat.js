@@ -88,6 +88,7 @@ async function post(url, message) {
   node src/chat.js --export <id> [f] Xuất kết quả phiên swarm ra file CSV/JSON (hoặc in ra terminal) (-e <id>)
   node src/chat.js --rebaseline <id> Chấm lại baseline cho một phiên đang chạy (-r <id>)
   node src/chat.js --harvest, -H     Gom kết quả các phiên swarm vào knowledge/improvements_log.jsonl
+  node src/chat.js --stats, -S       Xem thống kê tổng hợp từ kho tri thức improvements_log.jsonl (-S)
   node src/chat.js --knowledge [n], -K Xem các dòng tri thức đã gom (mặc định 20 dòng gần nhất) (-K [n])
   node src/chat.js --clear           Xóa lịch sử trò chuyện của điều phối viên
   node src/chat.js --help, -h        Hiện hướng dẫn này`);
@@ -367,6 +368,40 @@ async function post(url, message) {
     console.log(`  Thư mục:  ${j.runsDir || '—'}`);
     console.log(`  Số phiên: ${(j.runIds || []).length} (${(j.runIds || []).join(', ') || 'không có'})`);
     console.log(`  Kết quả:  +${j.freshCount || 0} dòng mới (tổng ${j.totalCount || 0} dòng trong ${j.outPath || 'knowledge/improvements_log.jsonl'})`);
+    return;
+  }
+
+  const statsIdx = args.indexOf('--stats') !== -1 ? args.indexOf('--stats') : args.indexOf('-S');
+  if (statsIdx !== -1) {
+    const isJson = args.includes('--json');
+    const r = await fetch(`${url}/api/harvest?limit=1`);
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || `Lỗi khi lấy thống kê tri thức (HTTP ${r.status})`);
+    if (!j.exists || !j.stats || !j.stats.total) {
+      console.log('Kho tri thức (knowledge/improvements_log.jsonl) chưa có dữ liệu.');
+      console.log('Chạy "node src/chat.js --harvest" để gom kết quả từ các phiên swarm.');
+      return;
+    }
+    if (isJson) {
+      console.log(JSON.stringify(j.stats, null, 2));
+      return;
+    }
+    const s = j.stats;
+    console.log(`Thống kê kho tri thức (${j.outPath || 'knowledge/improvements_log.jsonl'}):`);
+    console.log(`  Tổng số bản ghi: ${s.total}`);
+    console.log(`  Tỷ lệ keep:      ${s.keepRate}% (keep: ${s.keepCount}, discard: ${s.discardCount}, conflict: ${s.conflictCount}, error: ${s.errorCount})`);
+    if (s.byStatus && Object.keys(s.byStatus).length > 0) {
+      console.log('  Theo trạng thái:');
+      for (const [st, c] of Object.entries(s.byStatus)) {
+        console.log(`    - ${st}: ${c}`);
+      }
+    }
+    if (s.byBot && Object.keys(s.byBot).length > 0) {
+      console.log('  Theo agent:');
+      for (const [bot, c] of Object.entries(s.byBot)) {
+        console.log(`    - ${bot}: ${c}`);
+      }
+    }
     return;
   }
 

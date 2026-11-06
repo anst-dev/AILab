@@ -648,8 +648,10 @@ let knowledgeData = [];
 async function loadKnowledge() {
   const meta = $('knowledgeMeta');
   const rows = $('knowledgeRows');
+  const statsEl = $('knowledgeStats');
   if (meta) meta.textContent = ' (đang tải...)';
   if (rows) rows.innerHTML = '<tr><td colspan="6" class="muted">Đang tải dữ liệu tri thức...</td></tr>';
+  if (statsEl) statsEl.style.display = 'none';
   try {
     const res = await api('/api/harvest?limit=150');
     knowledgeData = Array.isArray(res.items) ? res.items : [];
@@ -657,6 +659,11 @@ async function loadKnowledge() {
       meta.textContent = res.exists
         ? ` (${knowledgeData.length}/${res.totalCount} dòng gần nhất)`
         : ' (chưa có file)';
+    }
+    if (statsEl && res.stats && res.stats.total) {
+      const s = res.stats;
+      statsEl.innerHTML = `<b>Thống kê:</b> ${s.total} dòng · <span style="color:var(--accent,#4caf50)">Tỷ lệ keep: ${s.keepRate}%</span> (${s.keepCount} giữ, ${s.discardCount} loại, ${s.conflictCount} xung đột, ${s.errorCount} lỗi)`;
+      statsEl.style.display = 'block';
     }
     renderKnowledge();
   } catch (e) {

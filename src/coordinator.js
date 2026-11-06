@@ -214,6 +214,10 @@ class Coordinator extends EventEmitter {
           const r = await this.ops.harvest();
           return { type, ok: true, text: `Đã gom kết quả (+${r.freshCount} dòng mới, tổng ${r.totalCount} dòng vào knowledge/improvements_log.jsonl)`, data: r };
         }
+        case 'stats': {
+          const r = await this.ops.stats();
+          return { type, ok: true, info: true, text: `Thống kê tri thức: ${r.total} dòng, tỷ lệ keep ${r.keepRate}%`, data: r };
+        }
         case 'list_runs':
           return { type, ok: true, info: true, text: 'danh sách các phiên', data: this.ops.listRuns() };
         case 'catalog':
@@ -319,6 +323,7 @@ Actions:
 - {"type":"export_json","id":"<run id>"} export run snapshot as JSON object
 - {"type":"list_logs","id":"<run id>"}   list all log files in a run
 - {"type":"harvest"}                    harvest/aggregate all run results and git logs into knowledge/improvements_log.jsonl
+- {"type":"stats"}                      summary statistics of improvements_log.jsonl
 - {"type":"list_runs"}                  list recent and active swarm runs
 - {"type":"catalog"}                    list available agent CLIs and detection status
 - {"type":"set_agent_template","cli":"<id>","template":"... {prompt} ..."}   change how an agent CLI is launched
