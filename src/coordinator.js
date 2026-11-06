@@ -225,11 +225,11 @@ class Coordinator extends EventEmitter {
           return { type, ok: true, info: true, text: `danh sách log ${a.id}`, data: files };
         }
         case 'gitlog': {
-          const commits = await this.ops.gitLog(a.id);
+          const commits = await this.ops.gitLog(a.id, a.limit || a.max || a.count);
           return { type, ok: true, info: true, text: `git log ${a.id} (${(commits || []).length} commit)`, data: commits };
         }
         case 'diff': {
-          const diff = await this.ops.gitDiff(a.id, { statOnly: !!a.stat, from: a.from, to: a.to, commit: a.commit });
+          const diff = await this.ops.gitDiff(a.id, { statOnly: !!a.stat, from: a.from, to: a.to, commit: a.commit, repo: a.repo });
           const label = a.commit ? `commit ${a.commit} (${a.id})` : `${a.id}${a.stat ? ' (--stat)' : ''}`;
           return { type, ok: true, info: true, text: `git diff ${label}`, data: diff };
         }

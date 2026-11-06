@@ -213,10 +213,11 @@ async function inspect(p) {
   return info;
 }
 
-async function gitLog(run, snap) {
-  const root = snap.repoRoot;
-  if (!root || !snap.baseCommit) return [];
-  const r = await git(['log', '--format=%h%x1f%an%x1f%ar%x1f%s', '-n', '200', `${snap.baseCommit}..${snap.central}`], root, { allowFail: true });
+async function gitLog(run, snap, max = 200) {
+  const root = (snap && snap.repoRoot) || (run && run.repoRoot) || (snap && snap.workspace);
+  if (!root || !snap || !snap.baseCommit) return [];
+  const limit = Math.max(1, Math.min(Number(max) || 200, 500));
+  const r = await git(['log', '--format=%h%x1f%an%x1f%ar%x1f%s', '-n', String(limit), `${snap.baseCommit}..${snap.central}`], root, { allowFail: true });
   if (r.code !== 0 || !r.stdout) return [];
   return r.stdout.split('\n').map((l) => {
     const [hash, author, when, subject] = l.split('\x1f');
@@ -224,8 +225,8 @@ async function gitLog(run, snap) {
   });
 }
 
-async function gitDiff(snap, { from, to, commit, statOnly } = {}) {
-  const root = snap && snap.repoRoot;
+async function gitDiff(snap, { from, to, commit, statOnly, repo } = {}) {
+  const root = repo || (snap && snap.repoRoot) || (snap && snap.workspace);
   if (!root) return '';
   if (commit) {
     const args = ['show'];
@@ -234,7 +235,7 @@ async function gitDiff(snap, { from, to, commit, statOnly } = {}) {
     const r = await git(args, root, { allowFail: true });
     return r.code === 0 ? r.stdout : (r.stderr || 'Không thể tải diff của commit.');
   }
-  if (!snap.baseCommit) return '';
+  if (!snap || !snap.baseCommit) return '';
   const refA = from || snap.baseCommit;
   const refB = to || snap.central || 'HEAD';
   const args = ['diff'];
@@ -365,15 +366,15 @@ const coordinator = new Coordinator({
         return [];
       }
     },
-    gitLog: async (id) => {
+    gitLog: async (id, max) => {
       const found = findSnapshot(String(id || ''), '');
       if (!found) throw new Error(`Không tìm thấy phiên ${id}.`);
-      return gitLog(found.run, found.snap);
+      return gitLog(found.run, found.snap, max);
     },
-    gitDiff: async (id, { from, to, commit, statOnly } = {}) => {
-      const found = findSnapshot(String(id || ''), '');
+    gitDiff: async (id, { from, to, commit, statOnly, repo } = {}) => {
+      const found = findSnapshot(String(id || ''), repo || '');
       if (!found) throw new Error(`Không tìm thấy phiên ${id}.`);
-      return gitDiff(found.snap, { from, to, commit, statOnly });
+      return gitDiff(found.snap, { from, to, commit, statOnly, repo });
     },
     deleteRun: async (id, repo) => {
       const runId = String(id || '');
@@ -783,14 +784,17 @@ async function handle(req, res) {
       return send(res, 200, { ok: true, id, message: `Đã xóa phiên ${id}` });
     }
 
-    if (req.method === 'GET' && action === 'gitlog') return send(res, 200, await gitLog(run, snap));
+    if (req.method === 'GET' && action === 'gitlog') {
+      const max = url.searchParams.get('max') || url.searchParams.get('limit') || 200;
+      return send(res, 200, await gitLog(run, snap, max));
+    }
 
     if (req.method === 'GET' && action === 'diff') {
       const statOnly = url.searchParams.get('stat') === '1' || url.searchParams.get('stat') === 'true';
       const from = url.searchParams.get('from') || '';
       const to = url.searchParams.get('to') || '';
       const commit = url.searchParams.get('commit') || '';
-      const diff = await gitDiff(snap, { from, to, commit, statOnly });
+      const diff = await gitDiff(snap, { from, to, commit, statOnly, repo });
       return send(res, 200, diff, 'text/plain; charset=utf-8');
     }
 
