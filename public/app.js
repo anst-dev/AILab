@@ -349,6 +349,11 @@ function renderRun() {
   if (live && s.status === 'stopped' && s.originalBranch && !s.mergedBack) {
     acts.push(`<button class="primary" data-act="merge">Merge kết quả vào ${esc(s.originalBranch)}</button>`);
   }
+  if (live && (s.status === 'running' || s.status === 'preparing') && s.opts && s.opts.evalMode !== 'none') {
+    acts.push('<button class="secondary" data-act="rebaseline" title="Chấm lại baseline với rubric/command hiện tại">Đo lại baseline</button>');
+  }
+  const repoParam = state.view && state.view.repo ? `?repo=${encodeURIComponent(state.view.repo)}` : '';
+  acts.push(`<a class="button secondary" href="/api/runs/${esc(s.id)}/export.csv${repoParam}" download="results-${esc(s.id)}.csv" title="Tải kết quả phiên dưới dạng file CSV">Xuất CSV</a>`);
   if (s.mergedBack) acts.push(`<span class="badge b-ok">Đã merge vào ${esc(s.mergedBack.branch)}</span>`);
   $('runActions').innerHTML = acts.join('');
   $('runActions').querySelectorAll('button[data-act]').forEach((b) => b.addEventListener('click', () => runAction(b.dataset.act)));
@@ -633,6 +638,10 @@ async function runAction(act) {
     } else if (act === 'merge') {
       await api(`/api/runs/${s.id}/merge`, { method: 'POST', body: {} });
       alert(`Đã merge ${s.central} vào ${s.originalBranch}.`);
+    } else if (act === 'rebaseline') {
+      if (!confirm('Chấm lại baseline hiện tại? Điểm baseline có thể thay đổi.')) return;
+      const res = await api(`/api/runs/${s.id}/rebaseline`, { method: 'POST', body: {} });
+      alert(`Đã hoàn tất đo lại baseline: ${res && res.best && res.best.score != null ? res.best.score : 'OK'}`);
     }
   } catch (e) {
     alert(e.message);

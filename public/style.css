@@ -106,10 +106,10 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); ou
 .hint b { color: var(--text); }
 .error { background: var(--bad-bg); color: var(--bad); padding: 10px 12px; border-radius: 8px; white-space: pre-line; }
 
-button { font: inherit; cursor: pointer; border-radius: 7px; padding: 7px 14px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); }
-button:disabled { opacity: .5; cursor: not-allowed; }
-button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
-button.secondary { background: var(--panel); }
+button, a.button { font: inherit; cursor: pointer; border-radius: 7px; padding: 7px 14px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); text-decoration: none; display: inline-flex; align-items: center; }
+button:disabled, a.button:disabled { opacity: .5; cursor: not-allowed; }
+button.primary, a.button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
+button.secondary, a.button.secondary { background: var(--panel); }
 button.ghost { background: transparent; border-color: transparent; }
 button.ghost:hover { background: var(--panel-2); }
 button.danger { background: var(--bad-bg); color: var(--bad); border-color: transparent; font-weight: 600; }
