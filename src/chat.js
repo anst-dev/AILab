@@ -87,6 +87,7 @@ async function post(url, message) {
   node src/chat.js --logs <id>       Liệt kê danh sách các file log trong phiên swarm
   node src/chat.js --log <id> [f], -L Xem log của agent/đánh giá trong phiên swarm (-L <id> [file])
   node src/chat.js --stop <id>, -k   Dừng một phiên swarm đang chạy (--graceful để chờ vòng hiện tại) (-k <id>)
+  node src/chat.js --delete <id>, -D Xóa dữ liệu của một phiên đã dừng (-D <id>)
   node src/chat.js --merge <id>, -m  Merge nhánh của phiên đã dừng vào nhánh gốc của dự án (-m <id>)
   node src/chat.js --export <id|harvest> [f] Xuất kết quả phiên swarm hoặc tri thức ra file CSV/JSON (-e)
   node src/chat.js --export-harvest [f], -E  Xuất toàn bộ kho tri thức ra file CSV/JSON (-E [file])
@@ -397,6 +398,27 @@ async function post(url, message) {
     const j = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(j.error || `Lỗi khi dừng phiên ${runId} (HTTP ${r.status})`);
     console.log(`Đã gửi yêu cầu dừng phiên ${runId} (chế độ: ${mode}). Trạng thái hiện tại: ${j.status || 'stopping'}.`);
+    return;
+  }
+
+  const delIdx = args.indexOf('--delete') !== -1 ? args.indexOf('--delete') : args.indexOf('-D');
+  if (delIdx !== -1) {
+    const runId = args[delIdx + 1];
+    if (!runId || runId.startsWith('-')) {
+      throw new Error('Vui lòng chỉ định ID phiên cần xóa: node src/chat.js --delete <id> (-D <id>)');
+    }
+    const rRun = await fetch(`${url}/api/runs/${encodeURIComponent(runId)}`);
+    let repoParam = '';
+    if (rRun.ok) {
+      const snap = await rRun.json().catch(() => ({}));
+      if (snap && snap.repoRoot) repoParam = `?repo=${encodeURIComponent(snap.repoRoot)}`;
+    }
+    const r = await fetch(`${url}/api/runs/${encodeURIComponent(runId)}${repoParam}`, {
+      method: 'DELETE',
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || `Lỗi khi xóa phiên ${runId} (HTTP ${r.status})`);
+    console.log(`Đã xóa thành công dữ liệu phiên ${runId}.`);
     return;
   }
 

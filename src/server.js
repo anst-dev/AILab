@@ -367,6 +367,25 @@ const coordinator = new Coordinator({
       if (!found) throw new Error(`Không tìm thấy phiên ${id}.`);
       return gitDiff(found.snap, { from, to, statOnly });
     },
+    deleteRun: async (id, repo) => {
+      const runId = String(id || '');
+      if (runs.has(runId)) throw new Error('Phiên đang chạy, vui lòng dừng trước khi xóa.');
+      const found = findSnapshot(runId, repo || '');
+      if (!found) throw new Error(`Không tìm thấy phiên ${runId}.`);
+      const roots = [];
+      if (repo) roots.push(repo);
+      if (found.snap && found.snap.repoRoot) roots.push(found.snap.repoRoot);
+      roots.push(...(loadConfig().recentWorkspaces || []));
+      for (const root of roots) {
+        const runDir = path.join(root, '.swarm', 'runs', runId);
+        if (fs.existsSync(runDir)) {
+          fs.rmSync(runDir, { recursive: true, force: true });
+          git(['branch', '-D', `swarm/${runId}`], root, { allowFail: true }).catch(() => {});
+          return { ok: true, id: runId };
+        }
+      }
+      throw new Error(`Không tìm thấy thư mục lưu trữ của phiên ${runId}.`);
+    },
     inspect,
     harvest: async () => {
       const harvestPath = path.join(APP_DIR, 'harvest.js');
@@ -697,6 +716,30 @@ async function handle(req, res) {
     const { snap, run } = found;
 
     if (req.method === 'GET' && !action) return send(res, 200, snap);
+
+    if (req.method === 'DELETE' && !action) {
+      if (run) return send(res, 400, { error: 'Phiên đang chạy, vui lòng dừng trước khi xóa.' });
+      const roots = [];
+      if (repo) roots.push(repo);
+      if (snap.repoRoot) roots.push(snap.repoRoot);
+      roots.push(...(loadConfig().recentWorkspaces || []));
+      let deleted = false;
+      for (const root of roots) {
+        const runDir = path.join(root, '.swarm', 'runs', id);
+        if (fs.existsSync(runDir)) {
+          try {
+            fs.rmSync(runDir, { recursive: true, force: true });
+            deleted = true;
+            git(['branch', '-D', `swarm/${id}`], root, { allowFail: true }).catch(() => {});
+            break;
+          } catch (e) {
+            return send(res, 500, { error: `Không thể xóa thư mục phiên: ${e.message}` });
+          }
+        }
+      }
+      if (!deleted) return send(res, 404, { error: `Không tìm thấy dữ liệu thư mục của phiên ${id} để xóa.` });
+      return send(res, 200, { ok: true, id, message: `Đã xóa phiên ${id}` });
+    }
 
     if (req.method === 'GET' && action === 'gitlog') return send(res, 200, await gitLog(run, snap));
 

@@ -190,6 +190,12 @@ class Coordinator extends EventEmitter {
         case 'stop':
           await this.ops.stopRun(a.id, a.mode === 'now' ? 'now' : 'graceful');
           return { type, ok: true, text: `Đã gửi lệnh dừng (${a.mode === 'now' ? 'ngay' : 'sau lượt này'}) cho ${a.id}`, runId: a.id };
+        case 'delete_run': {
+          await this.ops.deleteRun(a.id);
+          this.owned.delete(a.id);
+          this.save();
+          return { type, ok: true, text: `Đã xóa dữ liệu phiên ${a.id}`, runId: a.id };
+        }
         case 'merge': {
           const r = await this.ops.mergeRun(a.id);
           return { type, ok: true, text: `Đã merge ${a.id}: ${JSON.stringify(r)}`, runId: a.id };
@@ -335,6 +341,7 @@ Actions:
     envExtra (key-value object or JSON string for agent and eval envs),
     maxIterations (per agent, 0 = unlimited), maxDurationMin (0 = unlimited), extraInstructions.
 - {"type":"stop","id":"<run id>","mode":"graceful"|"now"}
+- {"type":"delete_run","id":"<run id>"} delete data and branch of a stopped or failed run
 - {"type":"merge","id":"<run id>"}      merge the run's central branch into the user's original branch
 - {"type":"rebaseline","id":"<run id>"} re-evaluate baseline/best commit for an active run
 - {"type":"export_csv","id":"<run id>"} export run results as CSV text
