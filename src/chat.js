@@ -78,6 +78,8 @@ async function post(url, message) {
   node src/chat.js "lệnh/tin nhắn"    Gửi tin nhắn một lần tới điều phối viên và in phản hồi
   node src/chat.js                   Mở chế độ chat tương tác (Ctrl+C để thoát)
   node src/chat.js --status, -s      Xem trạng thái server và các phiên swarm đang chạy
+  node src/chat.js --stop <id>       Dừng một phiên swarm đang chạy (--graceful để chờ vòng hiện tại)
+  node src/chat.js --export <id> [f] Xuất kết quả phiên swarm ra file CSV (hoặc in ra terminal)
   node src/chat.js --clear           Xóa lịch sử trò chuyện của điều phối viên
   node src/chat.js --help, -h        Hiện hướng dẫn này`);
     return;
@@ -107,6 +109,51 @@ async function post(url, message) {
     const r = await fetch(`${url}/api/chat/clear`, { method: 'POST' });
     if (!r.ok) throw new Error('Không thể xóa lịch sử chat.');
     console.log('Đã xóa toàn bộ lịch sử trò chuyện.');
+    return;
+  }
+
+  const stopIdx = args.indexOf('--stop');
+  if (stopIdx !== -1) {
+    const runId = args[stopIdx + 1];
+    if (!runId || runId.startsWith('-')) {
+      throw new Error('Vui lòng chỉ định ID phiên cần dừng: node src/chat.js --stop <id>');
+    }
+    const mode = args.includes('--graceful') ? 'graceful' : 'now';
+    const r = await fetch(`${url}/api/runs/${encodeURIComponent(runId)}/stop`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || `Lỗi khi dừng phiên ${runId} (HTTP ${r.status})`);
+    console.log(`Đã gửi yêu cầu dừng phiên ${runId} (chế độ: ${mode}). Trạng thái hiện tại: ${j.status || 'stopping'}.`);
+    return;
+  }
+
+  const exportIdx = args.indexOf('--export');
+  if (exportIdx !== -1) {
+    const runId = args[exportIdx + 1];
+    if (!runId || runId.startsWith('-')) {
+      throw new Error('Vui lòng chỉ định ID phiên cần export: node src/chat.js --export <id> [file.csv]');
+    }
+    const outFile = args[exportIdx + 2] && !args[exportIdx + 2].startsWith('-') ? args[exportIdx + 2] : null;
+    const r = await fetch(`${url}/api/runs/${encodeURIComponent(runId)}/export.csv`);
+    if (!r.ok) {
+      const errText = await r.text();
+      let msg = errText;
+      try {
+        const j = JSON.parse(errText);
+        if (j.error) msg = j.error;
+      } catch {}
+      throw new Error(msg || `Lỗi khi export CSV phiên ${runId} (HTTP ${r.status})`);
+    }
+    const csvData = await r.text();
+    if (outFile) {
+      fs.writeFileSync(outFile, csvData, 'utf8');
+      console.log(`Đã lưu kết quả phiên ${runId} ra file: ${outFile}`);
+    } else {
+      process.stdout.write(csvData);
+    }
     return;
   }
 
