@@ -718,7 +718,9 @@ async function handle(req, res) {
     if (req.method === 'GET' && !action) return send(res, 200, snap);
 
     if (req.method === 'DELETE' && !action) {
-      if (run) return send(res, 400, { error: 'Phiên đang chạy, vui lòng dừng trước khi xóa.' });
+      if (run && (run.status === 'running' || run.status === 'preparing' || run.status === 'stopping')) {
+        return send(res, 400, { error: 'Phiên đang chạy, vui lòng dừng trước khi xóa.' });
+      }
       const roots = [];
       if (repo) roots.push(repo);
       if (snap.repoRoot) roots.push(snap.repoRoot);
@@ -736,6 +738,10 @@ async function handle(req, res) {
             return send(res, 500, { error: `Không thể xóa thư mục phiên: ${e.message}` });
           }
         }
+      }
+      if (run) {
+        runs.delete(id);
+        deleted = true;
       }
       if (!deleted) return send(res, 404, { error: `Không tìm thấy dữ liệu thư mục của phiên ${id} để xóa.` });
       return send(res, 200, { ok: true, id, message: `Đã xóa phiên ${id}` });

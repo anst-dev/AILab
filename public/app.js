@@ -779,6 +779,7 @@ async function runAction(act) {
       if (!confirm(`Xóa vĩnh viễn dữ liệu phiên ${s.id} và nhánh swarm tương ứng? Thao tác này không thể hoàn tác.`)) return;
       const repoParam = state.view && state.view.repo ? `?repo=${encodeURIComponent(state.view.repo)}` : '';
       await api(`/api/runs/${s.id}${repoParam}`, { method: 'DELETE' });
+      state.live.delete(s.id);
       alert(`Đã xóa phiên ${s.id}.`);
       showNew();
       await refreshRuns();
