@@ -376,7 +376,6 @@ function renderRun() {
 
   renderScoreChart();
   renderAgents();
-  renderScoreChart();
 
   $('resultRows').innerHTML =
     s.results
@@ -417,46 +416,69 @@ const CHART_COLORS = { keep: '#35e6a3', 'keep-merged': '#35e6a3', discard: '#ff5
 const fmtScore = (v) => (Math.abs(v) >= 1000 ? String(Math.round(v)) : String(+Number(v).toFixed(4)));
 
 function renderScoreChart() {
+  const card = $('chartCard');
   const svg = $('scoreChart');
   const empty = $('chartEmpty');
   const s = state.snap;
   if (!svg || !s) return;
-  const pts = s.results.filter((r) => r.score != null && Number.isFinite(r.score));
+  if (card) {
+    card.hidden = s.opts && s.opts.evalMode !== 'score';
+    if (card.hidden) return;
+  }
+  const pts = (s.results || []).filter((r) => r.score != null && r.score !== '' && Number.isFinite(Number(r.score)));
   if (!pts.length) {
     svg.innerHTML = '';
-    empty.hidden = false;
+    if (empty) empty.hidden = false;
     return;
   }
-  empty.hidden = true;
+  if (empty) empty.hidden = true;
   const W = svg.clientWidth || 600;
-  const H = 120;
-  const padL = 42, padR = 10, padT = 10, padB = 14;
+  const H = 130;
+  const padL = 48, padR = 12, padT = 12, padB = 18;
   const innerW = Math.max(10, W - padL - padR);
   const innerH = H - padT - padB;
-  const maxIter = Math.max(0, ...pts.map((p) => p.iter || 0));
-  let lo = Math.min(...pts.map((p) => p.score));
-  let hi = Math.max(...pts.map((p) => p.score));
-  if (lo === hi) { lo -= 1; hi += 1; }
-  const x = (it) => padL + (maxIter ? (it / maxIter) * innerW : 0);
-  const y = (v) => padT + innerH - ((v - lo) / (hi - lo)) * innerH;
+  const maxIter = Math.max(1, ...pts.map((p) => Number(p.iter) || 0));
+  let lo = Math.min(...pts.map((p) => Number(p.score)));
+  let hi = Math.max(...pts.map((p) => Number(p.score)));
+  if (lo === hi) {
+    lo -= 1;
+    hi += 1;
+  } else {
+    const pad = (hi - lo) * 0.08;
+    lo -= pad;
+    hi += pad;
+  }
+  const x = (it) => padL + (maxIter ? ((Number(it) || 0) / maxIter) * innerW : 0);
+  const y = (v) => padT + innerH - ((Number(v) - lo) / (hi - lo)) * innerH;
 
   const parts = [];
-  for (const v of [hi, lo]) {
+  for (const v of [hi, (hi + lo) / 2, lo]) {
     parts.push(`<line x1="${padL}" y1="${y(v).toFixed(1)}" x2="${W - padR}" y2="${y(v).toFixed(1)}" class="cg"/>`);
-    parts.push(`<text x="${padL - 5}" y="${(y(v) + 3).toFixed(1)}" class="ct" text-anchor="end">${fmtScore(v)}</text>`);
+    parts.push(`<text x="${padL - 6}" y="${(y(v) + 3).toFixed(1)}" class="ct" text-anchor="end">${fmtScore(v)}</text>`);
   }
-  const step = Math.max(1, Math.ceil(maxIter / Math.max(1, Math.floor(innerW / 34))));
+  const step = Math.max(1, Math.ceil(maxIter / Math.max(1, Math.floor(innerW / 36))));
   for (let it = 0; it <= maxIter; it += step) {
     parts.push(`<text x="${x(it).toFixed(1)}" y="${H - 2}" class="ct" text-anchor="middle">${it}</text>`);
   }
+
+  // Best/keep line progression
+  const keeps = pts
+    .filter((r) => r.status === 'keep' || r.status === 'baseline')
+    .sort((a, b) => (Number(a.iter) || 0) - (Number(b.iter) || 0) || a.t - b.t);
+  if (keeps.length > 1) {
+    const pathD = keeps.map((k, idx) => `${idx === 0 ? 'M' : 'L'} ${x(k.iter || 0).toFixed(1)} ${y(k.score).toFixed(1)}`).join(' ');
+    parts.push(`<path d="${pathD}" fill="none" stroke="var(--ok)" stroke-width="2" stroke-opacity="0.6" stroke-dasharray="4,2"/>`);
+  }
+
   for (const p of pts) {
     const color = CHART_COLORS[p.status] || '#8a8f98';
     const who = p.agent || '—';
     const cx = x(p.iter || 0).toFixed(1);
     const cy = y(p.score).toFixed(1);
+    const tip = `#${p.iter || 0} · ${who} · ${p.score} (${p.status})${p.desc ? ' · ' + p.desc : ''}`;
     parts.push(
-      `<circle cx="${cx}" cy="${cy}" r="3.5" fill="${color}" class="cp">` +
-        `<title>#${p.iter || 0} · ${esc(who)} · ${esc(p.score)} · ${esc(p.status)}</title>` +
+      `<circle cx="${cx}" cy="${cy}" r="4" fill="${color}" class="cp">` +
+        `<title>${esc(tip)}</title>` +
       `</circle>`
     );
   }
@@ -490,128 +512,7 @@ function renderAgents() {
   );
 }
 
-function renderScoreChart() {
-  const card = $('chartCard');
-  const container = $('scoreChart');
-  if (!card || !container) return;
-  const s = state.snap;
-  if (!s || !s.results) {
-    card.hidden = true;
-    return;
-  }
 
-  const valid = s.results.filter(
-    (r) => r.score !== null && r.score !== undefined && r.score !== '' && !isNaN(Number(r.score))
-  );
-
-  if (!valid.length) {
-    if (s.opts && s.opts.evalMode === 'score') {
-      card.hidden = false;
-      container.innerHTML = '<p class="muted" style="margin:8px 0">Chưa có kết quả điểm số để vẽ biểu đồ.</p>';
-    } else {
-      card.hidden = true;
-    }
-    return;
-  }
-
-  card.hidden = false;
-
-  const iters = valid.map((r) => (r.iter != null && !isNaN(Number(r.iter)) ? Number(r.iter) : 0));
-  const scores = valid.map((r) => Number(r.score));
-
-  const minIter = 0;
-  let maxIter = Math.max(1, ...iters);
-  if (minIter === maxIter) maxIter = minIter + 1;
-
-  let minScore = Math.min(...scores);
-  let maxScore = Math.max(...scores);
-  if (minScore === maxScore) {
-    minScore -= 1;
-    maxScore += 1;
-  } else {
-    const pad = (maxScore - minScore) * 0.1;
-    minScore -= pad;
-    maxScore += pad;
-  }
-
-  const svgW = 640;
-  const svgH = 220;
-  const padL = 60;
-  const padR = 25;
-  const padT = 20;
-  const padB = 35;
-  const W = svgW - padL - padR;
-  const H = svgH - padT - padB;
-
-  const toX = (it) => padL + ((it - minIter) / (maxIter - minIter)) * W;
-  const toY = (sc) => padT + H - ((sc - minScore) / (maxScore - minScore)) * H;
-
-  // Grid & Y labels
-  const yTicksCount = 4;
-  let gridSvg = '';
-  for (let i = 0; i <= yTicksCount; i++) {
-    const val = minScore + (i / yTicksCount) * (maxScore - minScore);
-    const y = toY(val);
-    const formatted = Math.abs(val) >= 100 ? val.toFixed(1) : Math.abs(val) >= 1 ? val.toFixed(3) : val.toFixed(5);
-    gridSvg += `<line x1="${padL}" y1="${y}" x2="${padL + W}" y2="${y}" stroke="var(--border)" stroke-dasharray="3,3" />`;
-    gridSvg += `<text x="${padL - 8}" y="${y + 4}" fill="var(--muted)" font-size="11" text-anchor="end">${formatted}</text>`;
-  }
-
-  // X ticks
-  const maxTicks = 10;
-  const iterSpan = maxIter - minIter;
-  const step = Math.max(1, Math.ceil(iterSpan / maxTicks));
-  for (let it = minIter; it <= maxIter; it += step) {
-    const x = toX(it);
-    gridSvg += `<line x1="${x}" y1="${padT + H}" x2="${x}" y2="${padT + H + 4}" stroke="var(--border)" />`;
-    gridSvg += `<text x="${x}" y="${padT + H + 18}" fill="var(--muted)" font-size="11" text-anchor="middle">${it}</text>`;
-  }
-
-  // Best/keep line progression
-  const keeps = valid
-    .filter((r) => r.status === 'keep' || r.status === 'baseline')
-    .sort((a, b) => (Number(a.iter) || 0) - (Number(b.iter) || 0) || a.t - b.t);
-
-  let lineSvg = '';
-  if (keeps.length > 1) {
-    const pathD = keeps.map((k, idx) => `${idx === 0 ? 'M' : 'L'} ${toX(Number(k.iter) || 0)} ${toY(Number(k.score))}`).join(' ');
-    lineSvg = `<path d="${pathD}" fill="none" stroke="var(--ok)" stroke-width="2" stroke-opacity="0.5" stroke-dasharray="4,2" />`;
-  }
-
-  // Points
-  let pointsSvg = '';
-  for (const r of valid) {
-    const it = r.iter != null && !isNaN(Number(r.iter)) ? Number(r.iter) : 0;
-    const sc = Number(r.score);
-    const cx = toX(it);
-    const cy = toY(sc);
-    const color = r.status === 'keep' ? 'var(--ok)' : r.status === 'discard' ? 'var(--bad)' : 'var(--info)';
-    const tip = `Vòng ${it}: ${sc} (${r.status}) · ${r.agent}${r.desc ? ` · ${r.desc}` : ''}`;
-    pointsSvg += `<circle cx="${cx}" cy="${cy}" r="5" fill="${color}" stroke="var(--panel)" stroke-width="1.5" style="cursor:pointer">
-      <title>${esc(tip)}</title>
-    </circle>`;
-  }
-
-  container.innerHTML = `
-    <div style="display:flex;gap:16px;font-size:12px;margin-bottom:10px;align-items:center;">
-      <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--ok);margin-right:5px;vertical-align:middle;"></span>Điểm giữ (keep)</span>
-      <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--bad);margin-right:5px;vertical-align:middle;"></span>Điểm loại (discard)</span>
-      <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--info);margin-right:5px;vertical-align:middle;"></span>Khác</span>
-    </div>
-    <div style="width:100%;overflow-x:auto;">
-      <svg viewBox="0 0 ${svgW} ${svgH}" style="width:100%;max-width:800px;height:auto;display:block;font-family:sans-serif;">
-        <!-- Axes -->
-        <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT + H}" stroke="var(--border)" stroke-width="1.5" />
-        <line x1="${padL}" y1="${padT + H}" x2="${padL + W}" y2="${padT + H}" stroke="var(--border)" stroke-width="1.5" />
-        <text x="${padL}" y="${padT - 6}" fill="var(--muted)" font-size="11">Điểm (score)</text>
-        <text x="${padL + W}" y="${padT + H + 30}" fill="var(--muted)" font-size="11" text-anchor="end">Vòng (iter)</text>
-        ${gridSvg}
-        ${lineSvg}
-        ${pointsSvg}
-      </svg>
-    </div>
-  `;
-}
 
 async function loadGitLog() {
   const s = state.snap;
