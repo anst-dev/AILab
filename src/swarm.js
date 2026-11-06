@@ -461,11 +461,19 @@ class SwarmRun extends EventEmitter {
     this.phase = 'Đo baseline';
     this.changed();
     try {
-      const a0 = this.agents[0];
+      let a0 = this.agents.find((a) => a.status === 'idle' || a.status === 'done');
+      if (!a0) {
+        const startWait = Date.now();
+        while (!a0 && Date.now() - startWait < 10000 && !this.stopMode) {
+          await sleep(500);
+          a0 = this.agents.find((a) => a.status === 'idle' || a.status === 'done');
+        }
+      }
+      if (!a0) a0 = this.agents[0];
       await this.syncWorktree(a0);
       const currentCommit = (await revParse(this.central, this.repoRoot)) || this.baseCommit;
       const isInitial = !this.results.some((r) => r.status === 'baseline');
-      const logRel = path.join('logs', 'baseline.eval.log');
+      const logRel = isInitial ? path.join('logs', 'baseline.eval.log') : path.join('logs', `rebaseline-${Date.now()}.eval.log`);
       const res = await this.evaluate(a0, path.join(this.runDir, logRel));
       if (res.ok) {
         if (o.evalMode === 'score') this.best = { score: res.score, commit: currentCommit.slice(0, 7), desc: isInitial ? 'baseline' : 'rebaseline', agent: null };

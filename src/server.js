@@ -390,7 +390,15 @@ async function handle(req, res) {
         try {
           csv = tsvTextToCsv(fs.readFileSync(path.join(root, '.swarm', 'runs', id, 'results.tsv'), 'utf8'));
           break;
-        } catch {}
+        } catch {
+          try {
+            const snap = JSON.parse(fs.readFileSync(path.join(root, '.swarm', 'runs', id, 'state.json'), 'utf8'));
+            if (snap && Array.isArray(snap.results) && snap.results.length) {
+              csv = resultsCsv(snap.results);
+              break;
+            }
+          } catch {}
+        }
       }
     }
     if (csv === null) return send(res, 400, { error: `Không export được CSV: không tìm thấy phiên ${id} hoặc file results.tsv của phiên.` });
