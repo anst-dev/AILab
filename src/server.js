@@ -469,7 +469,7 @@ async function handle(req, res) {
         ? harvestMod.getOutPath()
         : path.join(APP_DIR, 'knowledge', 'improvements_log.jsonl');
       if (!fs.existsSync(logPath)) {
-        return send(res, 200, { ok: true, exists: false, totalCount: 0, items: [] });
+        return send(res, 200, { ok: true, exists: false, totalCount: 0, items: [], stats: null });
       }
       const lines = fs.readFileSync(logPath, 'utf8').split('\n').map((l) => l.trim()).filter(Boolean);
       const items = [];
@@ -478,12 +478,14 @@ async function handle(req, res) {
       for (const line of tail) {
         try { items.push(JSON.parse(line)); } catch { items.push({ raw: line }); }
       }
+      const stats = harvestMod && typeof harvestMod.computeStats === 'function' ? harvestMod.computeStats(logPath) : null;
       return send(res, 200, {
         ok: true,
         exists: true,
         totalCount: lines.length,
         outPath: logPath,
         items,
+        stats,
       });
     } catch (e) {
       return send(res, 500, { error: e.message });

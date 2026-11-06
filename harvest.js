@@ -134,8 +134,17 @@ const toLine = (r) => JSON.stringify({
   commit: r.commit, score: r.score, status: r.status, note: r.note,
 });
 
-function runHarvest(customOut) {
-  const targetOut = customOut || getOutPath();
+function runHarvest(customOut, options = {}) {
+  let targetOut = null;
+  let dryRun = false;
+  if (customOut && typeof customOut === 'object') {
+    targetOut = customOut.targetOut || customOut.outPath || customOut.customOut || null;
+    dryRun = Boolean(customOut.dryRun);
+  } else {
+    targetOut = customOut || null;
+    dryRun = Boolean(options && options.dryRun);
+  }
+  targetOut = targetOut || getOutPath();
   const existing = fs.existsSync(targetOut)
     ? fs.readFileSync(targetOut, 'utf8').split('\n').map((l) => l.replace(/\r$/, '').trim()).filter(Boolean)
     : [];
@@ -176,8 +185,10 @@ function runHarvest(customOut) {
   }
   items.sort((a, b) => a.tsMs - b.tsMs);
 
-  fs.mkdirSync(path.dirname(targetOut), { recursive: true });
-  fs.writeFileSync(targetOut, items.map((i) => i.line).join('\n') + '\n');
+  if (!dryRun) {
+    fs.mkdirSync(path.dirname(targetOut), { recursive: true });
+    fs.writeFileSync(targetOut, items.map((i) => i.line).join('\n') + '\n');
+  }
   return {
     runsDir,
     runIds,
@@ -186,14 +197,95 @@ function runHarvest(customOut) {
     freshCount: fresh.length,
     totalCount: items.length,
     outPath: targetOut,
+    dryRun,
+  };
+}
+
+function computeStats(target) {
+  let items = [];
+  let logPath = null;
+  if (Array.isArray(target)) {
+    items = target;
+  } else {
+    logPath = typeof target === 'string' ? target : getOutPath();
+    if (fs.existsSync(logPath)) {
+      const lines = fs.readFileSync(logPath, 'utf8').split('\n').map((l) => l.trim()).filter(Boolean);
+      for (const l of lines) {
+        try { items.push(JSON.parse(l)); } catch {}
+      }
+    }
+  }
+
+  const byStatus = {};
+  const byBot = {};
+  const total = items.length;
+  for (const item of items) {
+    const st = item.status || 'unknown';
+    byStatus[st] = (byStatus[st] || 0) + 1;
+    const bot = item.bot || 'unknown';
+    byBot[bot] = (byBot[bot] || 0) + 1;
+  }
+  const keepCount = (byStatus['keep'] || 0) + (byStatus['keep-merged'] || 0);
+  const discardCount = (byStatus['discard'] || 0) + (byStatus['no-change'] || 0) + (byStatus['duplicate'] || 0);
+  const conflictCount = byStatus['conflict'] || 0;
+  const errorCount = (byStatus['crash'] || 0) + (byStatus['error'] || 0);
+  const keepRate = total > 0 ? Number(((keepCount / total) * 100).toFixed(1)) : 0;
+
+  return {
+    total,
+    byStatus,
+    byBot,
+    keepCount,
+    discardCount,
+    conflictCount,
+    errorCount,
+    keepRate,
+    logPath,
   };
 }
 
 if (require.main === module) {
-  const res = runHarvest();
-  console.log(`harvest: runs dir = ${res.runsDir}`);
-  console.log(`harvest: ${res.runIds.length} run results.tsv (${res.runIds.join(', ') || 'không có'}), ${res.tsvRowCount} dòng tsv, ${res.gitRowCount} commit swarm/*`);
-  console.log(`harvest: +${res.freshCount} dòng mới, tổng ${res.totalCount} dòng -> knowledge/improvements_log.jsonl`);
+  const args = process.argv.slice(2);
+  if (args.includes('--help') || args.includes('-h')) {
+    console.log(`Sử dụng:
+  node harvest.js              Gom kết quả các phiên swarm vào knowledge/improvements_log.jsonl
+  node harvest.js --stats, -s  Xem thống kê chi tiết các lượt và tỷ lệ keep trong knowledge log
+  node harvest.js --dry-run, -n Xem trước số dòng sẽ được gom mà không ghi file
+  node harvest.js --json       In kết quả gom hoặc thống kê dạng JSON ra stdout
+  node harvest.js --help, -h   Hiện hướng dẫn này`);
+    process.exit(0);
+  }
+
+  const isJson = args.includes('--json');
+  if (args.includes('--stats') || args.includes('-s')) {
+    const stats = computeStats();
+    if (isJson) {
+      console.log(JSON.stringify(stats, null, 2));
+    } else {
+      console.log(`Knowledge Log: ${stats.logPath || getOutPath()}`);
+      console.log(`Tổng số dòng: ${stats.total}`);
+      console.log(`Tỷ lệ keep: ${stats.keepRate}% (keep: ${stats.keepCount}, discard: ${stats.discardCount}, conflict: ${stats.conflictCount}, error: ${stats.errorCount})`);
+      console.log('Theo trạng thái:');
+      for (const [st, c] of Object.entries(stats.byStatus)) {
+        console.log(`  - ${st}: ${c}`);
+      }
+      console.log('Theo bot:');
+      for (const [b, c] of Object.entries(stats.byBot)) {
+        console.log(`  - ${b}: ${c}`);
+      }
+    }
+    process.exit(0);
+  }
+
+  const dryRun = args.includes('--dry-run') || args.includes('-n');
+  const res = runHarvest({ dryRun });
+  if (isJson) {
+    console.log(JSON.stringify(res, null, 2));
+  } else {
+    console.log(`harvest: runs dir = ${res.runsDir}`);
+    console.log(`harvest: ${res.runIds.length} run results.tsv (${res.runIds.join(', ') || 'không có'}), ${res.tsvRowCount} dòng tsv, ${res.gitRowCount} commit swarm/*`);
+    console.log(`harvest: ${dryRun ? '[dry-run] ' : ''}+${res.freshCount} dòng mới, tổng ${res.totalCount} dòng -> ${res.outPath}`);
+  }
 }
 
-module.exports = { runHarvest, tsvRows, gitRows, findRunsDir, findRepoRoot, getOutPath, OUT };
+module.exports = { runHarvest, computeStats, tsvRows, gitRows, findRunsDir, findRepoRoot, getOutPath, OUT };
