@@ -29,6 +29,7 @@ theo thứ tự ưu tiên, sao cho `node evaluate.js` vẫn PASS (app phải ch�
    (kind="swarm-row", note=id run; dedupe commit+iter+status — chạy lại không nhân đôi).
 8. [x] **Xóa phiên trên Web UI** — nút "Xóa phiên" trong chi tiết phiên đã dừng/lịch sử, xác nhận trước khi gọi DELETE /api/runs/:id và làm mới danh sách.
 9. [x] **Copy git checkout & Diff UI** — nút chép lệnh `git checkout <branch>` và xem diff/diff stat nhánh trung tâm trên Web UI.
+10. [x] **Xem commit diff trên Web UI** — hỗ trợ xem git show / diff của commit cụ thể khi bấm vào commit hash trong Git log hoặc bảng kết quả.
 
 ## Luật
 

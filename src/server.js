@@ -224,9 +224,17 @@ async function gitLog(run, snap) {
   });
 }
 
-async function gitDiff(snap, { from, to, statOnly } = {}) {
+async function gitDiff(snap, { from, to, commit, statOnly } = {}) {
   const root = snap && snap.repoRoot;
-  if (!root || !snap.baseCommit) return '';
+  if (!root) return '';
+  if (commit) {
+    const args = ['show'];
+    if (statOnly) args.push('--stat');
+    args.push(commit);
+    const r = await git(args, root, { allowFail: true });
+    return r.code === 0 ? r.stdout : (r.stderr || 'Không thể tải diff của commit.');
+  }
+  if (!snap.baseCommit) return '';
   const refA = from || snap.baseCommit;
   const refB = to || snap.central || 'HEAD';
   const args = ['diff'];
@@ -362,10 +370,10 @@ const coordinator = new Coordinator({
       if (!found) throw new Error(`Không tìm thấy phiên ${id}.`);
       return gitLog(found.run, found.snap);
     },
-    gitDiff: async (id, { from, to, statOnly } = {}) => {
+    gitDiff: async (id, { from, to, commit, statOnly } = {}) => {
       const found = findSnapshot(String(id || ''), '');
       if (!found) throw new Error(`Không tìm thấy phiên ${id}.`);
-      return gitDiff(found.snap, { from, to, statOnly });
+      return gitDiff(found.snap, { from, to, commit, statOnly });
     },
     deleteRun: async (id, repo) => {
       const runId = String(id || '');
@@ -766,7 +774,8 @@ async function handle(req, res) {
       const statOnly = url.searchParams.get('stat') === '1' || url.searchParams.get('stat') === 'true';
       const from = url.searchParams.get('from') || '';
       const to = url.searchParams.get('to') || '';
-      const diff = await gitDiff(snap, { from, to, statOnly });
+      const commit = url.searchParams.get('commit') || '';
+      const diff = await gitDiff(snap, { from, to, commit, statOnly });
       return send(res, 200, diff, 'text/plain; charset=utf-8');
     }
 

@@ -415,9 +415,15 @@ function renderRun() {
         ({ r, i }) => `<tr class="${r.log ? 'clickable' : ''}" data-i="${i}">
           <td class="mono">${time(r.t)}</td><td>${esc(r.agent)}</td><td>${r.iter || ''}</td>
           <td>${badge(RESULT_STATUS, r.status)}</td><td class="mono">${r.score == null ? '' : esc(r.score)}</td>
-          <td class="mono">${esc(r.commit)}</td><td>${esc(r.desc)}</td></tr>`
+          <td class="mono">${r.commit ? `<code class="commit-link" data-hash="${esc(r.commit)}" title="Xem git diff của commit ${esc(r.commit)}" style="cursor:pointer;text-decoration:underline;">${esc(r.commit)}</code>` : ''}</td><td>${esc(r.desc)}</td></tr>`
       )
       .join('') || `<tr><td colspan="7" class="muted">${curFilter === 'all' ? 'Chưa có lượt nào hoàn thành.' : 'Không có lượt nào khớp bộ lọc.'}</td></tr>`;
+  $('resultRows').querySelectorAll('.commit-link').forEach((link) => {
+    link.addEventListener('click', (e) => {
+      e.stopPropagation();
+      viewCommitDiff(link.dataset.hash);
+    });
+  });
   $('resultRows').querySelectorAll('tr[data-i]').forEach((tr) => {
     tr.addEventListener('mouseenter', () => {
       const origIdx = Number(tr.dataset.i);
@@ -744,8 +750,14 @@ async function loadGitLog() {
   try {
     const log = await api(`/api/runs/${s.id}/gitlog?repo=${encodeURIComponent(s.repoRoot || '')}`);
     $('gitLog').innerHTML = log.length
-      ? log.map((c) => `<li><code>${esc(c.hash)}</code>${esc(c.subject)} <span class="muted">· ${esc(c.author)} · ${esc(c.when)}</span></li>`).join('')
+      ? log.map((c) => `<li><code class="commit-link" data-hash="${esc(c.hash)}" title="Xem git show của commit ${esc(c.hash)}" style="cursor:pointer;text-decoration:underline;">${esc(c.hash)}</code> ${esc(c.subject)} <span class="muted">· ${esc(c.author)} · ${esc(c.when)}</span></li>`).join('')
       : '<li class="muted">Chưa có commit nào được merge.</li>';
+    $('gitLog').querySelectorAll('.commit-link').forEach((link) => {
+      link.addEventListener('click', (e) => {
+        e.stopPropagation();
+        viewCommitDiff(link.dataset.hash);
+      });
+    });
   } catch {
     $('gitLog').innerHTML = '';
   }
@@ -827,6 +839,24 @@ function closeLog() {
   clearInterval(logTimer);
   state.log = null;
   $('logDlg').close();
+}
+
+async function viewCommitDiff(hash) {
+  const s = state.snap;
+  if (!s || !hash) return;
+  $('logTitle').textContent = `Commit diff — ${hash}`;
+  $('logLive').textContent = '';
+  $('logBody').textContent = `Đang tải chi tiết commit ${hash}...`;
+  if (!$('logDlg').open) $('logDlg').showModal();
+  clearInterval(logTimer);
+  state.log = null;
+  try {
+    const repoParam = state.view && state.view.repo ? `&repo=${encodeURIComponent(state.view.repo)}` : '';
+    const txt = await api(`/api/runs/${s.id}/diff?commit=${encodeURIComponent(hash)}${repoParam}`);
+    $('logBody').textContent = txt || '(Commit không có nội dung diff)';
+  } catch (e) {
+    $('logBody').textContent = 'Lỗi tải commit diff: ' + e.message;
+  }
 }
 
 // ---------------------------------------------------------------------------
