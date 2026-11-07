@@ -594,8 +594,10 @@ async function handle(req, res) {
 
   if (req.method === 'GET' && p === '/api/catalog') {
     const cfg = loadConfig();
-    const ar = path.resolve(APP_DIR, '..', 'autoresearch');
-    const suggested = fs.existsSync(path.join(ar, 'train.py')) ? { autoresearch: ar } : {};
+    // autoresearch nằm cạnh app (bản agent-swarm/) hoặc bên trong (app ở gốc AILab)
+    const ar = [path.resolve(APP_DIR, '..', 'autoresearch'), path.join(APP_DIR, 'autoresearch')]
+      .find((d) => fs.existsSync(path.join(d, 'train.py')));
+    const suggested = ar ? { autoresearch: ar } : {};
     return send(res, 200, { agents: await getCatalog(cfg), recentWorkspaces: cfg.recentWorkspaces || [], suggested, platform: process.platform, coordinator: cfg.coordinator || {} });
   }
 
@@ -1119,17 +1121,17 @@ async function main() {
   const url = `http://127.0.0.1:${port}`;
   console.log(`Agent Swarm đang chạy tại ${url}  (Ctrl+C để thoát)`);
   if (!args.includes('--no-open')) openBrowser(url);
-  if (!process.env.PORT) {
+  // Luôn ghi server.json (kể cả khi có PORT) để --background/--status/--stop tìm được server.
+  // Muốn chạy thử không đụng server thật thì dùng SWARM_DATA_DIR riêng (evaluate.js làm vậy).
+  try {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(SERVER_FILE, JSON.stringify({ pid: process.pid, port, url, startedAt: Date.now() }));
+  } catch {}
+  process.on('exit', () => {
     try {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-      fs.writeFileSync(SERVER_FILE, JSON.stringify({ pid: process.pid, port, url, startedAt: Date.now() }));
+      if (JSON.parse(fs.readFileSync(SERVER_FILE, 'utf8')).pid === process.pid) fs.unlinkSync(SERVER_FILE);
     } catch {}
-    process.on('exit', () => {
-      try {
-        if (JSON.parse(fs.readFileSync(SERVER_FILE, 'utf8')).pid === process.pid) fs.unlinkSync(SERVER_FILE);
-      } catch {}
-    });
-  }
+  });
 
   let shuttingDown = false;
   shutdownHook = () => shutdown();

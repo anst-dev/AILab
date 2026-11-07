@@ -3,6 +3,7 @@
 'use strict';
 const { execFile, spawn } = require('node:child_process');
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const http = require('node:http');
 
@@ -48,9 +49,10 @@ function httpGet(url, timeoutMs) {
   }
   console.log(`CHECK syntax: ${files.length} file OK`);
 
-  // 2) Smoke test: server khởi động + API sống
+  // 2) Smoke test: server khởi động + API sống (data dir tạm: không đụng server.json của server thật)
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'swarm-eval-'));
   const child = spawn(process.execPath, [path.join(SRC, 'server.js'), '--no-open'], {
-    env: { ...process.env, PORT: String(PORT) },
+    env: { ...process.env, PORT: String(PORT), SWARM_DATA_DIR: dataDir },
     windowsHide: true,
     stdio: 'ignore',
   });
@@ -69,7 +71,20 @@ function httpGet(url, timeoutMs) {
     try { child.kill(); } catch { /* đã chết */ }
   }
 
-  // 3) Ghi nhận các tính năng roadmap đã có (để bot thấy tiến độ — không chặn)
+  // 3) Regression test: mọi file test/*.test.js + bộ e2e/api/coordinator phải exit 0.
+  //    EVAL_QUICK=1 bỏ qua bước này (chỉ smoke) khi cần chấm nhanh.
+  if (!process.env.EVAL_QUICK) {
+    const TEST = path.join(ROOT, 'test');
+    const suites = fs.readdirSync(TEST).filter((f) => f.endsWith('.test.js')).sort()
+      .concat(['e2e.js', 'api.js', 'coordinator.js']);
+    for (const f of suites) {
+      const r = await sh(process.execPath, [path.join(TEST, f)], 300000);
+      if (r.code !== 0) fail(`test/${f}: ${(r.stderr || r.stdout).trim().split('\n').slice(-6).join(' | ').slice(0, 400)}`);
+    }
+    console.log(`CHECK tests: ${suites.length} bộ PASS`);
+  }
+
+  // 4) Ghi nhận các tính năng roadmap đã có (để bot thấy tiến độ — không chặn)
   const swarmSrc = fs.readFileSync(path.join(SRC, 'swarm.js'), 'utf8');
   const features = [];
   if (/publishCommand/.test(swarmSrc)) features.push('publishCommand');

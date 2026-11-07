@@ -83,6 +83,9 @@ function normalizeOptions(raw, catalog) {
   o.keepWorktrees = !!raw.keepWorktrees;
   o.extraInstructions = String(raw.extraInstructions || '').trim();
   o.publishCommand = String(raw.publishCommand || '').trim();
+  // knowledgeLog: file JSONL (tuyệt đối hoặc tương đối repo) để logImprovement ghi mỗi KEEP.
+  // Rỗng = tắt — mặc định không tạo file lạ trong dự án của người dùng.
+  o.knowledgeLog = String(raw.knowledgeLog || '').trim();
 
   // envExtra: object merged into env when running agent + evalCommand (RENDER_CACHE passthrough)
   o.envExtra = {};
@@ -245,13 +248,13 @@ class SwarmRun extends EventEmitter {
     return row;
   }
 
-  /** Append 1 dòng JSONL vào knowledge/improvements_log.jsonl ở repo root sau mỗi KEEP.
+  /** Append 1 dòng JSONL vào opts.knowledgeLog sau mỗi KEEP (tắt khi option rỗng).
    * Orchestrator ghi trực tiếp bằng fs nên không bị protectedFiles chặn (cơ chế đó chỉ
    * hoàn tác file trong worktree của agent). Lỗi ghi bị bỏ qua để không ảnh hưởng vòng chạy. */
   logImprovement(agent, desc, commit, score) {
     try {
-      if (!this.repoRoot) return;
-      const file = path.join(this.repoRoot, 'knowledge', 'improvements_log.jsonl');
+      if (!this.repoRoot || !this.opts.knowledgeLog) return;
+      const file = path.resolve(this.repoRoot, this.opts.knowledgeLog);
       fs.mkdirSync(path.dirname(file), { recursive: true });
       fs.appendFileSync(file, JSON.stringify({
         ts: new Date().toISOString(),

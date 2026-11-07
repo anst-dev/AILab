@@ -25,6 +25,7 @@ const HERE = __dirname;
 
 // Tìm .swarm/runs: đi tối đa 5 cấp từ thư mục chứa script (worktree nằm ở <repo>/.swarm/wt/<ten>).
 function findRunsDir() {
+  if (process.env.HARVEST_RUNS_DIR) return path.resolve(process.env.HARVEST_RUNS_DIR);
   let dir = HERE;
   for (let i = 0; i < 5; i++) {
     const cand = path.join(dir, '.swarm', 'runs');
@@ -52,7 +53,7 @@ const OUT = getOutPath();
 // ---------- tiện ích ----------
 function sh(cmd, args) {
   try {
-    return execFileSync(cmd, args, { cwd: HERE, encoding: 'utf8', windowsHide: true, timeout: 30000 });
+    return execFileSync(cmd, args, { cwd: findRepoRoot(), encoding: 'utf8', windowsHide: true, timeout: 30000, stdio: ['ignore', 'pipe', 'ignore'] });
   } catch {
     return '';
   }
@@ -127,6 +128,18 @@ function gitRows(takenCommits) {
   return rows;
 }
 
+// ---------- lọc nhiễu ----------
+// Vòng no-change (agent không sửa gì, thường do hết quota 429) không mang tri thức gì: đêm 06/11
+// chúng chiếm 4.392/4.620 dòng. Bỏ khi gom, và dọn luôn khỏi log cũ (nếu không, dọn tay xong
+// lần harvest kế tiếp lại ghi lại từ results.tsv).
+const NOISE_STATUS = new Set(['no-change']);
+const QUOTA_RE = /RESOURCE_EXHAUSTED|\b429\b|quota (reached|exceeded)|rate.?limit/i;
+function isNoise(r) {
+  if (!r || r.kind !== 'swarm-row') return false;
+  if (NOISE_STATUS.has(r.status)) return true;
+  return !r.commit && r.status !== 'keep' && QUOTA_RE.test(String(r.feature || ''));
+}
+
 // ---------- ghép + dedupe + ghi ----------
 const toLine = (r) => JSON.stringify({
   ts: r.ts, bot: r.bot, kind: r.kind, feature: r.feature,
@@ -149,11 +162,14 @@ function runHarvest(customOut, options = {}) {
     : [];
   const existingSeenLines = new Set();
   const existing = [];
+  let prunedCount = 0;
   for (const l of rawExisting) {
-    if (!existingSeenLines.has(l)) {
-      existingSeenLines.add(l);
-      existing.push(l);
-    }
+    if (existingSeenLines.has(l)) continue;
+    existingSeenLines.add(l);
+    let obj = null;
+    try { obj = JSON.parse(l); } catch { /* dòng lạ: giữ nguyên */ }
+    if (isNoise(obj)) { prunedCount++; continue; }
+    existing.push(l);
   }
   const existingParsed = existing.map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
   const existingAllCommits = new Set(existingParsed.map((o) => o.commit).filter(Boolean));
@@ -170,7 +186,9 @@ function runHarvest(customOut, options = {}) {
 
   const seenKeys = new Set(); // commit+status hoặc runId+iter+ts+bot+status
   const fresh = [];
+  let skippedNoise = 0;
   for (const r of [...trows, ...grows]) {
+    if (isNoise(r)) { skippedNoise++; continue; }
     const key = r.commit
       ? 'c|' + r.commit + '|' + (r.status || '')
       : 'nc|' + (r.note || '') + '|' + r._iter + '|' + (r.ts || '') + '|' + (r.bot || '') + '|' + (r.status || '');
@@ -215,6 +233,8 @@ function runHarvest(customOut, options = {}) {
     tsvRowCount: trows.length,
     gitRowCount: grows.length,
     freshCount: fresh.length,
+    skippedNoise,
+    prunedCount,
     totalCount: items.length,
     outPath: targetOut,
     dryRun,
@@ -559,8 +579,8 @@ if (require.main === module) {
   } else {
     console.log(`harvest: runs dir = ${res.runsDir}`);
     console.log(`harvest: ${res.runIds.length} run results.tsv (${res.runIds.join(', ') || 'không có'}), ${res.tsvRowCount} dòng tsv, ${res.gitRowCount} commit swarm/*`);
-    console.log(`harvest: ${dryRun ? '[dry-run] ' : ''}+${res.freshCount} dòng mới, tổng ${res.totalCount} dòng -> ${res.outPath}`);
+    console.log(`harvest: ${dryRun ? '[dry-run] ' : ''}+${res.freshCount} dòng mới, bỏ ${res.skippedNoise} dòng nhiễu, dọn ${res.prunedCount} dòng nhiễu cũ, tổng ${res.totalCount} dòng -> ${res.outPath}`);
   }
 }
 
-module.exports = { runHarvest, computeStats, filterKnowledge, listKnowledge, exportKnowledgeCsv, exportKnowledgeJson, exportKnowledgeJsonl, tsvRows, gitRows, findRunsDir, findRepoRoot, getOutPath, OUT };
+module.exports = { runHarvest, isNoise, computeStats, filterKnowledge, listKnowledge, exportKnowledgeCsv, exportKnowledgeJson, exportKnowledgeJsonl, tsvRows, gitRows, findRunsDir, findRepoRoot, getOutPath, OUT };

@@ -19,6 +19,8 @@ const KNOWN_AGENTS = [
   { id: 'cursor-agent', name: 'Cursor Agent', bin: 'cursor-agent', template: 'cursor-agent -p --force {prompt}' },
   { id: 'agy', name: 'Antigravity CLI (agy)', bin: 'agy', template: 'agy -p {prompt} --dangerously-skip-permissions' },
   { id: 'aider', name: 'Aider', bin: 'aider', template: 'aider --yes-always --no-auto-commits --no-gitignore --message {prompt}' },
+  // npm i -g zcode-app-cli; login via `zcode login --oauth`. Start Plan quota (GLM-5.3-Flash) shares the ZCode Desktop session.
+  { id: 'zcode', name: 'ZCode CLI (Z.ai)', bin: 'zcode', template: 'zcode --model account:zai-start-plan/GLM-5.3-Flash -p {prompt}' },
 ];
 
 function findBin(bin) {

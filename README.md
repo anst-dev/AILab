@@ -31,7 +31,7 @@ Bạn nhập yêu cầu ─► chọn CLI + số agent ─► Bắt đầu
 
 - **Node.js ≥ 18** (không cần `npm install`, app không có thư viện ngoài)
 - **Git**
-- Ít nhất một agent CLI đã đăng nhập sẵn: `claude`, `codex`, `gemini`, `copilot`, `opencode`, `qwen`, `cursor-agent`, `aider`, hoặc một CLI tuỳ chỉnh.
+- Ít nhất một agent CLI đã đăng nhập sẵn: `claude`, `codex`, `gemini`, `copilot`, `opencode`, `qwen`, `cursor-agent`, `aider`, `zcode`, hoặc một CLI tuỳ chỉnh.
 
 ## Chạy
 
@@ -125,6 +125,25 @@ Agent điều phối là một CLI ở chế độ chỉ trả lời (`claude -p
 | Cursor | `cursor-agent -p --force {prompt}` |
 | Antigravity | `agy -p {prompt} --dangerously-skip-permissions` |
 | Aider | `aider --yes-always --no-auto-commits --no-gitignore --message {prompt}` |
+| ZCode (Z.ai) | `zcode --model account:zai-start-plan/GLM-5.3-Flash -p {prompt}` |
+
+### Dùng ZCode (Z.ai GLM) làm agent
+
+Gói **Start Plan** (vd. *ZCODE WEEKEND BUILD*, GLM-5.3-Flash) trong ZCode Desktop gọi được từ CLI qua [`zcode-app-cli`](https://github.com/kingsword09/zcode-cli) (CLI cộng đồng, bọc agent của ZCode Desktop).
+
+```powershell
+npm install -g zcode-app-cli@latest     # cần Node ≥ 22.19
+zcode login --oauth                     # cùng tài khoản ZCode Desktop (--no-browser nếu chạy headless)
+zcode --model account:zai-start-plan/GLM-5.3-Flash -p "say ok"   # thử nhanh
+```
+
+Sau đó chọn agent **ZCode CLI (Z.ai)** trong UI. Ghi chú:
+
+- Cần bản sau [fix #251](https://github.com/kingsword09/zcode-cli/issues/248) (01/11/2026). Bản cũ báo `Model not in Provider Registry` với model Start Plan.
+- Start Plan chạy qua `zcode.z.ai` bằng token OAuth của ZCode, **không** dùng API key của `api.z.ai`, nên không thể trỏ Claude Code (`ANTHROPIC_BASE_URL`) vào để dùng quota này.
+- Gói GLM Coding Plan: đổi model thành `account:zai-individual-coding-plan/GLM-5.3-Flash` (sửa lệnh trong cấu hình agent của UI).
+- CLI chưa có cờ bỏ qua xác nhận quyền. Nếu ở chế độ `-p` agent đứng chờ hoặc không sửa file, đặt chế độ `yolo` trong `%USERPROFILE%\.zcode\cli\setting.json`.
+- Khi quota hết, các lượt sẽ không có thay đổi và circuit breaker tự dừng phiên.
 
 > ⚠️ Agent chạy ở chế độ **bỏ qua xác nhận quyền** để có thể tự làm việc. Chỉ dùng với dự án bạn tin tưởng và nên có backup hoặc remote git.
 >
@@ -178,8 +197,11 @@ Sau đó chọn mẫu **autoresearch** và trỏ thư mục dự án tới `auto
 ## Kiểm thử
 
 ```bash
-npm test     # = node test/e2e.js && node test/api.js && node test/coordinator.js
+npm test     # = regression.test.js + e2e.js + api.js + coordinator.js
+node evaluate.js   # cổng chấm của swarm: syntax + smoke + toàn bộ test (EVAL_QUICK=1 để bỏ test)
 ```
+
+`test/regression.test.js` khóa các lỗi đã gặp: circuit breaker dừng phiên khi agent toàn no-change, `knowledgeLog` mặc định tắt (không tạo `knowledge/` trong dự án người dùng), harvest bỏ dòng no-change/lỗi quota và chạy lại không nhân dòng. Bot thêm test mới đặt tên `test/*.test.js` — `evaluate.js` tự chạy.
 
 `test/coordinator.js` khởi động server nền, nhắn qua `chat.js`, dùng agent điều phối giả (`test/fake-coordinator.js`) để kiểm tra: inspect → start → phiên kết thúc → tóm tắt, hành động lỗi, lưu hội thoại, `--stop`.
 

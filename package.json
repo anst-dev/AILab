@@ -7,6 +7,6 @@
   "engines": { "node": ">=18" },
   "scripts": {
     "start": "node src/server.js",
-    "test": "node test/e2e.js && node test/api.js && node test/coordinator.js"
+    "test": "node test/regression.test.js && node test/e2e.js && node test/api.js && node test/coordinator.js"
   }
 }

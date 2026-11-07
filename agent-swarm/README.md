@@ -29,7 +29,7 @@ Bạn nhập yêu cầu ─► chọn CLI + số agent ─► Bắt đầu
 
 - **Node.js ≥ 18** (không cần `npm install`, app không có thư viện ngoài)
 - **Git**
-- Ít nhất một agent CLI đã đăng nhập sẵn: `claude`, `codex`, `gemini`, `copilot`, `opencode`, `qwen`, `cursor-agent`, `aider`, hoặc một CLI tuỳ chỉnh.
+- Ít nhất một agent CLI đã đăng nhập sẵn: `claude`, `codex`, `gemini`, `copilot`, `opencode`, `qwen`, `cursor-agent`, `aider`, `zcode`, hoặc một CLI tuỳ chỉnh.
 
 ## Chạy
 
@@ -99,6 +99,7 @@ Agent điều phối là một CLI ở chế độ chỉ trả lời (`claude -p
 | Cursor | `cursor-agent -p --force {prompt}` |
 | Antigravity | `agy -p {prompt} --dangerously-skip-permissions` |
 | Aider | `aider --yes-always --no-auto-commits --no-gitignore --message {prompt}` |
+| ZCode (Z.ai) | `zcode --model account:zai-start-plan/GLM-5.3-Flash -p {prompt}` |
 
 > ⚠️ Agent chạy ở chế độ **bỏ qua xác nhận quyền** để có thể tự làm việc. Chỉ dùng với dự án bạn tin tưởng và nên có backup hoặc remote git.
 >
